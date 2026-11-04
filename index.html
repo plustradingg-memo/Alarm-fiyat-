@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fiyat Alarmı</title>
+  <meta name="description" content="Ürün, döviz ve kripto fiyatlarını takip edin; hedef fiyata ulaşınca alarm alın.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">🔔</span>
+      <h1>Fiyat Alarmı</h1>
+    </div>
+    <div class="top-actions">
+      <button id="btnRefresh" class="btn ghost" title="Canlı fiyatları şimdi güncelle">↻ Güncelle</button>
+      <button id="btnNotify" class="btn ghost" title="Tarayıcı bildirimlerine izin ver">Bildirimleri aç</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stats" id="stats"></section>
+
+    <section class="card">
+      <h2>Yeni takip ekle</h2>
+      <form id="addForm" autocomplete="off">
+        <div class="tabs" role="tablist">
+          <label><input type="radio" name="type" value="manual" checked> Ürün (elle fiyat)</label>
+          <label><input type="radio" name="type" value="fx"> Döviz</label>
+          <label><input type="radio" name="type" value="crypto"> Kripto</label>
+        </div>
+
+        <div class="grid">
+          <label class="field" data-for="manual">
+            <span>Ürün adı</span>
+            <input name="name" placeholder="ör. Kulaklık XYZ">
+          </label>
+          <label class="field" data-for="manual">
+            <span>Ürün bağlantısı (isteğe bağlı)</span>
+            <input name="url" type="url" placeholder="https://...">
+          </label>
+          <label class="field" data-for="manual">
+            <span>Şu anki fiyat</span>
+            <input name="price" type="number" step="0.01" min="0" placeholder="0,00">
+          </label>
+
+          <label class="field" data-for="fx" hidden>
+            <span>Döviz</span>
+            <select name="fx">
+              <option value="USD">USD – Amerikan Doları</option>
+              <option value="EUR">EUR – Euro</option>
+              <option value="GBP">GBP – İngiliz Sterlini</option>
+              <option value="CHF">CHF – İsviçre Frangı</option>
+              <option value="JPY">JPY – Japon Yeni</option>
+            </select>
+          </label>
+
+          <label class="field" data-for="crypto" hidden>
+            <span>Kripto para</span>
+            <select name="crypto">
+              <option value="bitcoin">Bitcoin (BTC)</option>
+              <option value="ethereum">Ethereum (ETH)</option>
+              <option value="solana">Solana (SOL)</option>
+              <option value="ripple">XRP</option>
+              <option value="tether">Tether (USDT)</option>
+              <option value="avalanche-2">Avalanche (AVAX)</option>
+            </select>
+          </label>
+
+          <label class="field" data-for="manual crypto">
+            <span>Para birimi</span>
+            <select name="currency">
+              <option value="TRY">₺ TRY</option>
+              <option value="USD">$ USD</option>
+              <option value="EUR">€ EUR</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Alarm koşulu</span>
+            <select name="direction">
+              <option value="below">Fiyat bu değerin altına düşünce</option>
+              <option value="above">Fiyat bu değerin üstüne çıkınca</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Hedef fiyat</span>
+            <input name="target" type="number" step="any" min="0" required placeholder="0,00">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">+ Takibe ekle</button>
+          <span class="hint" id="formHint"></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="list-head">
+        <h2>Takip listesi</h2>
+        <div class="filters">
+          <input id="search" type="search" placeholder="Ara...">
+          <select id="sort">
+            <option value="new">En yeni</option>
+            <option value="near">Hedefe en yakın</option>
+            <option value="name">İsme göre</option>
+          </select>
+        </div>
+      </div>
+      <div id="list" class="list"></div>
+      <p id="empty" class="empty" hidden>Henüz takip edilen bir şey yok. Yukarıdan ekleyin.</p>
+    </section>
+
+    <section class="card settings">
+      <h2>Ayarlar</h2>
+      <div class="grid">
+        <label class="field">
+          <span>Canlı fiyat güncelleme aralığı</span>
+          <select id="interval">
+            <option value="1">1 dakika</option>
+            <option value="5">5 dakika</option>
+            <option value="15">15 dakika</option>
+            <option value="60">1 saat</option>
+            <option value="0">Kapalı</option>
+          </select>
+        </label>
+        <label class="field check">
+          <input id="sound" type="checkbox" checked>
+          <span>Alarm çalınca ses çal</span>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button id="btnExport" class="btn ghost">Verileri dışa aktar (JSON)</button>
+        <label class="btn ghost file">
+          Verileri içe aktar
+          <input id="importFile" type="file" accept="application/json" hidden>
+        </label>
+        <button id="btnClear" class="btn danger">Tümünü sil</button>
+      </div>
+      <p class="hint">Veriler yalnızca bu tarayıcıda saklanır. Döviz kurları: Frankfurter (ECB), kripto: CoinGecko.</p>
+    </section>
+  </main>
+
+  <dialog id="priceDialog">
+    <form method="dialog" id="priceForm">
+      <h3 id="priceDialogTitle">Yeni fiyat gir</h3>
+      <label class="field">
+        <span>Güncel fiyat</span>
+        <input name="price" type="number" step="0.01" min="0" required>
+      </label>
+      <div class="form-actions">
+        <button value="cancel" class="btn ghost" formnovalidate>Vazgeç</button>
+        <button value="ok" class="btn primary">Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
