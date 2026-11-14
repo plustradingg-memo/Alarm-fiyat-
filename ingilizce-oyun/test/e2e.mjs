@@ -272,6 +272,23 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await tap(page, '[data-act="home"]');
   }, 'story');
 
+  if (want('story')){
+    const tp = await openPage(browser, { save: { ...OLD_SAVE, story: { picnic: { plays: 2, stickers: [] } } } });
+    await step('parmakla sürükleme (dokunmatik) elmayı sepete koyar', async () => {
+      await tap(tp, '[data-act="story"]'); await tp.waitForTimeout(550); await tap(tp, '.next-btn');
+      await nextVisible(tp); await waitFor(tp, '#field'); await tp.waitForTimeout(650);
+      const a = await tp.locator('#field [data-key="fruits:apple"]').boundingBox(), b = await tp.locator('#basket').boundingBox();
+      const cdp = await tp.context().newCDPSession(tp);
+      const x0 = a.x + a.width / 2, y0 = a.y + a.height / 2, x1 = b.x + b.width / 2, y1 = b.y + b.height / 2;
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y: y0 }] });
+      for (let k = 1; k <= 14; k++){ await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x0 + (x1 - x0) * k / 14, y: y0 + (y1 - y0) * k / 14 }] }); await tp.waitForTimeout(16); }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await waitFor(tp, '.teach .blob', 8000);
+      assert.deepEqual(tp.__errors, []);
+    }, 'story');
+    await tp.context().close();
+  }
+
   console.log('Minik Market');
   await clearSpoken(page);
   await step('market: tanıtım, ısınma, ipuçları, sürükle + dokun, sepet', async () => { try {
@@ -313,6 +330,27 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.waitForSelector('.feature');
   } catch (e){ const ev = await page.evaluate(() => window.__ev.slice(-14)).catch(() => []); e.message += ' | olaylar: ' + ev.join(' '); throw e; } }, 'market');
   await step('hiç konsol hatası yok', async () => { assert.deepEqual(page.__errors, []); });
+  if (want('market')){
+    const bp = await openPage(browser, { save: { ...OLD_SAVE, market: { visits: 3, bought: {} } } });
+    await step('arka plana gidince market durur, dönünce konuşmadan bekler, dokununca sürer', async () => {
+      await tap(bp, '[data-act="market"]');
+      await bp.waitForFunction(() => document.querySelectorAll('#shelf .item:not(.waiting)').length >= 2, null, { timeout: 10000 });
+      const setHidden = h => bp.evaluate(h => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => h ? 'hidden' : 'visible' }); document.dispatchEvent(new Event('visibilitychange')); }, h);
+      await setHidden(true);
+      const shown = await bp.$$eval('#shelf .item:not(.waiting)', e => e.length);
+      await bp.waitForTimeout(2500);
+      assert.ok(await bp.$$eval('#shelf .item:not(.waiting)', e => e.length) <= shown + 1, 'gizliyken tanıtım ilerlememeli');
+      await clearSpoken(bp);
+      await setHidden(false);
+      await bp.waitForTimeout(1500);
+      assert.equal((await spoken(bp)).length, 0, 'dönünce kendiliğinden konuşmamalı');
+      await bp.mouse.click(30, 300);                               // çocuğun ilk dokunuşu
+      await bp.waitForFunction(() => window.__spoken.length > 0, null, { timeout: 5000 });
+      await bp.waitForFunction(() => document.querySelectorAll('#shelf .item.waiting').length === 0, null, { timeout: 15000 });
+      assert.deepEqual(bp.__errors, []);
+    }, 'market');
+    await bp.context().close();
+  }
   await step('dışarıya yalnızca mevcut Google Fonts isteği var', async () => {
     const ext = page.__requests.filter(u => !u.startsWith('file:') && !u.startsWith('data:'));
     assert.ok(ext.every(u => /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(u)), ext.join('\n'));

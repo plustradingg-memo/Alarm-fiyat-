@@ -436,6 +436,7 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
 /* yerleştirilebilir nesneler + sepet */
 .field{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
 .item{position:relative;width:var(--item);height:var(--item);flex:none;border-radius:24px;border:3px solid var(--line);background:var(--paper);box-shadow:0 5px 0 var(--line);font-size:calc(var(--item) * .58);line-height:1;display:grid;place-items:center;padding:0;touch-action:none;-webkit-touch-callout:none;transition:transform .15s,box-shadow .15s,opacity .2s}
+.item > *{pointer-events:none}
 .item.selected{transform:translateY(-8px) scale(1.06);box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun),0 0 0 13px var(--line);z-index:2}
 .item.selected::after{content:"✋";position:absolute;top:-18px;right:-14px;font-size:24px;line-height:1;font-family:var(--font-emoji)}
 .item.dragging{opacity:.25}
@@ -808,11 +809,14 @@ function picnicRec(){
   let r = S.story.picnic;
   if (!r || typeof r !== 'object' || Array.isArray(r)) r = S.story.picnic = {};
   if (!Array.isArray(r.stickers)) r.stickers = [];
-  r.stickers = r.stickers.filter((k, i, a) => typeof k === 'string' && WORD[k] && a.indexOf(k) === i);
-  if (typeof r.plays !== 'number') r.plays = 0;
+  r.stickers = r.stickers.filter(isStoryKey);
+  const n = typeof r.plays === 'string' ? Number(r.plays) : r.plays;
+  r.plays = (typeof n === 'number' && isFinite(n) && n >= 0) ? n : 0;
+  if (r.stickers.indexOf(r.last) < 0) r.last = r.stickers[r.stickers.length - 1] || null;
   return r;
 }
-const storyStickers = () => picnicRec().stickers.filter((k, i, a) => WORD[k] && a.indexOf(k) === i);
+const isStoryKey = (k, i, a) => typeof k === 'string' && k.indexOf('story:') === 0 && Object.prototype.hasOwnProperty.call(WORD, k) && a.indexOf(k) === i;
+const storyStickers = () => picnicRec().stickers.filter(isStoryKey);
 const hasSticker = k => k.indexOf('special:') === 0 ? S.specials.indexOf(k) > -1 : k.indexOf('story:') === 0 ? storyStickers().indexOf(k) > -1 : !!S.seen[k];
 const stickerCount = () => totalSeen() + S.specials.length + storyStickers().length;
 
@@ -914,11 +918,14 @@ function pickVoice(){
   if (!voices.length) loadVoices();
   const want = uk() ? 'en-gb' : 'en-us';
   const en = voices.filter(v => vlang(v).startsWith('en') && !NOVELTY.test(v.name));
-  // Önce cihaz üstündeki sesler; yalnızca hiç yoksa uzak sese düşülür.
-  const local = en.filter(v => v.localService !== false);
-  const base = local.length ? local : en;
-  const exact = base.filter(v => vlang(v) === want);
-  const pool = exact.length ? exact : base;
+  const isLocal = v => v.localService !== false;
+  const exact = en.filter(v => vlang(v) === want);
+  // Önce aksanı tutan cihaz üstü ses. Ebeveyn İngiliz aksanını seçtiyse ve cihazda yerel en-GB yoksa
+  // aksanı tutan (önceden de kullanılan) ses; yoksa herhangi bir cihaz üstü İngilizce ses.
+  let pool = exact.filter(isLocal);
+  if (!pool.length && uk()) pool = exact;
+  if (!pool.length) pool = en.filter(isLocal);
+  if (!pool.length) pool = exact.length ? exact : en;
   const prefer = ['Samantha','Google US English','Google UK English Female','Microsoft Aria','Microsoft Jenny','Microsoft Libby','Microsoft Sonia','Karen','Serena','Moira','Daniel','Microsoft Zira'];
   for (const p of prefer){ const v = pool.find(x => x.name.indexOf(p) > -1); if (v) return v; }
   return pool.find(v => v.localService) || pool[0] || null;
@@ -972,7 +979,8 @@ function speakLine(segs){
   const groups = [[]], pauses = [];
   spoken.forEach(s => { if (s[0] === 'pause'){ groups.push([]); pauses.push(s[1]); } else groups[groups.length - 1].push(s); });
   return (async () => {
-    if (!synth || document.hidden){ await wait(synth ? 50 : 500); return id === speakId; }
+    if (!synth){ await wait(500); return id === speakId; }
+    if (document.hidden){ await wait(50); return false; }
     try {
       const busy = synth.speaking || synth.pending;
       synth.cancel();
@@ -1212,6 +1220,8 @@ function maybeChest(){
 /* ================= ayarlar (ebeveyn) ================= */
 let resetArmed = false;
 function renderSettings(){
+  const mb0 = $('.settings-modal') && $('.modal-back');
+  const keepScroll = mb0 ? mb0.scrollTop : 0;
   const st = S.settings;
   const seg = (k, opts) => `<div class="seg" role="group">${opts.map(([v, l]) => `<button data-act="set" data-k="${k}" data-v="${v}" aria-pressed="${String(st[k]) === v}">${l}</button>`).join('')}</div>`;
   const v = pickVoice(), tv = trVoice();
@@ -1224,10 +1234,11 @@ function renderSettings(){
       <div class="set-row"><span>Türkçe sesli yönlendirme</span>${seg('trVoice', [['true','Açık'], ['false','Kapalı']])}</div>
     </div>
     <div class="voice-box"><p>İngilizce ses: <b>${v ? v.name + ' (' + v.lang + (v.localService === false ? ', çevrim içi' : '') + ')' : (synth ? 'cihazın varsayılan sesi' : 'bu tarayıcı sesli okumayı desteklemiyor')}</b></p><button class="btn small" data-act="testvoice">${ICON.speaker} İngilizce dene</button></div>
-    <div class="voice-box"><p>Türkçe ses: <b>${tv ? tv.name + ' (' + tv.lang + ')' : ({ off: 'kapalı', nosynth: '—', unknown: 'cihaz seçecek' }[trState()] || 'cihazda bulunamadı; yönergeler resim ve el işaretiyle gösterilir')}</b></p><button class="btn small" data-act="testtr">${ICON.speaker} Türkçe dene</button></div>
+    <div class="voice-box"><p>Türkçe ses: <b>${trState() === 'off' ? 'yönlendirme kapalı' + (tv ? ' (' + tv.name + ')' : '') : tv ? tv.name + ' (' + tv.lang + ')' : ({ nosynth: '—', unknown: 'cihaz seçecek' }[trState()] || 'cihazda bulunamadı; yönergeler resim ve el işaretiyle gösterilir')}</b></p><button class="btn small" data-act="testtr">${ICON.speaker} Türkçe dene</button></div>
     <p class="note">Sesleri cihazın kendisi üretir; Türkçe yönlendirme için yalnızca cihaz üstündeki sesler kullanılır. Ses gelmezse sessiz modu kapatıp sesi açın. Türkçe ses yoksa: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › Türkçe; Android’de Ayarlar › Genel yönetim (veya Sistem) › Dil › Metin okuma çıkışı › Google › Dil verilerini yükle › Türkçe. Menü adları cihaza göre değişebilir; Ayarlar’da “Metin okuma” diye arayın.</p>
     <div class="tally"><span><b>${S.stars}</b> yıldız</span><span><b>${totalSeen()}</b>/${TOTAL} kelime</span><span><b>${S.specials.length}</b>/${SPECIALS.length} hazine</span><span><b>${storyStickers().length}</b>/${STORY_STICKERS.length} hikâye çıkartması</span></div>
     <div class="modal-actions"><button class="btn small danger ${resetArmed ? 'armed' : ''}" data-act="reset">${resetArmed ? 'Emin misiniz? Evet, sıfırla' : 'İlerlemeyi sıfırla'}</button><button class="btn primary" data-act="close">Kapat</button></div>`, 'settings-modal');
+  const mb = $('.modal-back'); if (mb && keepScroll) mb.scrollTop = keepScroll;
 }
 function openSettings(){
   resetArmed = false;
@@ -1263,6 +1274,7 @@ function go(name, arg){
   stopSpeech();
   closeModal();
   current = { name, arg };
+  clearTimeout(capT); capEl.classList.remove('show');
   $$('.hand, .fly-item, .drag-ghost').forEach(n => n.remove());
   document.body.classList.toggle('focus-mode', name === 'story' || name === 'market');
   if ((name === 'story' || name === 'market') && !actHistoryState()){ try { history.pushState({ bubuAct: 1 }, ''); } catch (e) {} }
@@ -1321,7 +1333,7 @@ function viewHome(){
     <div class="section-head"><h2>Hikâye ve oyun</h2><span class="en" lang="en">Story &amp; play</span></div>
     <div class="features">
       <button class="feature" data-act="story" style="--cat:var(--c-green)" aria-label="Bubu’nun Pikniği hikâyesini başlat">
-        ${storyStickers().length ? `<span class="f-badge emo" aria-hidden="true">${WORD[storyStickers()[storyStickers().length - 1]].e}</span>` : ''}
+        ${storyStickers().length ? `<span class="f-badge emo" aria-hidden="true">${WORD[picnicRec().last].e}</span>` : ''}
         <span class="f-art" aria-hidden="true"><span class="emo f-main">🧺</span><span class="emo f-a">🍎</span><span class="emo f-b">🐰</span></span>
         <span class="f-text"><span class="f-tag">Hikâye</span><b>Bubu’nun Pikniği</b><small>${storyStickers().length ? `${storyStickers().length}/${STORY_STICKERS.length} çıkartma seçildi` : 'Elma, kırmızı, tavşan'}</small></span>
         <span class="f-play" aria-hidden="true">${ICON.play}</span>
@@ -1713,6 +1725,7 @@ function makePlacer(root, o){
   function cancelDrag(){
     if (!drag) return;
     const d = drag; drag = null; target.classList.remove('hover');
+    if (d.onLost) d.el.removeEventListener('lostpointercapture', d.onLost);
     if (d.moved){ suppress = Date.now(); sendBack(d); if (!locked()) setSel(d.el); }
   }
   function down(e){
@@ -1738,7 +1751,9 @@ function makePlacer(root, o){
       drag.el.classList.add('dragging');
       setSel(null);
       try { drag.el.setPointerCapture(e.pointerId); } catch (_) {}
-      drag.el.addEventListener('lostpointercapture', cancelDrag, { once: true });
+      // Yalnızca düğmenin kendisi yakalamayı kaybederse iptal (dokunmada iç resim yakalamayı bırakınca değil).
+      drag.onLost = ev => { if (drag && ev.target === drag.el) cancelDrag(); };
+      drag.el.addEventListener('lostpointercapture', drag.onLost);
       if (o.onDragStart) o.onDragStart(drag.el);
     }
     if (e.cancelable) e.preventDefault();
@@ -1748,7 +1763,7 @@ function makePlacer(root, o){
   function up(e){
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag; drag = null;
-    d.el.removeEventListener('lostpointercapture', cancelDrag);
+    if (d.onLost) d.el.removeEventListener('lostpointercapture', d.onLost);
     if (!d.moved) return;                 // kısa dokunuş: click olayı seçimi yapar
     suppress = Date.now();
     target.classList.remove('hover');
@@ -1912,7 +1927,7 @@ let curTask = null;
 // Bir etkinliğin ortak durumu: zamanlayıcılar, tekrar dinlenecek cümle, bekleme ipuçları, sahne koruması.
 function makeTask(){
   const t = { alive: true, timers: [], anims: [], line: null, speaking: false, talkId: 0, step: 0, demo: null, pic: false,
-    idle: [], idleStage: 0, idleT: 0, readyAt: 0, placer: null, lastReplay: 0 };
+    idle: [], idleStage: 0, idleT: 0, readyAt: 0, placer: null, lastReplay: 0, paused: false, resumeQ: [], pendingHint: null };
   curTask = t;
   t.later = (fn, ms) => { const id = setTimeout(() => { if (t.alive) fn(); }, ms); t.timers.push(id); return id; };
   t.guard = ms => { t.readyAt = performance.now() + ms; };          // sahne değişince çift dokunuş taşmasın
@@ -1939,12 +1954,33 @@ function makeTask(){
       return ok;
     });
   };
+  // Çocuğun istediği söz (resme dokununca adı): tekrar dinlenecek cümleyi değiştirmez.
+  t.say = segs => t.talk(segs, t.line || segs);
   // Yanlış cevapta ipucu, çalan sözü kelimenin ortasında kesmez: parça sonunu (en çok 1,2 sn) bekler.
+  // Beklerken yeni bir yanlış gelirse en son ipucu söylenir (ikincisi kaybolmaz).
   t.talkSoon = (segs, replay) => {
     if (!t.speaking) return t.talk(segs, replay);
-    const my = t.talkId, step = t.step;
-    return Promise.race([new Promise(r => segWaiters.push(r)), wait(1200)])
-      .then(() => (t.alive && step === t.step && my === t.talkId) ? t.talk(segs, replay) : false);
+    const had = !!t.pendingHint;
+    t.pendingHint = { segs, replay, step: t.step, talkId: t.talkId };
+    if (had) return Promise.resolve(false);
+    return Promise.race([new Promise(r => segWaiters.push(r)), wait(1200)]).then(() => {
+      const h = t.pendingHint; t.pendingHint = null;
+      if (!h || !t.alive || h.step !== t.step || h.talkId !== t.talkId) return false;
+      return t.talk(h.segs, h.replay);
+    });
+  };
+  // Biri (çocuk) sözü devraldıysa o söz bitene kadar bekle (en çok 8 sn).
+  t.quiet = () => new Promise(r => { const t0 = performance.now(); (function tick(){ if (!t.speaking || !t.alive || performance.now() - t0 > 8000) r(); else setTimeout(tick, 120); })(); });
+  // Arka plandan dönünce kendiliğinden konuşulmaz: akış çocuğun ilk dokunuşuyla sürer.
+  t.whenActive = () => (!t.paused && !document.hidden) ? Promise.resolve() : new Promise(r => t.resumeQ.push(r));
+  t.resume = () => { if (!t.paused || document.hidden) return; t.paused = false; const q = t.resumeQ; t.resumeQ = []; q.forEach(f => f()); };
+  // Senaryo cümlesi: duraklamaya uyar, en az ms sürer, çocuk araya girdiyse onun sözünü kesmez.
+  t.beat = async (segs, ms, replay) => {
+    await t.whenActive();
+    const step = t.step;
+    const r = await Promise.all([t.talk(segs, replay), wait(ms || 0)]);
+    if (!r[0] && t.alive && step === t.step) await t.quiet();
+    return r[0];
   };
   // Bekleme merdiveni: söz bittikten 8 sn sonra 1. ipucu, 12 sn sonra 2. ipucu, sonra susar. Dokunuş sayacı sıfırlar.
   t.setIdle = fns => { t.idle = fns || []; t.idleStage = 0; t.armIdle(); };
@@ -1959,11 +1995,11 @@ function makeTask(){
       t.armIdle();
     }, t.idleStage === 0 ? 8000 : 12000);
   };
-  t.poke = () => { if (!t.speaking) t.armIdle(); };
+  t.poke = () => { if (t.paused) t.resume(); if (!t.speaking) t.armIdle(); };
   t.clearStep = () => {
     t.timers.forEach(clearTimeout); t.timers = [];
     t.anims.forEach(a => { try { a.cancel(); } catch (e) {} }); t.anims = [];
-    clearTimeout(t.idleT); t.idle = []; t.talkId++; t.speaking = false; t.step++; t.demo = null;
+    clearTimeout(t.idleT); t.idle = []; t.talkId++; t.speaking = false; t.step++; t.demo = null; t.pendingHint = null;
     if (t.placer){ t.placer.destroy(); t.placer = null; }
     $$('.hand, .fly-item').forEach(h => h.remove());
   };
@@ -1978,7 +2014,7 @@ function makeTask(){
   viewActs.replay = () => {
     const now = performance.now();
     if (!t.line || now - t.lastReplay < 700) return;      // çekiç gibi basılan tekrar düğmesi sesi kilitlemesin
-    t.lastReplay = now; sfx.tap(); t.talk(t.line, t.line);
+    t.lastReplay = now; sfx.tap(); t.resume(); t.talk(t.line, t.line);
     if (t.pic && t.demo) t.demo();                         // resimli modda gösterim de yinelenir
   };
   return t;
@@ -2011,10 +2047,12 @@ function viewStory(){
   }
   function next(){
     if (!T.alive || i >= PICNIC_STEPS.length - 1) return;
-    if (document.hidden){ T.later(next, 600); return; }      // arka plandayken hikâye kendi kendine ilerlemesin
+    if (T.paused || document.hidden){ const st = T.step; T.whenActive().then(() => { if (T.alive && st === T.step) next(); }); return; }
     i++; render();
   }
   function advance(ms){ if (advancing) return; advancing = true; T.later(next, ms); }
+  // Övgü bitince ilerle; çocuk tekrar dinle ya da resme dokunduysa önce o söz bitsin.
+  const praiseThen = (p, ms) => p.then(ok => ok ? null : T.quiet()).then(() => advance(ms));
   viewActs.next = () => { if (!T.ready()) return; sfx.tap(); next(); };
   function setWant(html, lvl){ const wp = $('#want-pic'); if (!wp) return; wp.innerHTML = html; wp.className = 'want-pic lvl' + lvl; wp.hidden = false; retrigger(wp, 'reveal-pic'); }
   function teach(b, w, intro, extra){
@@ -2025,7 +2063,7 @@ function viewStory(){
     const showNext = () => { const n = $('.next-btn', b); if (n) n.hidden = false; };   // ▶ kelime duyulduktan sonra çıkar
     T.talk(segs).then(showNext);
     T.later(showNext, 7000);
-    viewActs.teachhear = el => { retrigger(el, 'bounce'); sfx.tap(); if (!T.speaking) speakLine([['en', A(say(w))]]); };
+    viewActs.teachhear = el => { retrigger(el, 'bounce'); sfx.tap(); if (!T.speaking) T.say([['en', A(say(w))]]); };
     T.setIdle([() => { T.talk([['tr', 'Devam etmek için yeşil düğmeye dokun.']], segs); const n = $('.next-btn', b); if (n) retrigger(n, 'hop'); }]);
   }
   const STEP = {
@@ -2054,7 +2092,7 @@ function viewStory(){
       T.placer = makePlacer(b, {
         target: $('#basket'),
         locked: () => done || demoing || !T.ready(),
-        onSelect: el => { sfx.tap(); if (!T.speaking) speakLine([['en', A(say(WORD[el.dataset.key]))]]); },
+        onSelect: el => { sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]); },
         onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], prompt); },
         onEmptyTarget: () => { hopSeq($('#field')); T.talk([['tr', 'Önce birine dokun, sonra sepete.'], ['en', A(say(APPLE))]], prompt); },
         onPlace: (el, from) => {
@@ -2063,7 +2101,7 @@ function viewStory(){
             done = true; el.classList.add('gone');
             T.fly(from, $('#basket'), w);
             sfx.good(); confettiAt($('#basket'), 30); cheerBubu();
-            T.talk([['en', A(say(APPLE))], ['tr', 'Harika! Elma sepette.']]).then(() => advance(600));
+            praiseThen(T.talk([['en', A(say(APPLE))], ['tr', 'Harika! Elma sepette.']]), 600);
             return true;
           }
           miss++; sfx.hmm(); retrigger(el, 'soft');
@@ -2083,6 +2121,7 @@ function viewStory(){
         T.later(() => handAt(h, bread), 60);
         T.later(() => { handTap(h); bread.classList.add('selected'); basket.classList.add('awaiting'); }, 900);
         await Promise.all([T.talk([['tr', 'Bak, önce ben yapayım: ekmeğe dokunuyorum.'], ['en', 'Bread!']], prompt), wait(1700)]);
+        await T.whenActive();
         if (!live()) return;
         handAt(h, basket);
         T.later(() => {
@@ -2091,9 +2130,10 @@ function viewStory(){
           bread.classList.add('gone');
           demoing = false; demoDone = true;                    // ekmek sepete girer girmez çocuk deneyebilir
         }, 850);
-        await Promise.all([T.talk([['tr', 'Sonra sepete dokunuyorum. Hop, sepette!']], prompt), wait(1900)]);
+        const p2 = T.talk([['tr', 'Sonra sepete dokunuyorum. Hop, sepette!']], prompt), myTalk = T.talkId;
+        await Promise.all([p2, wait(1900)]);
         h.classList.add('fade'); T.later(() => h.remove(), 400);
-        if (!live() || done) return;
+        if (!live() || done || miss > 0 || T.talkId !== myTalk) return;
         T.talk([['tr', 'Şimdi sıra sende.']].concat(prompt), prompt);
       })();
     },
@@ -2114,11 +2154,11 @@ function viewStory(){
         if (w === RED){
           done = true; el.classList.add('chosen');
           sfx.good(); confettiAt(el, 30); cheerBubu();
-          T.talk([['en', A(say(RED))], ['tr', 'Süper! Kırmızı örtüyü serdik.']]).then(() => advance(600));
+          praiseThen(T.talk([['en', A(say(RED))], ['tr', 'Süper! Kırmızı örtüyü serdik.']]), 600);
           return;
         }
         sfx.hmm(); retrigger(el, 'soft');
-        if (tried[w.key]){ if (!T.speaking) speakLine([['en', A(say(w))]]); return; }   // aynı yanlışa tekrar: sadece adı
+        if (tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return; }   // aynı yanlışa tekrar: sadece adı
         tried[w.key] = 1; miss++;
         if (miss === 1 && !T.pic){
           setWant(pic(APPLE, true), 2);
@@ -2144,12 +2184,12 @@ function viewStory(){
       viewActs.bush = el => {
         if (done || !T.ready()) return;
         const w = WORD[el.dataset.key];
-        if (el.classList.contains('open')){ if (!T.speaking) speakLine([['en', A(say(w))]]); return; }
+        if (el.classList.contains('open')){ if (!T.speaking) T.say([['en', A(say(w))]]); return; }
         el.classList.add('open'); el.classList.remove('peek', 'hint-glow'); el.setAttribute('aria-label', say(w));
         if (w === RABBIT){
           done = true;
           sfx.good(); confettiAt(el, 36); cheerBubu();
-          T.talk([['en', A(say(RABBIT))], ['tr', 'Buldun! Tavşan pikniğe geliyor.']]).then(() => advance(700));
+          praiseThen(T.talk([['en', A(say(RABBIT))], ['tr', 'Buldun! Tavşan pikniğe geliyor.']]), 700);
           return;
         }
         // Yanlış çalı bir keşif sayılır: hayvan görünür kalır, ipucu verilir.
@@ -2167,7 +2207,7 @@ function viewStory(){
           <span class="fin-rabbit r2">${pic(RABBIT)}</span></div></div>` + emptyRow;
       T.bubble(`<b lang="en">${A(say(APPLE))} ${A(say(RED))} ${A(say(RABBIT))}</b>`);
       sfx.win(); confettiBig(); cheerBubu();
-      T.talk([['en', A(say(APPLE))], ['en', A(say(RED))], ['en', A(say(RABBIT))], ['en', `A ${say(RED)} ${say(APPLE)}!`], ['tr', 'Yaşasın! Piknik hazır!']]).then(() => advance(700));
+      praiseThen(T.talk([['en', A(say(APPLE))], ['en', A(say(RED))], ['en', A(say(RABBIT))], ['en', `A ${say(RED)} ${say(APPLE)}!`], ['tr', 'Yaşasın! Piknik hazır!']]), 700);
       T.later(() => advance(0), 16000);
     },
     sticker(b){
@@ -2195,7 +2235,8 @@ function viewStory(){
         if (chosen || !T.ready()) return;
         const w = WORD[el.dataset.key]; chosen = w;
         const had = rec.stickers.indexOf(w.key) > -1;
-        if (!had){ rec.stickers.push(w.key); save(); updateStats(); }
+        if (!had) rec.stickers.push(w.key);
+        rec.last = w.key; save(); if (!had) updateStats();
         $$('#picks .pick').forEach(p => { p.classList.remove('spot'); if (p !== el) p.disabled = true; });
         el.classList.add('chosen'); sfx.good(); confettiAt(el, 50);
         $('#after-pick').innerHTML = endActions(true);
@@ -2285,10 +2326,12 @@ function viewMarket(){
     T.later(() => handAt(h, el), 60);
     T.later(() => { handTap(h); el.classList.add('selected'); }, 900);
     await Promise.all([T.talk([['tr', 'Dinle, Bubu ne istiyor?'], please(w)], replayLine(w)), wait(1700)]);
+    await T.whenActive();
     if (!live()) return;
     handAt(h, $('#basket'));
     T.later(() => handTap(h), 850);
     await Promise.all([T.talk([['tr', 'Önce ona dokun, sonra sepete.']], replayLine(w)), wait(1800)]);
+    await T.whenActive();
     if (!live()) return;
     el.classList.remove('selected'); h.classList.add('fade'); T.later(() => h.remove(), 400);
     setBusy(false);
@@ -2297,15 +2340,17 @@ function viewMarket(){
   // Her ziyarette ürünler tezgâha tek tek gelir ve adları söylenir: önce öğret, sonra iste.
   async function parade(){
     const tok = T.step, live = () => T.alive && tok === T.step;
-    await Promise.all([T.talk([['tr', 'Minik Market’e hoş geldin!']]), wait(900)]);
+    await T.beat([['tr', 'Minik Market’e hoş geldin!']], 900);
     const els = $$('#shelf .item');
     for (let k = 0; k < els.length; k++){
       if (!live()) return;
+      await T.whenActive(); if (!live()) return;
       els[k].classList.remove('waiting'); retrigger(els[k], 'arrive');
-      await Promise.all([T.talk([['en', A(say(shelf[k]))]]), wait(800)]);
+      await T.beat([['en', A(say(shelf[k]))]], 800);
     }
     if (!live()) return;
-    await Promise.all([T.talk([['tr', 'Bubu ne isterse, sepete koy.']]), wait(600)]);
+    await T.beat([['tr', 'Bubu ne isterse, sepete koy.']], 600);
+    await T.whenActive();
     if (live()) ask(true);
   }
   function finish(){
@@ -2316,24 +2361,26 @@ function viewMarket(){
     sfx.win(); confettiBig(); cheerBubu();
     (async () => {
       const tok = T.step, live = () => T.alive && tok === T.step;
-      await Promise.all([T.talk([['tr', 'Sepet doldu!']]), wait(700)]);
+      await T.beat([['tr', 'Sepet doldu!']], 700);
       const els = $$('#fb-items .r-item');
       for (let k = 0; k < els.length; k++){
         if (!live()) return;
+        await T.whenActive(); if (!live()) return;
         retrigger(els[k], 'bounce');
-        await Promise.all([T.talk([['en', A(say(bought[k]))]]), wait(650)]);
+        await T.beat([['en', A(say(bought[k]))]], 650);
       }
       if (!live()) return;
-      await T.talk([['en', 'Thank you! Bye-bye!']]);
+      await T.beat([['en', 'Thank you! Bye-bye!']], 0);
+      await T.whenActive();
       if (live()) T.talk([['tr', 'Bir daha oynayalım mı?']]);
     })();
   }
-  viewActs.rhear = el => { const w = WORD[el.dataset.key]; sfx.tap(); retrigger(el, 'bounce'); speakLine([['en', A(say(w))]]); };
+  viewActs.rhear = el => { const w = WORD[el.dataset.key]; sfx.tap(); retrigger(el, 'bounce'); T.say([['en', A(say(w))]]); };
   T.placer = makePlacer($('#mk'), {
     target: $('#basket'),
     locked: () => busy || !T.ready(),
     onSelect: el => {
-      sfx.tap(); if (!T.speaking) speakLine([['en', A(say(WORD[el.dataset.key]))]]);
+      sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]);
       const bk = $('#basket'); if (bk && bk.getBoundingClientRect().bottom > innerHeight) bk.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
     },
     onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], replayLine(want())); },
@@ -2342,14 +2389,15 @@ function viewMarket(){
       const w = WORD[el.dataset.key], target = want();
       if (w === target){
         setBusy(true); bought.push(w);
-        S.market.bought[w.key] = (S.market.bought[w.key] || 0) + 1; save();
+        S.market.bought[w.key] = (Number(S.market.bought[w.key]) || 0) + 1; save();
         el.classList.add('gone'); el.disabled = true; el.removeAttribute('data-item');
         if (el.parentNode) el.parentNode.classList.add('empty');          // boş raf yeri kalır, diğerleri kaymaz
         T.fly(from, $('#basket'), w);
         sfx.good(); confettiAt($('#basket'), 24); cheerBubu();
         round++; slots();
         const last = round >= orders.length;
-        T.talk([['en', `${A(say(w)).slice(0, -1)}! Thank you!`]]).then(() => T.later(last ? finish : () => ask(false), 400));
+        T.talk([['en', `${A(say(w)).slice(0, -1)}! Thank you!`]]).then(ok => ok ? null : T.quiet())
+          .then(() => T.whenActive()).then(() => T.later(last ? finish : () => ask(false), 400));
         return true;
       }
       miss++; sfx.hmm(); retrigger(el, 'soft');
@@ -2369,6 +2417,7 @@ const inAct = () => ACT_VIEWS.indexOf(current.name) > -1;
 let pendingRoute = null;
 function actHistoryState(){ try { return !!(history.state && history.state.bubuAct); } catch (e) { return false; } }
 function leaveTo(name){
+  if (pendingRoute){ pendingRoute = name; return; }        // bir geri gidiş zaten yolda
   if (!actHistoryState()){ go(name); return; }
   pendingRoute = name;
   try { history.back(); } catch (e) { pendingRoute = null; go(name); return; }
@@ -2382,8 +2431,8 @@ document.addEventListener('visibilitychange', () => {
   if (!inAct()) return;
   const T = curTask;
   if (document.hidden){                                  // kilitli ekranda Bubu konuşmasın, sürükleme yarıda kalmasın
+    if (T){ T.paused = true; if (T.placer) T.placer.cancelDrag(); clearTimeout(T.idleT); }
     stopSpeech();
-    if (T){ if (T.placer) T.placer.cancelDrag(); clearTimeout(T.idleT); }
   } else {
     const r = $('.act-btn.replay'); if (r) retrigger(r, 'hop');
     if (T) T.armIdle();
@@ -2439,7 +2488,11 @@ const ACT = {
     if (k === 'trVoice' && v) speakLine([['tr','Türkçe yönlendirme açık.']]);
   },
   testvoice(){ speakLine([['en', 'Hello! I am Bubu. Cat, dog, apple!']]); },
-  testtr(){ speakLine(canSpeakTr() ? [['tr', 'Merhaba! Ben Bubu. Hadi oynayalım!'], ['en', 'Hello!']] : [['en', 'Hello!']]); if (!canSpeakTr()) toast('Türkçe ses bulunamadı'); },
+  testtr(){
+    if (trState() === 'off'){ toast('Türkçe yönlendirme kapalı'); return; }
+    speakLine(canSpeakTr() ? [['tr', 'Merhaba! Ben Bubu. Hadi oynayalım!'], ['en', 'Hello!']] : [['en', 'Hello!']]);
+    if (!canSpeakTr()) toast('Türkçe ses bulunamadı');
+  },
   reset(){
     if (!resetArmed){
       resetArmed = true; renderSettings();
