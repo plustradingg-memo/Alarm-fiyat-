@@ -14,7 +14,7 @@
 ## Kayıt
 
 Tarayıcının `localStorage` alanında `bubu-english-v1` anahtarı. Yeni alanlar eskilerin yanına eklenir:
-`story.picnic { plays, stickers[] }`, `market { visits, bought{} }`, `settings.trVoice`.
+`story.picnic { plays, stickers[], last }`, `market { visits, bought{} }`, `settings.trVoice`, `settings.onlineVoice`.
 Eski kayıtlar (yıldız, kelimeler, hazineler, ayarlar) olduğu gibi korunur. Kayıt yalnızca o cihazdadır; adrese göre ayrı tutulur.
 
 ## Gerçek telefonda ses testi
