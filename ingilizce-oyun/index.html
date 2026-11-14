@@ -607,6 +607,128 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
   .act-btn.replay.cue{box-shadow:0 4px 0 var(--line),0 0 0 4px var(--paper),0 0 0 10px var(--sun)}
 }
 
+/* ---------- Minik Dostum: sahneler ve hayvan ---------- */
+.pet-act{--pw:min(52vw,28vh,230px);--pw:min(52vw,28svh,230px)}
+.pet-scene{position:relative;align-self:stretch;justify-self:stretch;min-height:200px;border:3px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:0 6px 0 var(--line);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6%;
+  --wall:#D8EEFF;--wall2:#EEF8FF;--floor:#E6C497}
+.pet-scene[data-time="noon"]{--wall:#A9DDFF;--wall2:#DDF2FF}
+.pet-scene[data-time="afternoon"]{--wall:#FFE6B8;--wall2:#FFF4DE}
+.pet-scene[data-time="evening"]{--wall:#FFC9A0;--wall2:#FFE6D2;--floor:#D9AE7C}
+.pet-scene[data-time="night"]{--wall:#26346A;--wall2:#33447F;--floor:#6B5640}
+.pet-scene.room,.pet-scene.kitchen{background:linear-gradient(var(--wall),var(--wall2) 70%,var(--floor) 70%)}
+.pet-scene .window{position:absolute;top:10%;left:7%;width:22%;aspect-ratio:1;max-width:96px;border:3px solid var(--line);border-radius:12px;background:linear-gradient(#8FD0FF,#CDEBFF);display:grid;place-items:center;font-size:clamp(22px,7vw,40px);box-shadow:inset 0 0 0 5px #FFFFFF}
+.pet-scene .window.big{width:30%;max-width:130px;font-size:clamp(32px,10vw,60px)}
+.pet-scene[data-time="night"] .window{background:linear-gradient(#0F1838,#26346A)}
+.pet-scene[data-time="evening"] .window{background:linear-gradient(#FF9E6B,#FFD3A8)}
+.pet-scene .rug{position:absolute;left:18%;right:18%;bottom:5%;height:12%;border-radius:50%;background:repeating-radial-gradient(circle,#FF9FCB 0 8px,#FFC9E2 8px 16px);border:3px solid var(--line);opacity:.9}
+.pet-tap,.pet-drop{position:relative;z-index:2;background:none;border:0;padding:0;border-radius:24px;touch-action:none}
+.pet-drop.awaiting,.pet-drop.hover{outline:4px dashed var(--sun);outline-offset:4px}
+.pet-box{position:relative;display:block;width:var(--pw);aspect-ratio:200/210;--grow:1;transform:scale(var(--grow));transform-origin:50% 100%;transition:transform .6s cubic-bezier(.3,1.5,.5,1)}
+.pet-box.stage-baby{--grow:.78}
+.pet-box.stage-kid{--grow:.92}
+.pet-box.stage-big{--grow:1.05}
+.pet-box > svg.pet{position:absolute;inset:0;width:100%;height:100%;overflow:visible;animation:petbob 2.6s ease-in-out infinite}
+.pet .lid{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);animation:blink 4.4s infinite}
+.pet .tail{transform-box:view-box;transform-origin:146px 162px;animation:wag 1.1s ease-in-out infinite}
+.pet .eyes-closed,.pet .mouth-open,.pet .mud,.pet .bubbles,.pet .sparkle,.pet .zzz{display:none}
+.pet-box.muddy .pet .mud{display:inline}
+.pet-box.c0 .pet .m0,.pet-box.c1 .pet .m1,.pet-box.c2 .pet .m2,.pet-box.c3 .pet .m3{display:none}
+.pet-box.soapy .pet .bubbles{display:inline}
+.pet-box.shiny .pet .sparkle,.pet-box.brushing .pet .sparkle{display:inline}
+.pet-box.eating .pet .mouth{display:none}
+.pet-box.eating .pet .mouth-open{display:inline;transform-box:fill-box;transform-origin:50% 50%;animation:chew .3s ease-in-out infinite alternate}
+.pet-box.sleeping .pet .eyes-open{display:none}
+.pet-box.sleeping .pet .eyes-closed,.pet-box.sleeping .pet .zzz{display:inline}
+.pet-box.sleeping .pet .zzz{animation:zzz 2s ease-in-out infinite}
+.pet-box.sleeping > svg.pet{animation:breathe 3.2s ease-in-out infinite}
+.pet-box.happy{animation:petjump .7s cubic-bezier(.3,1.5,.5,1)}
+.pet-box.grow{animation:petgrow 1.2s cubic-bezier(.3,1.5,.5,1)}
+.pet-box.nope > svg.pet{animation:nopehead .6s}
+.pet-box.brushing > svg.pet{animation:nopehead .4s 3}
+.wear{position:absolute;inset:0;pointer-events:none;z-index:2}
+.wear-item{position:absolute;transform:translate(-50%,-50%);font-size:calc(var(--pw) * .27 * var(--sc,1));line-height:1;filter:drop-shadow(0 2px 0 var(--line))}
+.pet-actions{gap:10px;align-items:center}
+.pet-do{width:62px;height:62px;flex:none;border-radius:20px;border:3px solid var(--line);background:var(--paper);box-shadow:0 4px 0 var(--line);display:grid;place-items:center;padding:0;font-size:30px;line-height:1;transition:transform .08s,box-shadow .08s}
+.pet-do:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.pet-do.now{background:var(--go);box-shadow:0 4px 0 var(--line),0 0 0 5px var(--sun);animation:breathe 1.6s ease-in-out infinite}
+/* sahiplenme */
+.adopt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;max-width:460px}
+.adopt-card{display:grid;justify-items:center;gap:4px;padding:10px 4px 10px;background:var(--paper);border:3px solid var(--line);border-radius:22px;box-shadow:0 5px 0 var(--line);min-width:0;transition:transform .2s,opacity .2s}
+.adopt-pet{display:block;width:100%;aspect-ratio:200/210}
+.adopt-pet svg{width:100%;height:100%;overflow:visible}
+.adopt-card b{font-family:var(--font-display);font-size:17px}
+.adopt-card.spot{transform:scale(1.06);box-shadow:0 5px 0 var(--line),0 0 0 6px var(--hl)}
+.adopt-card.chosen{background:var(--good-soft);transform:scale(1.06)}
+.adopt-card:disabled{opacity:.35}
+/* mutfak: kâse */
+.bowl{position:absolute;z-index:3;right:8%;bottom:6%;width:30%;max-width:130px;aspect-ratio:2/1;border:0;padding:0;background:none;border-radius:0 0 60px 60px}
+.bowl::before{content:"";position:absolute;inset:30% 0 0;border:3px solid var(--line);border-radius:6px 6px 60px 60px;background:linear-gradient(#FF8A7A,#F26B5B)}
+.bowl.awaiting::before,.bowl.hover::before{box-shadow:0 0 0 6px var(--sun)}
+.bowl-in{position:absolute;inset:0 10% 30%;display:flex;justify-content:center;align-items:flex-end;font-size:clamp(20px,6vw,30px);line-height:1;z-index:1}
+.field.four{gap:10px}
+.field.four{flex-wrap:nowrap}
+.field.four .item{width:calc(var(--item) * .78);height:calc(var(--item) * .78);font-size:calc(var(--item) * .46)}
+/* park */
+.pet-scene.park{background:linear-gradient(#9ED8FF,#D6F0FF 62%,#8BD873 62%)}
+.park-obj{position:absolute;z-index:2;background:none;border:0;padding:4px;border-radius:18px;font-size:clamp(36px,11vw,58px);line-height:1}
+.park-obj .blob{font-size:.9em}
+.park-obj[data-key="nature:tree"]{font-size:clamp(58px,17vw,96px)}
+.park-obj.hint-glow{box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun);background:rgba(255,255,255,.35)}
+.park-obj.bounce > *{animation:boing .55s}
+.park-obj:disabled{opacity:.6}
+.park-obj.ball.thrown{animation:throwball .9s ease-out forwards}
+.park-obj.ball.back{animation:none;transform:translate(-120px,0)}
+.puddle{position:absolute;left:58%;bottom:7%;width:22%;height:8%;border-radius:50%;background:#5DA9E9;border:3px solid var(--line);opacity:.85}
+.walker{position:relative;z-index:1;pointer-events:none;transition:transform .8s ease-in-out}
+.walker.run{transform:translateX(60%)}
+.walker.splash{animation:splash 1s ease-in-out forwards}
+/* banyo */
+.pet-scene.bathroom{background:repeating-linear-gradient(0deg,transparent 0 38px,rgba(30,42,74,.12) 38px 40px),repeating-linear-gradient(90deg,transparent 0 38px,rgba(30,42,74,.12) 38px 40px),linear-gradient(#DFF3F7,#EAF8FB)}
+.tub{position:absolute;z-index:3;left:10%;right:10%;bottom:6%;height:22%;background:linear-gradient(#FFFFFF,#E6EEF5);border:3px solid var(--line);border-radius:14px 14px 50px 50px;pointer-events:none}
+.pet-drop.in-tub{margin-bottom:15%}
+.rain{position:absolute;inset:0 15% 30%;z-index:4;pointer-events:none;opacity:0;background:repeating-linear-gradient(100deg,transparent 0 14px,rgba(80,170,255,.75) 14px 17px)}
+.rain.on{animation:rain 1.3s linear}
+.towel{display:block;width:62%;height:48%;background:repeating-linear-gradient(90deg,#FF9FCB 0 8px,#FFFFFF 8px 16px);border:3px solid var(--line);border-radius:8px}
+.item:disabled{opacity:.4}
+/* yatak odası */
+.pet-scene.bedroom{background:linear-gradient(var(--wall),var(--wall2) 68%,var(--floor) 68%);justify-content:flex-start;padding-left:6%}
+.pet-scene.bedroom.dark::after{content:"";position:absolute;inset:0;background:rgba(5,10,30,.45);pointer-events:none;z-index:1}
+.lamp{position:absolute;z-index:3;top:34%;right:5%;width:56px;height:56px;border-radius:50%;border:3px solid var(--line);background:#FFF3B0;box-shadow:0 0 0 8px rgba(255,230,120,.5);font-size:28px;display:grid;place-items:center;padding:0}
+.lamp.off{background:#7A7F99;box-shadow:none;filter:grayscale(1)}
+.lamp:disabled{opacity:1}
+.sky-stars{position:absolute;z-index:3;top:9%;left:33%;right:5%;display:flex;justify-content:space-between;gap:4px}
+.star-btn{width:36px;height:36px;flex:none;padding:0;border:0;background:none;display:grid;place-items:center}
+.star-btn svg{width:30px;height:30px}
+.star-btn:disabled{opacity:.25}
+.star-btn.lit svg{filter:drop-shadow(0 0 6px #FFE27A)}
+.bed{position:absolute;z-index:2;right:5%;bottom:6%;width:52%;height:34%;border:0;padding:0;background:#C98645;border-radius:14px;box-shadow:inset 0 0 0 3px var(--line)}
+.bed::before{content:"";position:absolute;left:6%;top:-14%;width:30%;height:34%;background:#FFFFFF;border:3px solid var(--line);border-radius:14px}
+.bed.awaiting,.bed.hover{outline:4px dashed var(--sun);outline-offset:4px}
+.bed-blanket{position:absolute;left:30%;right:0;top:20%;bottom:0;background:repeating-linear-gradient(45deg,#8DC4FF 0 12px,#BCA4FF 12px 24px);border:3px solid var(--line);border-radius:12px;z-index:4}
+.sleeper{transition:transform .7s ease-in-out}
+.sleeper.in-bed{position:absolute;right:16%;bottom:16%;z-index:3;transform:scale(.62);transform-origin:50% 100%}
+.sun-btn{width:96px;height:96px;border-radius:50%;border:3px solid var(--line);background:var(--sun);box-shadow:0 6px 0 var(--line);font-size:52px;display:grid;place-items:center;padding:0;animation:breathe 1.6s ease-in-out infinite}
+@media (max-width:400px){
+  .pet-act .act-btn{width:56px;height:56px}
+  .pet-act .steps .step{width:26px;height:26px;font-size:15px}
+  .pet-act .steps{gap:4px}
+  .pet-do{width:56px;height:56px;font-size:27px}
+  .pet-actions{gap:7px}
+}
+@media (prefers-reduced-motion:reduce){
+  .pet-do.now,.sun-btn{box-shadow:0 4px 0 var(--line),0 0 0 6px var(--sun)}
+}
+@keyframes petbob{50%{transform:translateY(-3%)}}
+@keyframes wag{50%{transform:rotate(14deg)}}
+@keyframes chew{to{transform:scaleY(.4)}}
+@keyframes zzz{50%{transform:translate(6px,-8px);opacity:.6}}
+@keyframes petjump{40%{transform:scale(var(--grow)) translateY(-14%)}70%{transform:scale(var(--grow)) translateY(-4%)}}
+@keyframes petgrow{40%{transform:scale(calc(var(--grow) * 1.25))}}
+@keyframes nopehead{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+@keyframes throwball{50%{transform:translate(-60px,-140px) rotate(300deg)}100%{transform:translate(-120px,0) rotate(600deg)}}
+@keyframes splash{50%{transform:translate(30%,-25%)}100%{transform:translate(40%,0)}}
+@keyframes rain{10%,85%{opacity:1}100%{opacity:0;background-position:0 120px}}
+
 /* ---------- animasyonlar ---------- */
 @keyframes breathe{50%{transform:scale(1.07)}}
 @keyframes glow{50%{box-shadow:0 5px 0 var(--line),0 0 0 13px var(--sun)}}
@@ -783,7 +905,7 @@ const DIGIT_COLORS = ['var(--c-red)','var(--c-orange)','var(--c-yellow)','var(--
 /* ================= kayıt ================= */
 const STORE_KEY = 'bubu-english-v1';
 const fresh = () => ({ stars:0, chest:0, seen:{}, best:{}, specials:[],
-  story:{}, market:{ visits:0, bought:{} },
+  story:{}, market:{ visits:0, bought:{} }, pet:{},
   settings:{ slow:false, accent:'us', showTr:true, sfx:true, trVoice:true, onlineVoice:false } });
 let S = load();
 function load(){
@@ -801,7 +923,7 @@ function load(){
       return Object.assign(d, o, {
         stars: num(o.stars), chest: num(o.chest),
         seen: obj(o.seen) || {}, best: obj(o.best) || {}, specials: Array.isArray(o.specials) ? o.specials : [],
-        story: obj(o.story) || {}, market,
+        story: obj(o.story) || {}, market, pet: obj(o.pet) || {},
         settings: Object.assign(d.settings, obj(o.settings) || {})
       });
     }
@@ -950,7 +1072,12 @@ function pickVoice(){
   if (!pool.length) pool = en.filter(isLocal);
   if (!pool.length && online) pool = en;
   if (!pool.length) return null;
-  const prefer = ['Samantha','Google US English','Google UK English Female','Microsoft Aria','Microsoft Jenny','Microsoft Libby','Microsoft Sonia','Karen','Serena','Moira','Daniel','Microsoft Zira'];
+  // Önce cihazın yüksek kaliteli (Premium / Enhanced / Neural / Natural) sesleri, sonra bilinen doğal sesler.
+  const hq = pool.find(v => /premium|enhanced|neural|natural/i.test(v.name));
+  if (hq) return hq;
+  const prefer = uk()
+    ? ['Serena','Kate','Daniel','Martha','Arthur','Google UK English Female','Microsoft Sonia','Microsoft Libby']
+    : ['Ava','Samantha','Zoe','Allison','Susan','Nicky','Google US English','Microsoft Aria','Microsoft Jenny','Microsoft Zira'];
   for (const p of prefer){ const v = pool.find(x => x.name.indexOf(p) > -1); if (v) return v; }
   return pool.find(v => v.localService) || pool[0] || null;
 }
@@ -967,8 +1094,8 @@ function speak(text){
       const u = new SpeechSynthesisUtterance(text);
       const v = pickVoice();
       if (v){ u.voice = v; u.lang = v.lang; } else u.lang = uk() ? 'en-GB' : 'en-US';
-      u.rate = S.settings.slow ? 0.6 : 0.85;
-      u.pitch = 1.12;
+      u.rate = S.settings.slow ? 0.72 : 0.92;
+      u.pitch = 1;
       u.onend = fin; u.onerror = fin;
       synth.speak(u);
       setTimeout(fin, 1200 + text.length * (S.settings.slow ? 160 : 110));
@@ -980,8 +1107,8 @@ function utter(text, lang){
   const u = new SpeechSynthesisUtterance(text);
   const v = tr ? trVoice() : pickVoice();
   if (v){ u.voice = v; u.lang = v.lang; } else u.lang = tr ? 'tr-TR' : (uk() ? 'en-GB' : 'en-US');
-  u.rate = tr ? (S.settings.slow ? 0.8 : 0.95) : (S.settings.slow ? 0.6 : 0.85);
-  u.pitch = tr ? 1.05 : 1.12;
+  u.rate = S.settings.slow ? 0.72 : 0.92;
+  u.pitch = 1;
   if (tr) u.addEventListener('error', e => { if (/unavailable|synthesis-failed|language/.test((e && e.error) || '')) trBroken = true; });
   u.addEventListener('end', segBoundary); u.addEventListener('error', segBoundary);
   return u;
@@ -990,7 +1117,7 @@ function utter(text, lang){
 let segWaiters = [];
 function segBoundary(){ const w = segWaiters; segWaiters = []; w.forEach(f => f()); }
 const lineText = segs => segs.filter(s => s && s[1] && s[0] !== 'pause').map(s => s[1]).join(' ');
-// İki dilli satır: [['tr','Elmayı sepete koy.'], ['en','Apple!'], ['pause', 1500], ['en','Apple!']].
+// Söz satırı: [['en','Look!'], ['en','Apple!'], ['pause', 1500], ['en','Apple!']]. (Uygulamada Türkçe konuşma yok.)
 // Parçalar arada iptal edilmeden sıraya alınır (Android'de Türkçe motor geç açılsa da kesilmez).
 // Türkçe ses yoksa Türkçe parçalar okunmaz (İngilizce sesle bozuk okunmasın), yazısı balonda/altyazıda görünür.
 // Söz bitince true, başka bir konuşma araya girerse false döner.
@@ -1093,6 +1220,9 @@ const sfx = {
   flip(){ tone(520, 0, .09, { type:'triangle', vol:.12, to:880 }); },
   good(){ tone(784, 0, .13, { vol:.16 }); tone(1175, .1, .24, { vol:.16 }); },
   bad(){ tone(330, 0, .3, { type:'triangle', vol:.13, to:170 }); },
+  chew(){ [0, .18, .36].forEach(t => tone(180, t, .1, { type:'triangle', vol:.12, to:120 })); },
+  scrub(){ noise(0, .18, .12); noise(.2, .18, .1); },
+  splash(){ noise(0, .45, .28); tone(700, 0, .3, { vol:.05, to:200 }); },
   hmm(){ tone(440, 0, .1, { type:'triangle', vol:.07 }); tone(554, .1, .14, { type:'triangle', vol:.07 }); },
   pop(){ noise(0, .12, .3); tone(900, 0, .1, { type:'square', vol:.05, to:200 }); },
   star(){ tone(1568, 0, .09, { vol:.09 }); tone(2093, .07, .15, { vol:.09 }); },
@@ -1254,19 +1384,17 @@ function renderSettings(){
   const keepScroll = mb0 ? mb0.scrollTop : 0;
   const st = S.settings;
   const seg = (k, opts) => `<div class="seg" role="group">${opts.map(([v, l]) => `<button data-act="set" data-k="${k}" data-v="${v}" aria-pressed="${String(st[k]) === v}">${l}</button>`).join('')}</div>`;
-  const v = pickVoice(), tv = trVoice();
+  const v = pickVoice();
   openModal(`<h2>Ebeveyn köşesi<span>Ayarlar</span></h2>
     <div class="set-list">
       <div class="set-row"><span>Konuşma hızı</span>${seg('slow', [['false','Normal'], ['true','Yavaş']])}</div>
       <div class="set-row"><span>Aksan</span>${seg('accent', [['us','Amerikan'], ['uk','İngiliz']])}</div>
       <div class="set-row"><span>Türkçe anlamı</span>${seg('showTr', [['true','Göster'], ['false','Gizle']])}</div>
       <div class="set-row"><span>Oyun sesleri</span>${seg('sfx', [['true','Açık'], ['false','Kapalı']])}</div>
-      <div class="set-row"><span>Türkçe sesli yönlendirme</span>${seg('trVoice', [['true','Açık'], ['false','Kapalı']])}</div>
       <div class="set-row"><span>Çevrim içi ses</span>${seg('onlineVoice', [['false','Kapalı'], ['true','Açık']])}</div>
     </div>
     <div class="voice-box"><p>İngilizce ses: <b>${v ? v.name + ' (' + v.lang + (v.localService === false ? ', çevrim içi' : '') + ')' + (uk() && vlang(v) !== 'en-gb' ? ' — bu cihazda İngiliz aksanlı ses yok' : '') : (!synth ? 'bu tarayıcı sesli okumayı desteklemiyor' : voices.length ? 'cihazda yerel İngilizce ses yok' : 'cihazın varsayılan sesi')}</b></p><button class="btn small" data-act="testvoice">${ICON.speaker} İngilizce dene</button></div>
-    <div class="voice-box"><p>Türkçe ses: <b>${trState() === 'off' ? 'yönlendirme kapalı' + (tv ? ' (' + tv.name + ')' : '') : tv ? tv.name + ' (' + tv.lang + ')' : ({ nosynth: '—', unknown: 'cihaz seçecek' }[trState()] || 'cihazda bulunamadı; yönergeler resim ve el işaretiyle gösterilir')}</b></p><button class="btn small" data-act="testtr">${ICON.speaker} Türkçe dene</button></div>
-    <p class="note">${v && v.localService === false ? 'İngilizce ses çevrim içi bir hizmetten geliyor (söylenen kelimeler o hizmete gider); istemezseniz “Çevrim içi ses”i kapatın.' : 'Sesleri cihazın kendisi üretir; çevrim içi (bulut) sesler yalnızca “Çevrim içi ses” açıksa kullanılır.'} Türkçe yönlendirme yalnızca cihaz üstündeki Türkçe sesle okunur. Ses gelmezse sessiz modu kapatıp sesi açın. Türkçe ses yoksa: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › Türkçe; Android’de Ayarlar › Genel yönetim (veya Sistem) › Dil › Metin okuma çıkışı › Google › Dil verilerini yükle › Türkçe. Menü adları cihaza göre değişebilir; Ayarlar’da “Metin okuma” diye arayın.</p>
+    <p class="note">${v && v.localService === false ? 'İngilizce ses çevrim içi bir hizmetten geliyor (söylenen kelimeler o hizmete gider); istemezseniz “Çevrim içi ses”i kapatın.' : 'Sesleri cihazın kendisi üretir; çevrim içi (bulut) sesler yalnızca “Çevrim içi ses” açıksa kullanılır.'} Uygulama yalnızca İngilizce konuşur. Daha doğal bir ses için cihaza yüksek kaliteli İngilizce ses indirin: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › İngilizce (ör. “Ava (Premium)”, “Zoe (Premium)”); Android’de Ayarlar › Metin okuma çıkışı › Google › Dil verilerini yükle › İngilizce (ABD) ve yüksek kaliteli sesi seçin.</p>
     <div class="tally"><span><b>${S.stars}</b> yıldız</span><span><b>${totalSeen()}</b>/${TOTAL} kelime</span><span><b>${S.specials.length}</b>/${SPECIALS.length} hazine</span><span><b>${storyStickers().length}</b>/${STORY_STICKERS.length} hikâye çıkartması</span></div>
     <div class="modal-actions"><button class="btn small danger ${resetArmed ? 'armed' : ''}" data-act="reset">${resetArmed ? 'Emin misiniz? Evet, sıfırla' : 'İlerlemeyi sıfırla'}</button><button class="btn primary" data-act="close">Kapat</button></div>`, 'settings-modal');
   const mb = $('.modal-back'); if (mb && keepScroll) mb.scrollTop = keepScroll;
@@ -1307,8 +1435,9 @@ function go(name, arg){
   current = { name, arg };
   clearTimeout(capT); capEl.classList.remove('show');
   $$('.hand, .fly-item, .drag-ghost').forEach(n => n.remove());
-  document.body.classList.toggle('focus-mode', name === 'story' || name === 'market');
-  if ((name === 'story' || name === 'market') && !actHistoryState()){ try { history.pushState({ bubuAct: 1 }, ''); } catch (e) {} }
+  const isAct = ACT_VIEWS.indexOf(name) > -1;
+  document.body.classList.toggle('focus-mode', isAct);
+  if (isAct && !actHistoryState()){ try { history.pushState({ bubuAct: 1 }, ''); } catch (e) {} }
   VIEWS[name](arg);
   window.scrollTo(0, 0);
 }
@@ -1367,6 +1496,11 @@ function viewHome(){
         ${storyStickers().length ? `<span class="f-badge emo" aria-hidden="true">${WORD[picnicRec().last].e}</span>` : ''}
         <span class="f-art" aria-hidden="true"><span class="emo f-main">🧺</span><span class="emo f-a">🍎</span><span class="emo f-b">🐰</span></span>
         <span class="f-text"><span class="f-tag">Hikâye</span><b>Bubu’nun Pikniği</b><small>${storyStickers().length ? `${storyStickers().length}/${STORY_STICKERS.length} çıkartma seçildi` : 'Elma, kırmızı, tavşan'}</small></span>
+        <span class="f-play" aria-hidden="true">${ICON.play}</span>
+      </button>
+      <button class="feature" data-act="pet" style="--cat:var(--c-pink)" aria-label="Minik Dostum: evcil hayvanını büyüt">
+        <span class="f-art" aria-hidden="true"><span class="emo f-main">${petRec().kind ? PET_KINDS[petRec().kind].icon : '🐶'}</span><span class="emo f-a">🦴</span><span class="emo f-b">🛁</span></span>
+        <span class="f-text"><span class="f-tag">Evcil dostum</span><b>Minik Dostum</b><small>${petRec().kind ? `${petRec().name} · ${petRec().days + 1}. gün` : 'Besle, gezdir, yıka, uyut'}</small></span>
         <span class="f-play" aria-hidden="true">${ICON.play}</span>
       </button>
       <button class="feature" data-act="market" style="--cat:var(--c-orange)" aria-label="Minik Market oyununu başlat">
@@ -1724,7 +1858,7 @@ function viewAlbum(){
 // Aynı ekranda iki yol: (1) nesneyi sürükleyip sepete bırak, (2) nesneye dokun (seçilir), sonra sepete dokun.
 // Klavye / ekran okuyucu: nesneler ve sepet birer düğme; Enter/Boşluk ile dokunma yolu çalışır.
 function makePlacer(root, o){
-  let selected = null, drag = null, suppress = 0, selT = 0, dropDownAt = 0;
+  let selected = null, drag = null, suppress = 0, suppressEl = null, selT = 0, dropDownAt = 0;
   const target = o.target;
   const locked = () => !!(o.locked && o.locked());
   const LIFT = 28;                                   // hayalet parmağın 28 px üstünde: el nesneyi kapatmasın
@@ -1757,7 +1891,7 @@ function makePlacer(root, o){
     if (!drag) return;
     const d = drag; drag = null; target.classList.remove('hover');
     if (d.onLost) d.el.removeEventListener('lostpointercapture', d.onLost);
-    if (d.moved){ suppress = Date.now(); sendBack(d); if (!locked()) setSel(d.el); }
+    if (d.moved){ suppress = Date.now(); suppressEl = d.el; sendBack(d); if (!locked()) setSel(d.el); }
   }
   function down(e){
     if (e.target.closest('[data-drop]') === target) dropDownAt = performance.now();
@@ -1797,7 +1931,7 @@ function makePlacer(root, o){
     const d = drag; drag = null;
     if (d.onLost) d.el.removeEventListener('lostpointercapture', d.onLost);
     if (!d.moved) return;                 // kısa dokunuş: click olayı seçimi yapar
-    suppress = Date.now();
+    suppress = Date.now(); suppressEl = d.el;
     target.classList.remove('hover');
     if (!locked() && near(e.clientX, e.clientY - LIFT)){
       const from = d.ghost.getBoundingClientRect();
@@ -1812,7 +1946,9 @@ function makePlacer(root, o){
   function cancel(e){ if (drag && e.pointerId === drag.id) cancelDrag(); }
   function touchBlock(e){ if (drag && drag.moved && e.cancelable) e.preventDefault(); }
   function click(e){
-    if (Date.now() - suppress < 450){ e.stopPropagation(); return; }
+    // Sürüklemeden hemen sonra gelen hayalet tıklama yalnızca sürüklenen nesnede ya da hedefte yutulur;
+    // çocuk hemen başka bir düğmeye (ör. duş) dokunursa o dokunuş kaybolmaz.
+    if (Date.now() - suppress < 450 && suppressEl && (suppressEl.contains(e.target) || target.contains(e.target))){ e.stopPropagation(); return; }
     const el = e.target.closest('[data-item]');
     if (el && root.contains(el)){
       e.stopPropagation();
@@ -1882,6 +2018,13 @@ function flyInto(fromRect, toEl, html, done){
 
 /* ================= hikâye ve market için ortak parçalar ================= */
 const A = s => s.charAt(0).toUpperCase() + s.slice(1) + '!';
+// "That's a banana." / "That's an egg." / "Those are grapes." (renkler ve sayılar artikelsiz)
+function thatIs(w){
+  const n = say(w);
+  if (w.pl) return `Those are ${n}.`;
+  if (w.color || w.num || /^(rice|milk|water|honey|soup|bread|cheese|juice|chocolate|corn|broccoli|lettuce|garlic)$/.test(n)) return `That's ${n}.`;
+  return `That's ${/^[aeiou]/i.test(n) ? 'an' : 'a'} ${n}.`;
+}
 function basketSVG(){
   const ln = 'stroke:var(--line)';
   return `<svg class="basket-svg" viewBox="0 0 160 112" aria-hidden="true">
@@ -1979,7 +2122,7 @@ function makeTask(){
   t.guard = ms => { t.readyAt = performance.now() + ms; };          // sahne değişince çift dokunuş taşmasın
   t.ready = () => performance.now() >= t.readyAt;
   // Resimli mod: cihazda Türkçe ses yoksa (ya da kapalıysa) yönergeler el gösterimi ve resimle verilir.
-  t.checkPic = () => { t.pic = trState() !== 'ok' || enState() === 'none'; return t.pic; };
+  t.checkPic = () => { t.pic = enState() !== 'ok' && enState() !== 'unknown'; return t.pic; };
   // Balon her sahnede sabit, kısa içerik gösterir (İngilizce kelime); ipuçları balonu değiştirmez.
   t.bubble = html => { const el = $('#tell-text'); if (el) el.innerHTML = html; };
   t.fly = (from, toEl, w, into) => {
@@ -2105,7 +2248,7 @@ function viewStory(){
     b.innerHTML = tellHTML() + `<div class="act-main"><div class="teach">${extra || ''}<button class="teach-pic" data-act="teachhear" aria-label="${say(w)}: tekrar dinle">${pic(w)}</button>
       <span class="teach-word" lang="en">${say(w)}</span>${S.settings.showTr ? `<span class="teach-tr">${w.tr}</span>` : ''}</div></div>` + goRow('Devam', true);
     T.bubble(word(w));
-    const segs = [['tr', intro], ['en', A(say(w))], ['tr', 'Sen de söyle!'], ['pause', 1500], ['en', A(say(w))]];
+    const segs = [['en', intro], ['en', A(say(w))], ['en', 'Say it!'], ['pause', 1500], ['en', A(say(w))]];
     let shown = false;
     const showNext = () => {                                   // ▶ kelime duyulduktan sonra çıkar
       const n = $('.next-btn', b); if (!n || shown) return;
@@ -2116,7 +2259,7 @@ function viewStory(){
     T.talk(segs).then(showNext);
     T.later(showNext, 7000);
     viewActs.teachhear = el => { retrigger(el, 'bounce'); sfx.tap(); if (!T.speaking) T.say([['en', A(say(w))]]); };
-    T.setIdle([() => { T.talk([['tr', 'Devam etmek için yeşil düğmeye dokun.']], segs); const n = $('.next-btn', b); if (n) retrigger(n, 'hop'); }]);
+    T.setIdle([() => { T.talk([['en', 'Tap the green button!']], segs); const n = $('.next-btn', b); if (n) retrigger(n, 'hop'); }]);
   }
   const STEP = {
     intro(b){
@@ -2124,13 +2267,13 @@ function viewStory(){
       T.bubble('<span lang="tr">Bubu’nun Pikniği</span>');
       T.demo = () => pointHand($('.next-btn'));
       if (T.pic) T.later(T.demo, 900);
-      const go = [['tr', 'Yeşil düğmeye dokun.']];
-      T.talk((firstPlay ? [['tr', 'Bugün Bubu pikniğe gidiyor!'], ['tr', 'Hadi, ona yardım edelim.']] : [['tr', 'Yine pikniğe gidiyoruz!']]).concat(go));
+      const go = [['en', 'Tap the green button!']];
+      T.talk((firstPlay ? [['en', 'Bubu is going on a picnic!'], ['en', "Let's help Bubu!"]] : [['en', "Let's go on a picnic!"]]).concat(go));
       T.setIdle([() => { T.talk(go); const n = $('.next-btn'); if (n) retrigger(n, 'hop'); }]);
     },
-    'teach-apple'(b){ teach(b, APPLE, 'Bak, bu bir elma. İngilizcesi:'); },
-    'teach-red'(b){ teach(b, RED, 'Bak, bu renk kırmızı. Elma kırmızı, balon kırmızı. İngilizcesi:', '<span class="teach-extra" aria-hidden="true"><span class="emo">🍎</span><span class="emo">🎈</span></span>'); },
-    'teach-rabbit'(b){ teach(b, RABBIT, 'Bak, bu bir tavşan. İngilizcesi:'); },
+    'teach-apple'(b){ teach(b, APPLE, 'Look!'); },
+    'teach-red'(b){ teach(b, RED, 'Look! The apple is red.', '<span class="teach-extra" aria-hidden="true"><span class="emo">🍎</span><span class="emo">🎈</span></span>'); },
+    'teach-rabbit'(b){ teach(b, RABBIT, 'Look!'); },
     'task-apple'(b){
       const BREAD = WORD['food:bread'];
       const demoing0 = !demoDone || T.pic;
@@ -2141,35 +2284,35 @@ function viewStory(){
       if (T.pic) setWant(pic(APPLE, true), 2);
       let miss = 0, done = false, demoing = demoing0;
       const tried = {};
-      const prompt = [['tr', 'Elmayı sepete koy.'], ['en', A(say(APPLE))]];
+      const prompt = [['en', `Put the ${say(APPLE)} in the basket!`]];
       const appleEl = () => $(`#field [data-key="${CSS.escape(APPLE.key)}"]`);
       T.demo = () => demoRow($('#field'), $('#basket'));
       T.placer = makePlacer(b, {
         target: $('#basket'),
         locked: () => done || demoing || !T.ready(),
         onSelect: el => { sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]); },
-        onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], prompt); },
-        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['tr', 'Önce bir resme dokun, sonra sepete.'], ['en', A(say(APPLE))]], prompt); },
+        onSelectIdle: el => { retrigger($('#basket'), 'hop'); demoMove(el, $('#basket')); T.talk([['en', 'Now tap the basket!']], prompt); },
+        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['en', 'Tap a picture first!']], prompt); },
         onPlace: (el, from) => {
           const w = WORD[el.dataset.key];
           if (w === APPLE){
             done = true; el.classList.add('gone');
             T.fly(from, $('#basket'), w);
             sfx.good(); confettiAt($('#basket'), 30); cheerBubu();
-            praiseThen(T.talk([['en', A(say(APPLE))], ['tr', 'Harika! Elma sepette.']]), 600);
+            praiseThen(T.talk([['en', A(say(APPLE))], ['en', 'Great job!']]), 600);
             return true;
           }
           sfx.hmm(); retrigger(el, 'soft');
           if (tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return false; }
           tried[w.key] = 1; miss++;
-          if (miss === 1 && !T.pic) T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Elma kırmızı ve yuvarlak.'], ['en', A(say(APPLE))]], prompt);
-          else if (miss <= 2){ glow(appleEl()); T.talkSoon([['tr', 'Bak, elma burada!'], ['en', A(say(APPLE))]], prompt); }
-          else { const a = appleEl(); glow(a); T.placer.preselect(a); pointHand($('#basket')); T.talkSoon([['tr', 'Elmayı seçtim. Şimdi sepete dokun.']], prompt); }
+          if (miss === 1 && !T.pic) T.talkSoon([['en', thatIs(w)], ['en', `Find the ${say(APPLE)}!`]], prompt);
+          else if (miss <= 2){ glow(appleEl()); T.talkSoon([['en', `Look! The ${say(APPLE)}!`]], prompt); }
+          else { const a = appleEl(); glow(a); T.placer.preselect(a); pointHand($('#basket')); T.talkSoon([['en', 'Now tap the basket!']], prompt); }
           return false;
         }
       });
       T.setIdle([() => { T.talk(prompt); demoRow($('#field'), $('#basket')); }, () => glow(appleEl())]);
-      if (!demoing){ T.talk([['tr', 'Bubu acıktı.']].concat(prompt), prompt); return; }
+      if (!demoing){ T.talk([['en', 'Bubu is hungry!']].concat(prompt), prompt); return; }
       // "Önce ben yapayım": el ekmeğe dokunur, sonra sepete; ekmek sepete girer. İlk oyunda ve resimli modda.
       (async () => {
         const tok = T.step, bread = $('#demo-bread'), basket = $('#basket');
@@ -2177,7 +2320,7 @@ function viewStory(){
         const h = makeHand();
         T.later(() => handAt(h, bread), 60);
         T.later(() => { handTap(h); bread.classList.add('selected'); basket.classList.add('awaiting'); }, 900);
-        await Promise.all([T.talk([['tr', 'Bak, önce ben yapayım: ekmeğe dokunuyorum.'], ['en', 'Bread!']], prompt), wait(1700)]);
+        await Promise.all([T.talk([['en', 'Watch me!'], ['en', 'Bread!']], prompt), wait(1700)]);
         await T.whenActive();
         if (!live()) return;
         handAt(h, basket);
@@ -2187,11 +2330,11 @@ function viewStory(){
           bread.classList.add('gone');
           demoing = false; demoDone = true;                    // ekmek sepete girer girmez çocuk deneyebilir
         }, 850);
-        const p2 = T.talk([['tr', 'Sonra sepete dokunuyorum. Hop, sepette!']], prompt), myTalk = T.talkId;
+        const p2 = T.talk([['en', 'In the basket!']], prompt), myTalk = T.talkId;
         await Promise.all([p2, wait(1900)]);
         h.classList.add('fade'); T.later(() => h.remove(), 400);
         if (!live() || done || miss > 0 || T.talkId !== myTalk) return;
-        T.talk([['tr', 'Şimdi sıra sende.']].concat(prompt), prompt);
+        T.talk([['en', 'Your turn!']].concat(prompt), prompt);
       })();
     },
     'task-red'(b){
@@ -2200,18 +2343,18 @@ function viewStory(){
       T.bubble(word(RED));
       let miss = 0, done = false;
       const tried = {};
-      const prompt = [['tr', 'Kırmızı örtüye dokun.'], ['en', A(say(RED))]];
+      const prompt = [['en', `Find the ${say(RED)} blanket!`]];
       const redEl = () => $(`#blankets [data-key="${CSS.escape(RED.key)}"]`);
       T.demo = () => hopSeq($('#blankets'));
       if (T.pic){ setWant(`<span class="blob" style="--blob:${RED.color}"></span>`, 2); T.demo(); }
-      T.talk([['tr', 'Şimdi örtüyü serelim.']].concat(prompt), prompt);
+      T.talk([['en', "Let's find a blanket!"]].concat(prompt), prompt);
       viewActs.blanket = el => {
         if (done || !T.ready()) return;
         const w = WORD[el.dataset.key];
         if (w === RED){
           done = true; el.classList.add('chosen');
           sfx.good(); confettiAt(el, 30); cheerBubu();
-          praiseThen(T.talk([['en', A(say(RED))], ['tr', 'Süper! Kırmızı örtüyü serdik.']]), 600);
+          praiseThen(T.talk([['en', A(say(RED))], ['en', 'Super!']]), 600);
           return;
         }
         sfx.hmm(); retrigger(el, 'soft');
@@ -2219,8 +2362,8 @@ function viewStory(){
         tried[w.key] = 1; miss++;
         if (miss === 1 && !T.pic){
           setWant(pic(APPLE, true), 2);
-          T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Kırmızı, elma gibi!'], ['en', A(say(RED))]], prompt);
-        } else { glow(redEl()); T.talkSoon([['tr', 'Kırmızı örtü burada!'], ['en', A(say(RED))]], prompt); }
+          T.talkSoon([['en', `That's ${say(w)}.`], ['en', `Find ${say(RED)}! Like the apple!`]], prompt);
+        } else { glow(redEl()); T.talkSoon([['en', `Here it is! ${A(say(RED))}`]], prompt); }
       };
       T.setIdle([() => { T.talk(prompt); hopSeq($('#blankets')); }, () => glow(redEl())]);
     },
@@ -2229,7 +2372,7 @@ function viewStory(){
       b.innerHTML = tellHTML() + `<div class="act-main"><div class="stage scene-bushes"><div class="bushes" id="bushes">${hide.map((w, k) => `<button class="bush" data-act="bush" data-key="${w.key}" aria-label="Çalı ${k + 1}"><span class="behind">${pic(w)}</span><span class="leaves">${bushSVG()}</span></button>`).join('')}</div></div></div>` + emptyRow;
       T.bubble(word(RABBIT));
       let found = 0, done = false;
-      const prompt = [['tr', 'Tavşanı bul!'], ['en', A(say(RABBIT))]];
+      const prompt = [['en', `Find the ${say(RABBIT)}!`]];
       const rabbitEl = () => $(`#bushes [data-key="${CSS.escape(RABBIT.key)}"]`);
       T.demo = () => {
         if (found > 0){ const r = rabbitEl(); if (r && !r.classList.contains('open')){ retrigger(r, 'hop'); if (T.pic) pointHand(r); } return; }
@@ -2237,7 +2380,7 @@ function viewStory(){
         if (T.pic){ const other = $$('#bushes .bush:not(.open)').find(x => x.dataset.key !== RABBIT.key); if (other) T.later(() => pointHand(other), 700); }
       };
       if (T.pic) setWant(pic(RABBIT, true), 1);
-      T.talk([['tr', 'Tavşan saklandı! Çalılara dokun, bul bakalım.'], ['en', A(say(RABBIT))]], prompt);
+      T.talk([['en', `The ${say(RABBIT)} is hiding!`]].concat(prompt), prompt);
       T.demo();                                                  // çalılar sırayla sallanır: dokunulabilir
       viewActs.bush = el => {
         if (done || !T.ready()) return;
@@ -2247,14 +2390,14 @@ function viewStory(){
         if (w === RABBIT){
           done = true;
           sfx.good(); confettiAt(el, 36); cheerBubu();
-          praiseThen(T.talk([['en', A(say(RABBIT))], ['tr', 'Buldun! Tavşan pikniğe geliyor.']]), 700);
+          praiseThen(T.talk([['en', A(say(RABBIT))], ['en', 'You found it!']]), 700);
           return;
         }
         // Yanlış çalı bir keşif sayılır: hayvan görünür kalır, ipucu verilir.
         sfx.pop(); found++;
         const r = rabbitEl(); if (r) r.classList.add('peek');
-        if (found === 1) T.talkSoon([['tr', `Burada ${w.tr} var!`], ['en', A(say(w))], ['tr', 'Tavşanın uzun kulakları var. Kulaklara bak!']], prompt);
-        else { glow(r); T.talkSoon([['tr', `Burada ${w.tr} var!`], ['en', A(say(w))], ['tr', 'Tavşan son çalıda!']], prompt); }
+        if (found === 1) T.talkSoon([['en', `A ${say(w)}!`], ['en', 'Look for the long ears!']], prompt);
+        else { glow(r); T.talkSoon([['en', `A ${say(w)}!`], ['en', `The ${say(RABBIT)} is here!`]], prompt); }
       };
       T.setIdle([() => { T.talk(prompt); T.demo(); }, () => { const r = rabbitEl(); if (r) r.classList.add('peek'); }]);
     },
@@ -2265,7 +2408,7 @@ function viewStory(){
           <span class="fin-rabbit r2">${pic(RABBIT)}</span></div></div>` + emptyRow;
       T.bubble(`<b lang="en">${A(say(APPLE))} ${A(say(RED))} ${A(say(RABBIT))}</b>`);
       sfx.win(); confettiBig(); cheerBubu();
-      praiseThen(T.talk([['en', A(say(APPLE))], ['en', A(say(RED))], ['en', A(say(RABBIT))], ['en', `A ${say(RED)} ${say(APPLE)}!`], ['tr', 'Yaşasın! Piknik hazır!']]), 700);
+      praiseThen(T.talk([['en', A(say(APPLE))], ['en', A(say(RED))], ['en', A(say(RABBIT))], ['en', `A ${say(RED)} ${say(APPLE)}!`], ['en', 'The picnic is ready!'], ['en', 'Hooray!']]), 700);
       T.later(() => advance(0), 16000);
     },
     sticker(b){
@@ -2273,12 +2416,12 @@ function viewStory(){
       b.innerHTML = tellHTML() + `<div class="act-main"><div class="picks" id="picks">${STORY_STICKERS.map((w, k) => `<button class="pick${rec.stickers.indexOf(w.key) > -1 ? ' owned' : ''}" data-act="pick" data-key="${w.key}" style="--r:${[-4, 2, -2][k]}deg"><span class="pic" aria-hidden="true">${pic(w)}</span><b lang="en">${say(w)}</b></button>`).join('')}</div></div><div class="go-row end-row" id="after-pick"></div>`;
       T.bubble('<span lang="tr">Bir çıkartma seç</span>');
       const names = STORY_STICKERS.map(w => ['en', A(say(w))]);
-      const full = [['tr', 'Sana bir çıkartma var! Hangisini istersin?']].concat(names, [['tr', 'Bir çıkartmaya dokun.']]);
+      const full = [['en', 'A sticker for you!'], ['en', 'Which one do you like?']].concat(names, [['en', 'Tap a sticker!']]);
       T.demo = () => hopSeq($('#picks'));
       (async () => {
         const tok = T.step, live = () => T.alive && tok === T.step && !chosen;
         if (T.pic) T.demo();
-        if (!(await T.talk([full[0]], full)) || !live()) return;
+        if (!(await T.talk([full[0], full[1]], full)) || !live()) return;
         const els = $$('#picks .pick');
         for (let k = 0; k < els.length; k++){
           if (!live()) return;
@@ -2287,7 +2430,7 @@ function viewStory(){
           els[k].classList.remove('spot');
           if (!r[0]) return;
         }
-        if (live()) T.talk([['tr', 'Bir çıkartmaya dokun.']], full);
+        if (live()) T.talk([['en', 'Tap a sticker!']], full);
       })();
       viewActs.pick = el => {
         if (chosen || !T.ready()) return;
@@ -2299,9 +2442,9 @@ function viewStory(){
         el.classList.add('chosen'); sfx.good(); confettiAt(el, 50);
         $('#after-pick').innerHTML = endActions(true);
         T.setIdle([]);
-        T.talk([['en', A(say(w))], ['tr', had ? 'Yine bunu seçtin! Çok güzel.' : 'Bu çıkartma artık senin!'], ['tr', 'Teşekkürler! Bubu çok mutlu. Bir daha oynamak istersen yeşil düğmeye dokun.']]);
+        T.talk([['en', A(say(w))], ['en', had ? 'Great choice!' : "It's yours!"], ['en', 'Thank you!'], ['en', 'Tap the green button to play again!']]);
       };
-      T.setIdle([() => { T.talk([['tr', 'Bir çıkartmaya dokun.']], full); hopSeq($('#picks')); }]);
+      T.setIdle([() => { T.talk([['en', 'Tap a sticker!']], full); hopSeq($('#picks')); }]);
     }
   };
   render();
@@ -2334,7 +2477,7 @@ function viewMarket(){
   const T = makeTask();
   cleanup = T.end;
   T.checkPic();
-  const warm = !(S.market.visits > 0) || T.pic;             // ilk ziyarette ve resimli modda ısınma gösterimi
+  const warm = !(S.market.visits > 0) || T.pic;   // ilk ziyarette ve hiç ses yoksa el gösterir             // ilk ziyarette ve resimli modda ısınma gösterimi
   let round = 0, miss = 0, busy = true, tried = {};
   const bought = [];
   const setBusy = v => { busy = v; const m = $('#mk'); if (m) m.dataset.turn = v ? 'bubu' : 'child'; };
@@ -2349,7 +2492,7 @@ function viewMarket(){
   const want = () => orders[round];
   const itemEl = w => $(`#shelf [data-key="${CSS.escape(w.key)}"]`);
   const please = w => ['en', `${A(say(w)).slice(0, -1)}, please!`];
-  const replayLine = w => [['tr', 'Bubu şunu istiyor:'], please(w)];
+  const replayLine = w => [please(w)];
   function setWant(level){
     const wp = $('#want-pic'), w = want(); if (!wp || !w) return;
     if (T.pic) level = Math.max(level, 2);                   // resimli modda istenen şey baştan resimle gösterilir
@@ -2375,7 +2518,7 @@ function viewMarket(){
     ]);
     if (warm && firstReq){ setWant(2); warmup(w); return; }
     setWant(0); setBusy(false);
-    T.talk(firstReq ? [['tr', 'Dinle, Bubu ne istiyor?'], please(w)] : [['tr', 'Bir de şunu istiyor:'], please(w)], replayLine(w));
+    T.talk(firstReq ? [['en', 'Listen!'], please(w)] : [please(w)], replayLine(w));
   }
   // Isınma: el önce istenen şeye, sonra sepete dokunur (taşımadan).
   async function warmup(w){
@@ -2383,22 +2526,22 @@ function viewMarket(){
     const tok = T.step, live = () => T.alive && tok === T.step, el = itemEl(w), h = makeHand();
     T.later(() => handAt(h, el), 60);
     T.later(() => { handTap(h); el.classList.add('selected'); }, 900);
-    await Promise.all([T.talk([['tr', 'Dinle, Bubu ne istiyor?'], please(w)], replayLine(w)), wait(1700)]);
+    await Promise.all([T.talk([['en', 'Watch me!'], please(w)], replayLine(w)), wait(1700)]);
     await T.whenActive();
     if (!live()) return;
     handAt(h, $('#basket'));
     T.later(() => handTap(h), 850);
-    await Promise.all([T.talk([['tr', 'Önce ona dokun, sonra sepete.']], replayLine(w)), wait(1800)]);
+    await Promise.all([T.talk([['en', 'Tap it, then tap the basket!']], replayLine(w)), wait(1800)]);
     await T.whenActive();
     if (!live()) return;
     el.classList.remove('selected'); h.classList.add('fade'); T.later(() => h.remove(), 400);
     setBusy(false);
-    T.talk([['tr', 'Şimdi sen yap!'], please(w)], replayLine(w));
+    T.talk([['en', 'Your turn!'], please(w)], replayLine(w));
   }
   // Her ziyarette ürünler tezgâha tek tek gelir ve adları söylenir: önce öğret, sonra iste.
   async function parade(){
     const tok = T.step, live = () => T.alive && tok === T.step;
-    await T.beat([['tr', 'Minik Market’e hoş geldin!']], 900);
+    await T.beat([['en', 'Welcome to the market!']], 900);
     const els = $$('#shelf .item');
     for (let k = 0; k < els.length; k++){
       if (!live()) return;
@@ -2408,7 +2551,7 @@ function viewMarket(){
       await T.beat([['en', A(say(shelf[k]))]], 800);
     }
     if (!live()) return;
-    await T.beat([['tr', 'Bubu ne isterse, sepete koy.']], 600);
+    await T.beat([['en', 'Help Bubu shop!']], 600);
     await T.whenActive();
     if (live()) ask(true);
   }
@@ -2421,7 +2564,7 @@ function viewMarket(){
     sfx.win(); confettiBig(); cheerBubu();
     (async () => {
       const tok = T.step, live = () => T.alive && tok === T.step;
-      await T.beat([['tr', 'Sepet doldu!']], 700);
+      await T.beat([['en', 'The basket is full!']], 700);
       const els = $$('#fb-items .r-item');
       for (let k = 0; k < els.length; k++){
         if (!live()) return;
@@ -2432,7 +2575,7 @@ function viewMarket(){
       if (!live()) return;
       await T.beat([['en', 'Thank you! Bye-bye!']], 0);
       await T.whenActive();
-      if (live()) T.talk([['tr', 'Bir daha oynamak istersen yeşil düğmeye dokun.']]);
+      if (live()) T.talk([['en', 'Tap the green button to play again!']]);
     })();
   }
   viewActs.rhear = el => { const w = WORD[el.dataset.key]; sfx.tap(); retrigger(el, 'bounce'); T.say([['en', A(say(w))]]); };
@@ -2443,8 +2586,8 @@ function viewMarket(){
       sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]);
       const bk = $('#basket'); if (bk && bk.getBoundingClientRect().bottom > innerHeight) bk.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
     },
-    onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], replayLine(want())); },
-    onEmptyTarget: () => { hopSeq($('#shelf')); T.talk([['tr', 'Önce bir resme dokun, sonra sepete.'], please(want())], replayLine(want())); },
+    onSelectIdle: el => { retrigger($('#basket'), 'hop'); demoMove(el, $('#basket')); T.talk([['en', 'Now tap the basket!']], replayLine(want())); },
+    onEmptyTarget: () => { hopSeq($('#shelf')); T.talk([['en', 'Tap a picture first!'], please(want())], replayLine(want())); },
     onPlace: (el, from) => {
       const w = WORD[el.dataset.key], target = want();
       if (w === target){
@@ -2463,9 +2606,9 @@ function viewMarket(){
       sfx.hmm(); retrigger(el, 'soft');
       if (tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return false; }
       tried[w.key] = 1; miss++;
-      if (miss === 1 && !T.pic){ setWant(1); T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Bubu başka bir şey istiyor. Dinle:'], please(target)], replayLine(target)); }
-      else if (miss <= 2){ setWant(2); glow(itemEl(target)); T.talkSoon([['tr', `Bubu ${target.tr} istiyor. Bak, burada!`], ['en', A(say(target))]], replayLine(target)); }
-      else { setWant(2); const t = itemEl(target); glow(t); T.placer.preselect(t); pointHand($('#basket')); T.talkSoon([['tr', 'Şimdi sepete dokun.']], replayLine(target)); }
+      if (miss === 1 && !T.pic){ setWant(1); T.talkSoon([['en', thatIs(w)], ['en', 'Listen!'], please(target)], replayLine(target)); }
+      else if (miss <= 2){ setWant(2); glow(itemEl(target)); T.talkSoon([['en', `Look! ${A(say(target))}`]], replayLine(target)); }
+      else { setWant(2); const t = itemEl(target); glow(t); T.placer.preselect(t); pointHand($('#basket')); T.talkSoon([['en', 'Now tap the basket!']], replayLine(target)); }
       return false;
     }
   });
@@ -2473,8 +2616,489 @@ function viewMarket(){
   parade();
 }
 
+/* ---------- Minik Dostum (evcil hayvan) ---------- */
+// Günlük rutin: kahvaltı → giyinme → yürüyüş → banyo → akşam yemeği → uyku. Gerçek zamana bağlı acıkma,
+// üzülme ya da ceza yok: rutin yalnızca çocuk oynadıkça ilerler; her tamamlanan günle hayvan büyür.
+const PET_KINDS = {
+  puppy:  { en: 'puppy',  name: 'Max',  icon: '🐶', good: 'Good puppy!', body: '#D9A066', dark: '#9C6235', light: '#F6E1C2',
+    food: [['food:milk', 'food:bread'], ['food:rice', 'vegetables:carrot']] },
+  kitten: { en: 'kitten', name: 'Luna', icon: '🐱', good: 'Good kitty!', body: '#F2A65A', dark: '#C46F23', light: '#FCE3C4',
+    food: [['food:milk', 'animals:fish'], ['food:rice', 'food:cheese']] },
+  bunny:  { en: 'bunny',  name: 'Coco', icon: '🐰', good: 'Good bunny!', body: '#EFE8E2', dark: '#B7A79A', light: '#FFFFFF',
+    food: [['vegetables:carrot', 'fruits:apple'], ['vegetables:lettuce', 'fruits:banana']] }
+};
+const PET_FOOD_POOL = ['food:milk', 'food:bread', 'food:egg', 'food:cheese', 'food:rice', 'food:soup', 'fruits:apple', 'fruits:banana',
+  'fruits:strawberry', 'vegetables:carrot', 'vegetables:lettuce', 'animals:fish', 'food:cookie'];
+const PET_ROUTINE = [
+  { id: 'breakfast', act: 'feed', icon: '🥣', time: 'morning' },
+  { id: 'dress', act: 'dress', icon: '👕', time: 'morning' },
+  { id: 'walk', act: 'walk', icon: '🌳', time: 'noon' },
+  { id: 'bath', act: 'bath', icon: '🛁', time: 'afternoon' },
+  { id: 'dinner', act: 'feed', icon: '🍽️', time: 'evening' },
+  { id: 'sleep', act: 'sleep', icon: '🌙', time: 'night' }
+];
+const PET_ACTS = [
+  { id: 'feed', icon: '🥣', label: 'Besle' }, { id: 'dress', icon: '👕', label: 'Giydir' }, { id: 'walk', icon: '🌳', label: 'Gezdir' },
+  { id: 'bath', icon: '🛁', label: 'Yıka' }, { id: 'sleep', icon: '🛏️', label: 'Uyut' }
+];
+const WEATHERS = [
+  { id: 'sunny', icon: '☀️', clothes: ['clothes:hat', 'clothes:glasses'] },
+  { id: 'rainy', icon: '🌧️', clothes: ['clothes:boots', 'clothes:coat'] },
+  { id: 'snowy', icon: '❄️', clothes: ['clothes:scarf', 'clothes:gloves'] }
+];
+// Giysilerin hayvan üzerindeki yeri (kutunun yüzdesi) ve boyutu
+const WEAR_AT = {
+  'clothes:hat': [[50, 7]], 'clothes:cap': [[50, 9]], 'clothes:glasses': [[50, 40, .8]], 'clothes:scarf': [[50, 63]],
+  'clothes:coat': [[50, 76]], 'clothes:gloves': [[22, 87, .62], [78, 87, .62]], 'clothes:boots': [[37, 95, .62], [63, 95, .62]]
+};
+const PET_TIMES = ['morning', 'morning', 'noon', 'afternoon', 'evening', 'night', 'night'];
+const PET_LOVE = ['Hi!', 'I love you!', 'Hee hee!', 'That tickles!'];
+const pleaseLine = w => ['en', `${A(say(w)).slice(0, -1)}, please!`];
+function petRec(){
+  let r = S.pet;
+  if (!r || typeof r !== 'object' || Array.isArray(r)) r = S.pet = {};
+  if (!PET_KINDS[r.kind]) r.kind = null;
+  const num = (v, d) => { const n = typeof v === 'string' ? Number(v) : v; return (typeof n === 'number' && isFinite(n) && n >= 0) ? Math.floor(n) : d; };
+  r.day = Math.max(1, num(r.day, 1)); r.step = Math.min(6, num(r.step, 0)); r.days = num(r.days, 0);
+  if (!Array.isArray(r.outfit)) r.outfit = [];
+  r.outfit = r.outfit.filter((k, i, a) => typeof k === 'string' && WEAR_AT[k] && a.indexOf(k) === i);
+  r.muddy = !!r.muddy;
+  if (r.kind) r.name = PET_KINDS[r.kind].name;
+  return r;
+}
+const petStage = r => r.days >= 3 ? 'big' : r.days >= 1 ? 'kid' : 'baby';
+const petWeather = r => WEATHERS[(r.day - 1) % WEATHERS.length];
+function petSVG(kind){
+  const K = PET_KINDS[kind], ln = 'stroke:var(--line)';
+  const ears = {
+    puppy: `<ellipse cx="54" cy="84" rx="17" ry="34" transform="rotate(22 54 84)" style="fill:${K.dark};${ln}" stroke-width="5"/><ellipse cx="146" cy="84" rx="17" ry="34" transform="rotate(-22 146 84)" style="fill:${K.dark};${ln}" stroke-width="5"/>`,
+    kitten: `<path d="M58 70L66 24L96 52Z" style="fill:${K.body};${ln}" stroke-width="5" stroke-linejoin="round"/><path d="M142 70L134 24L104 52Z" style="fill:${K.body};${ln}" stroke-width="5" stroke-linejoin="round"/><path d="M67 58L70 36L84 50Z" style="fill:#FFB4C2"/><path d="M133 58L130 36L116 50Z" style="fill:#FFB4C2"/>`,
+    bunny: `<ellipse cx="78" cy="34" rx="14" ry="38" style="fill:${K.body};${ln}" stroke-width="5"/><ellipse cx="122" cy="34" rx="14" ry="38" style="fill:${K.body};${ln}" stroke-width="5"/><ellipse cx="78" cy="36" rx="6" ry="26" style="fill:#FFB4C2"/><ellipse cx="122" cy="36" rx="6" ry="26" style="fill:#FFB4C2"/>`
+  }[kind];
+  const tail = {
+    puppy: `<g class="tail"><path d="M144 160Q178 140 168 108" fill="none" style="${ln}" stroke-width="18" stroke-linecap="round"/><path d="M144 160Q178 140 168 108" fill="none" style="stroke:${K.dark}" stroke-width="10" stroke-linecap="round"/></g>`,
+    kitten: `<g class="tail"><path d="M146 168Q192 160 176 110" fill="none" style="${ln}" stroke-width="16" stroke-linecap="round"/><path d="M146 168Q192 160 176 110" fill="none" style="stroke:${K.body}" stroke-width="9" stroke-linecap="round"/></g>`,
+    bunny: `<g class="tail"><circle cx="150" cy="168" r="14" style="fill:#FFFFFF;${ln}" stroke-width="5"/></g>`
+  }[kind];
+  const whiskers = kind === 'kitten' ? `<path d="M76 112H54M76 118L56 124M124 112H146M124 118L144 124" style="${ln}" stroke-width="2.5" stroke-linecap="round"/>` : '';
+  const nose = kind === 'kitten' ? `<path d="M94 104H106L100 111Z" style="fill:#F07A8A;${ln}" stroke-width="2.5" stroke-linejoin="round"/>` : `<ellipse cx="100" cy="104" rx="8" ry="6" style="fill:#3B2A2A"/>`;
+  return `<svg class="pet" viewBox="0 0 200 210" aria-hidden="true">
+${tail}
+<ellipse cx="100" cy="158" rx="50" ry="40" style="fill:${K.body};${ln}" stroke-width="5"/>
+<ellipse cx="100" cy="166" rx="30" ry="24" style="fill:${K.light}"/>
+<ellipse cx="74" cy="194" rx="15" ry="10" style="fill:${K.light};${ln}" stroke-width="4"/><ellipse cx="126" cy="194" rx="15" ry="10" style="fill:${K.light};${ln}" stroke-width="4"/>
+${ears}
+<circle cx="100" cy="92" r="48" style="fill:${K.body};${ln}" stroke-width="5"/>
+<ellipse cx="100" cy="112" rx="24" ry="17" style="fill:${K.light}"/>
+<circle cx="70" cy="106" r="7" style="fill:#FF9FB0;opacity:.7"/><circle cx="130" cy="106" r="7" style="fill:#FF9FB0;opacity:.7"/>
+<g class="eyes-open"><ellipse cx="82" cy="88" rx="7" ry="9" style="fill:#1E2A4A"/><ellipse cx="118" cy="88" rx="7" ry="9" style="fill:#1E2A4A"/><circle cx="85" cy="84" r="2.6" style="fill:#FFFFFF"/><circle cx="121" cy="84" r="2.6" style="fill:#FFFFFF"/>
+<ellipse class="lid" cx="82" cy="88" rx="8.5" ry="10.5" style="fill:${K.body}"/><ellipse class="lid" cx="118" cy="88" rx="8.5" ry="10.5" style="fill:${K.body}"/></g>
+<path class="eyes-closed" d="M74 90Q82 96 90 90M110 90Q118 96 126 90" fill="none" style="${ln}" stroke-width="4" stroke-linecap="round"/>
+${whiskers}${nose}
+<path class="mouth" d="M90 115Q100 124 110 115" fill="none" style="${ln}" stroke-width="4" stroke-linecap="round"/>
+<ellipse class="mouth-open" cx="100" cy="119" rx="8" ry="7" style="fill:#8A3B3B;${ln}" stroke-width="3"/>
+<g class="mud"><circle class="m0" cx="78" cy="146" r="11" style="fill:#7A5230"/><circle class="m1" cx="124" cy="160" r="12" style="fill:#7A5230"/><circle class="m2" cx="116" cy="70" r="9" style="fill:#7A5230"/><circle class="m3" cx="86" cy="178" r="9" style="fill:#7A5230"/></g>
+<g class="bubbles" style="fill:#FFFFFF;stroke:#9FD3F5" stroke-width="2.5"><circle cx="70" cy="140" r="10"/><circle cx="86" cy="128" r="7"/><circle cx="130" cy="152" r="11"/><circle cx="112" cy="64" r="8"/><circle cx="96" cy="176" r="8"/><circle cx="140" cy="132" r="6"/></g>
+<g class="sparkle" style="fill:#FFD84D;stroke:var(--line)" stroke-width="2"><polygon points="40,40 44,50 54,52 44,56 40,66 36,56 26,52 36,50"/><polygon points="164,60 167,68 175,70 167,73 164,81 161,73 153,70 161,68"/></g>
+<text class="zzz" x="140" y="44" style="fill:var(--text);font-family:var(--font-display);font-weight:800" font-size="28">z</text>
+</svg>`;
+}
+function wearHTML(r){
+  return r.outfit.map(k => (WEAR_AT[k] || []).map(([x, y, sc]) => `<span class="wear-item emo" style="left:${x}%;top:${y}%;--sc:${sc || 1}">${WORD[k].e}</span>`).join('')).join('');
+}
+function petHTML(r, extra){
+  return `<span class="pet-box stage-${petStage(r)}${r.muddy ? ' muddy' : ''} ${extra || ''}" id="pet" data-kind="${r.kind}">${petSVG(r.kind)}<span class="wear" id="wear">${wearHTML(r)}</span></span>`;
+}
+function viewPet(){
+  const R = petRec();
+  const T = makeTask();
+  cleanup = T.end;
+  let love = 0;
+  const K = () => PET_KINDS[R.kind];
+  const pet = () => $('#pet');
+  const petClass = (c, ms) => { const p = pet(); if (!p) return; p.classList.remove(c); void p.offsetWidth; p.classList.add(c); if (ms) T.later(() => { const q = pet(); if (q) q.classList.remove(c); }, ms); };
+  const ask = w => `Where is the ${say(w)}?`;
+  const roomNeed = () => [
+    [['en', "I'm hungry!"], ['en', 'Breakfast time!']],
+    [['en', "Let's get dressed!"]],
+    [['en', "Let's go for a walk!"]],
+    [['en', "I'm dirty!"], ['en', 'Bath time!']],
+    [['en', "I'm hungry!"], ['en', 'Dinner time!']],
+    [['en', "I'm sleepy!"], ['en', 'Bedtime!']]
+  ][R.step] || [['en', 'Good night!']];
+  const curAct = () => (PET_ROUTINE[R.step] || {}).act;
+  function bar(inRoom){
+    const steps = PET_ROUTINE.map((s, k) => `<span class="step${k < R.step ? ' done' : ''}${k === R.step ? ' now' : ''}"><span class="emo">${s.icon}</span></span>`).join('');
+    return `<div class="act-bar">
+      ${inRoom ? `<button class="act-btn" data-act="exit" aria-label="Ana sayfaya dön">${ICON.home}</button>` : `<button class="act-btn" data-act="petroom" aria-label="Odaya dön">${ICON.back}</button>`}
+      <div class="act-mid" aria-hidden="true">${R.kind ? `<div class="steps">${steps}</div>` : ''}</div>
+      <button class="act-btn replay${synth ? '' : ' muted'}" data-act="replay" aria-label="Tekrar dinle">${ICON.speaker}</button></div>`;
+  }
+  function render(name){
+    T.clearStep();
+    app.innerHTML = `<div class="act pet-act" id="act">${bar(name === 'room' || name === 'adopt')}<div class="act-body" id="pb" tabindex="-1"></div></div>`;
+    T.guard(name === 'adopt' ? 700 : 500);
+    T.checkPic();
+    SCREEN[name]($('#pb'));
+    try { $('#pb').focus({ preventScroll: true }); } catch (e) {}
+  }
+  function nextStep(){ R.step = Math.min(6, R.step + 1); save(); T.later(() => render(R.step >= 6 ? 'night' : 'room'), 900); }
+  const doneThen = (p, fn) => p.then(ok => ok ? null : T.quiet()).then(() => T.whenActive()).then(() => { if (T.alive) fn(); });
+  viewActs.petroom = () => { sfx.tap(); render(R.step >= 6 ? 'night' : 'room'); };
+  viewActs.pettap = el => {
+    if (!T.ready()) return;
+    sfx.flip(); petClass('happy', 700);
+    T.say([['en', PET_LOVE[love++ % PET_LOVE.length]]]);
+  };
+  // Yerleştirme ortak yardımcıları: yanlışta aynı nesne tekrar konursa yalnızca adı söylenir.
+  function wrongPick(st, w, target, segsL1){
+    sfx.hmm();
+    if (st.tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return; }
+    st.tried[w.key] = 1; st.miss++;
+    if (st.miss === 1 && !T.pic) T.talkSoon(segsL1, st.replay);
+    else { const t = $(`#field [data-key="${CSS.escape(target.key)}"]`); glow(t); T.talkSoon([['en', `Look! ${A(say(target))}`]], st.replay); }
+  }
+  const SCREEN = {
+    adopt(b){
+      const kinds = Object.keys(PET_KINDS);
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="adopt" id="adopt">${kinds.map(k => `<button class="adopt-card" data-act="adopt" data-kind="${k}" aria-label="${PET_KINDS[k].en}"><span class="adopt-pet">${petSVG(k)}</span><b lang="en">${PET_KINDS[k].en}</b></button>`).join('')}</div></div>` + emptyRow;
+      T.bubble('<span lang="tr">Minik Dostum</span>');
+      const names = kinds.map(k => ['en', `A ${PET_KINDS[k].en}!`]);
+      const full = [['en', 'Choose your pet!']].concat(names);
+      (async () => {
+        const tok = T.step, live = () => T.alive && tok === T.step && !R.kind;
+        if (!(await T.talk([full[0]], full)) || !live()) return;
+        const els = $$('#adopt .adopt-card');
+        for (let k = 0; k < els.length; k++){
+          if (!live()) return;
+          els[k].classList.add('spot');
+          const r = await Promise.all([T.talk([names[k]], full), wait(700)]);
+          els[k].classList.remove('spot');
+          if (!r[0]) return;
+        }
+      })();
+      viewActs.adopt = el => {
+        if (R.kind || !T.ready()) return;
+        R.kind = el.dataset.kind; R.name = K().name; R.day = 1; R.step = 0; R.days = 0; R.outfit = []; R.muddy = false; save();
+        sfx.win(); confettiAt(el, 50);
+        el.classList.add('chosen'); $$('#adopt .adopt-card').forEach(x => { if (x !== el) x.disabled = true; });
+        doneThen(T.talk([['en', `Hi! I'm ${R.name}!`], ['en', "Let's be friends!"]]), () => render('room'));
+      };
+      T.setIdle([() => { T.talk([['en', 'Tap a pet!']], full); hopSeq($('#adopt')); }]);
+    },
+    room(b){
+      if (R.step >= 6){ render('night'); return; }
+      const st = PET_ROUTINE[R.step], wx = petWeather(R);
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene room" data-time="${st.time}"><span class="window"><span class="emo">${st.time === 'night' ? '🌙' : wx.icon}</span></span><span class="rug"></span>
+        <button class="pet-tap" data-act="pettap" aria-label="${R.name}">${petHTML(R)}</button></div></div>
+        <div class="go-row pet-actions" id="acts">${PET_ACTS.map(a => `<button class="pet-do${a.id === st.act ? ' now' : ''}" data-act="petdo" data-do="${a.id}" aria-label="${a.label}"><span class="emo">${a.icon}</span></button>`).join('')}</div>`;
+      T.bubble(`<b lang="en">${R.name}</b>`);
+      const need = roomNeed();
+      T.talk(need);
+      const cur = () => $(`#acts [data-do="${st.act}"]`);
+      T.demo = () => pointHand(cur());
+      if (T.pic) T.later(T.demo, 900);
+      viewActs.petdo = el => {
+        if (!T.ready()) return;
+        if (el.dataset.do === st.act){ sfx.tap(); render(st.act === 'feed' ? 'feed' : st.act); return; }
+        sfx.hmm(); const c = cur(); if (c){ retrigger(c, 'hop'); pointHand(c); }
+        T.talk([['en', 'Not now!']].concat(need), need);
+      };
+      T.setIdle([() => { T.talk(need); const c = cur(); if (c) pointHand(c); }, () => { const c = cur(); if (c) retrigger(c, 'hop'); }]);
+    },
+    feed(b){
+      const meal = R.step === 4 ? 1 : 0;
+      const foods = K().food[meal].map(k => WORD[k]);
+      const extras = shuffle(PET_FOOD_POOL.filter(k => !foods.some(f => f.key === k))).slice(0, 2).map(k => WORD[k]);
+      const table = shuffle(foods.concat(extras));
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene kitchen" data-time="${PET_TIMES[R.step]}">${petHTML(R)}<button class="bowl" data-drop id="bowl" aria-label="Kâse"><span class="bowl-in" id="bowl-in"></span></button></div></div>
+        <div class="basket-row"><div class="field four" id="field">${table.map(w => itemBtn(w)).join('')}</div></div>`;
+      let idx = 0, busy = false;
+      const st = { miss: 0, tried: {}, replay: [pleaseLine(foods[0])] };
+      const want = () => foods[idx];
+      T.bubble(`<b lang="en">${meal ? 'Dinner' : 'Breakfast'}</b>`);
+      T.talk([['en', "I'm hungry!"], pleaseLine(foods[0])], st.replay);
+      T.demo = () => demoRow($('#field'), $('#bowl'));
+      T.placer = makePlacer(b, {
+        target: $('#bowl'),
+        locked: () => busy || !T.ready(),
+        onSelect: el => { sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]); },
+        onSelectIdle: el => { retrigger($('#bowl'), 'hop'); demoMove(el, $('#bowl')); T.talk([['en', 'Now tap the bowl!']], st.replay); },
+        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['en', 'Tap a picture first!'], pleaseLine(want())], st.replay); },
+        onPlace: (el, from) => {
+          const w = WORD[el.dataset.key];
+          if (w !== want()){ retrigger(el, 'soft'); petClass('nope', 600); wrongPick(st, w, want(), [['en', 'No, thank you!'], pleaseLine(want())]); return false; }
+          busy = true; el.classList.add('gone');
+          T.fly(from, $('#bowl'), w, $('#bowl-in'));
+          sfx.good(); T.later(() => { sfx.chew(); petClass('eating', 1300); }, 450);
+          idx++;
+          const last = idx >= foods.length;
+          const p = T.talk([['en', 'Yum!'], ['en', A(say(w))]]);
+          doneThen(p, () => {
+            if (last){ confettiAt(pet(), 30); doneThen(T.talk([['en', "I'm full!"], ['en', 'Thank you!']]), nextStep); return; }
+            busy = false; st.miss = 0; st.tried = {}; st.replay = [pleaseLine(want())];
+            T.talk(st.replay);
+          });
+          return true;
+        }
+      });
+      T.setIdle([() => { T.talk(st.replay); demoRow($('#field'), $('#bowl')); }, () => glow($(`#field [data-key="${CSS.escape(want().key)}"]`))]);
+    },
+    dress(b){
+      const wx = petWeather(R), want = wx.clothes.map(k => WORD[k]);
+      const others = shuffle(WEATHERS.filter(x => x !== wx).reduce((a, x) => a.concat(x.clothes), [])).slice(0, 2).map(k => WORD[k]);
+      const items = shuffle(want.concat(others));
+      R.outfit = []; save();
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene room" data-time="morning"><span class="window big"><span class="emo">${wx.icon}</span></span>
+        <button class="pet-drop" data-drop id="petdrop" aria-label="${R.name}">${petHTML(R)}</button></div></div>
+        <div class="basket-row"><div class="field four" id="field">${items.map(w => itemBtn(w)).join('')}</div></div>`;
+      let idx = 0, busy = false;
+      const put = w => [['en', `Put on the ${say(w)}!`]];
+      const st = { miss: 0, tried: {}, replay: put(want[0]) };
+      T.bubble(`<b lang="en">${A(wx.id).slice(0, -1)}</b>`);
+      T.talk([['en', 'Look outside!'], ['en', `It's ${wx.id}!`]].concat(put(want[0])), st.replay);
+      T.demo = () => demoRow($('#field'), $('#petdrop'));
+      T.placer = makePlacer(b, {
+        target: $('#petdrop'),
+        locked: () => busy || !T.ready(),
+        onSelect: el => { sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]); },
+        onSelectIdle: el => { demoMove(el, $('#petdrop')); T.talk([['en', `Now tap ${R.name}!`]], st.replay); },
+        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['en', 'Tap a picture first!']].concat(st.replay), st.replay); },
+        onPlace: (el, from) => {
+          const w = WORD[el.dataset.key];
+          if (w !== want[idx]){ retrigger(el, 'soft'); wrongPick(st, w, want[idx], [['en', thatIs(w)]].concat(put(want[idx]))); return false; }
+          busy = true; el.classList.add('gone');
+          T.fly(from, $('#petdrop'), w, null);
+          R.outfit.push(w.key); save();
+          T.later(() => { const wr = $('#wear'); if (wr) wr.innerHTML = wearHTML(R); petClass('happy', 700); }, 500);
+          sfx.good(); idx++;
+          const last = idx >= want.length;
+          doneThen(T.talk([['en', A(say(w))], ['en', w.pl ? 'I like them!' : 'I like it!']]), () => {
+            if (last){ confettiAt(pet(), 30); doneThen(T.talk([['en', "I'm ready!"], ['en', "Let's go for a walk!"]]), nextStep); return; }
+            busy = false; st.miss = 0; st.tried = {}; st.replay = put(want[idx]);
+            T.talk(st.replay);
+          });
+          return true;
+        }
+      });
+      T.setIdle([() => { T.talk(st.replay); demoRow($('#field'), $('#petdrop')); }, () => glow($(`#field [data-key="${CSS.escape(want[idx].key)}"]`))]);
+    },
+    walk(b){
+      const keys = ['animals:bird', 'nature:flower', 'nature:tree', 'animals:butterfly'];
+      const finds = shuffle(keys).slice(0, 3).map(k => WORD[k]);
+      const pos = { 'nature:tree': 'left:2%;bottom:22%', 'animals:bird': 'left:36%;top:5%', 'nature:flower': 'left:4%;bottom:3%', 'animals:butterfly': 'right:5%;top:14%' };
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene park" id="park" data-time="noon">
+        ${keys.map(k => `<button class="park-obj" data-act="parkobj" data-key="${k}" style="${pos[k]}" aria-label="${say(WORD[k])}">${pic(WORD[k])}</button>`).join('')}
+        <span class="puddle" aria-hidden="true"></span>
+        <button class="park-obj ball" data-act="ball" style="right:4%;bottom:4%" aria-label="${say(WORD['toys:ball'])}" disabled>${pic(WORD['toys:ball'])}</button>
+        <span class="walker" id="walker">${petHTML(R)}</span></div></div>` + emptyRow;
+      let idx = 0, phase = 'find';
+      const st = { miss: 0, tried: {}, replay: [['en', ask(finds[0])]] };
+      T.bubble(`<b lang="en">Park</b>`);
+      T.talk([['en', "Let's go to the park!"], ['en', ask(finds[0])]], st.replay);
+      T.demo = () => hopSeq($('#park'));
+      viewActs.parkobj = el => {
+        if (phase !== 'find' || !T.ready()) return;
+        const w = WORD[el.dataset.key], target = finds[idx];
+        retrigger(el, 'bounce');
+        if (w !== target){
+          sfx.hmm();
+          if (st.tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return; }
+          st.tried[w.key] = 1; st.miss++;
+          if (st.miss === 1 && !T.pic) T.talkSoon([['en', thatIs(w)], ['en', ask(target)]], st.replay);
+          else { glow($(`#park [data-key="${CSS.escape(target.key)}"]`)); T.talkSoon([['en', `Look! ${A(say(target))}`]], st.replay); }
+          return;
+        }
+        phase = 'wait'; sfx.good(); confettiAt(el, 18); petClass('happy', 700);
+        el.classList.remove('hint-glow');
+        idx++;
+        doneThen(T.talk([['en', `Yes! A ${say(w)}!`]]), () => {
+          if (idx < finds.length){ phase = 'find'; st.miss = 0; st.tried = {}; st.replay = [['en', ask(finds[idx])]]; T.talk(st.replay); return; }
+          phase = 'ball';
+          const ball = $('#park .ball'); ball.disabled = false; glow(ball);
+          st.replay = [['en', 'Throw the ball!']];
+          T.talk([['en', "Let's play!"], ['en', 'Throw the ball!']], st.replay);
+          T.demo = () => pointHand($('#park .ball'));
+          if (T.pic) T.later(T.demo, 600);
+        });
+      };
+      viewActs.ball = el => {
+        if (phase !== 'ball' || !T.ready()) return;
+        phase = 'fetch'; el.classList.remove('hint-glow'); el.classList.add('thrown'); sfx.pop();
+        const wk = $('#walker'); if (wk) wk.classList.add('run');
+        T.later(() => { el.classList.remove('thrown'); el.classList.add('back'); }, 900);
+        doneThen(Promise.all([T.talk([['en', 'Fetch!']]), wait(1700)]).then(r => r[0]), () => {
+          if (wk) wk.classList.remove('run');
+          petClass('happy', 700);
+          doneThen(T.talk([['en', K().good]]), () => {
+            if (wk) wk.classList.add('splash');
+            sfx.splash(); R.muddy = true; save();
+            T.later(() => { const p = pet(); if (p) p.classList.add('muddy'); }, 500);
+            doneThen(Promise.all([T.talk([['en', 'Splash!'], ['en', "Oh no! I'm dirty!"]]), wait(1200)]).then(r => r[0]), nextStep);
+          });
+        });
+      };
+      T.setIdle([() => { T.talk(st.replay); hopSeq($('#park')); }, () => {
+        if (phase === 'find') glow($(`#park [data-key="${CSS.escape(finds[idx].key)}"]`));
+        if (phase === 'ball') pointHand($('#park .ball'));
+      }]);
+    },
+    bath(b){
+      R.outfit = []; R.muddy = true; save();
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene bathroom" data-time="${PET_TIMES[R.step]}"><span class="tub" aria-hidden="true"></span>
+        <button class="pet-drop in-tub" data-drop id="petdrop" aria-label="${R.name}">${petHTML(R)}</button><span class="rain" id="rain" aria-hidden="true"></span></div></div>
+        <div class="basket-row"><div class="field" id="field">
+          <button class="item" data-item data-key="tool:soap" data-name="soap" aria-pressed="false"><span class="ipic emo" aria-hidden="true">🧼</span><span class="sr-only" lang="en">soap</span></button>
+          <button class="item tool-btn" data-act="shower" id="shower" disabled><span class="ipic emo" aria-hidden="true">🚿</span><span class="sr-only" lang="en">shower</span></button>
+          <button class="item" data-item data-key="tool:towel" data-name="towel" aria-pressed="false" id="towel" disabled><span class="ipic towel" aria-hidden="true"></span><span class="sr-only" lang="en">towel</span></button>
+        </div></div>`;
+      let phase = 'soap', spots = 0;
+      const SPOTS = 4;
+      const lines = { soap: [['en', 'Use the soap!']], water: [['en', 'Now the water!']], towel: [['en', 'Now the towel!']] };
+      T.bubble(`<b lang="en">Bath</b>`);
+      T.talk([['en', 'Bath time!'], ['en', 'Use the soap!']], lines.soap);
+      const tool = () => phase === 'soap' ? $('#field [data-key="tool:soap"]') : phase === 'water' ? $('#shower') : $('#towel');
+      T.demo = () => phase === 'water' ? pointHand($('#shower')) : demoMove(tool(), $('#petdrop'));
+      T.placer = makePlacer(b, {
+        target: $('#petdrop'),
+        locked: () => !T.ready(),
+        onSelect: el => { sfx.tap(); if (!T.speaking) T.say([['en', A(el.dataset.name)]]); },
+        onSelectIdle: el => { demoMove(el, $('#petdrop')); T.talk([['en', `Now tap ${R.name}!`]], lines[phase]); },
+        onEmptyTarget: () => { const t = tool(); if (t) pointHand(t); T.talk(lines[phase], lines[phase]); },
+        onPlace: (el, from) => {
+          const k = el.dataset.key;
+          if (k === 'tool:soap' && phase === 'soap'){
+            sfx.scrub(); const p = pet(); if (p){ p.classList.add('soapy', 'c' + spots); }
+            spots++;
+            if (spots < SPOTS){ T.say([['en', 'Scrub, scrub!']]); T.later(() => T.placer && T.placer.preselect(el), 50); return true; }
+            phase = 'water'; const sh = $('#shower'); sh.disabled = false; glow(sh);
+            T.talk([['en', 'Bubbles!'], ['en', 'Now the water!']], lines.water);
+            if (T.pic) T.later(T.demo, 600);
+            return true;
+          }
+          if (k === 'tool:towel' && phase === 'towel'){
+            phase = 'done'; sfx.good(); R.muddy = false; save();
+            const p = pet(); if (p){ p.classList.remove('muddy', 'wet'); p.classList.add('shiny'); }
+            confettiAt(p, 30);
+            doneThen(T.talk([['en', 'All dry!'], ['en', "I'm clean!"]]), nextStep);
+            return true;
+          }
+          sfx.hmm(); const t = tool(); if (t){ retrigger(t, 'hop'); glow(t); }
+          T.talkSoon(lines[phase], lines[phase]);
+          return false;
+        }
+      });
+      viewActs.shower = el => {
+        if (phase !== 'water' || !T.ready()) return;
+        phase = 'towel'; el.classList.remove('hint-glow'); sfx.splash();
+        const rain = $('#rain'); if (rain) retrigger(rain, 'on');
+        T.later(() => { const p = pet(); if (p){ p.classList.remove('soapy', 'muddy'); p.classList.add('wet'); } }, 700);
+        const tw = $('#towel'); tw.disabled = false; glow(tw);
+        T.talk([['en', 'Splash!'], ['en', 'Now the towel!']], lines.towel);
+        if (T.pic) T.later(T.demo, 1200);
+      };
+      T.setIdle([() => { T.talk(lines[phase] || []); T.demo(); }, () => { const t = tool(); if (t) glow(t); }]);
+    },
+    sleep(b){
+      R.outfit = []; save();
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene bedroom" id="bedroom" data-time="night"><span class="window"><span class="emo">🌙</span></span>
+        <button class="lamp" data-act="lamp" id="lamp" aria-label="light" disabled><span class="emo">💡</span></button>
+        <span class="sky-stars" id="stars">${[0, 1, 2, 3, 4].map(k => `<button class="star-btn" data-act="star" data-i="${k}" aria-label="star" disabled>${star('off')}</button>`).join('')}</span>
+        <button class="pet-drop sleeper" data-drop data-key="pet:${R.kind}" data-name="${R.name}" id="petdrop" aria-pressed="false" aria-label="${R.name}">${petHTML(R)}</button>
+        <button class="bed" data-drop id="bed" aria-label="bed"><span class="bed-blanket"></span></button></div></div>
+        <div class="basket-row"><div class="field" id="field"><button class="item" data-item data-key="tool:toothbrush" data-name="toothbrush" aria-pressed="false" id="brush"><span class="ipic emo" aria-hidden="true">🪥</span><span class="sr-only" lang="en">toothbrush</span></button></div></div>`;
+      let phase = 'brush', count = 0;
+      const lines = { brush: [['en', 'Brush your teeth!']], bed: [['en', 'Into bed!']], light: [['en', 'Turn off the light!']], stars: [['en', "Let's count the stars!"]] };
+      const NUMS = ['One!', 'Two!', 'Three!', 'Four!', 'Five!'];
+      T.bubble(`<b lang="en">Bedtime</b>`);
+      T.talk([['en', 'Bedtime!'], ['en', 'Brush your teeth!']], lines.brush);
+      T.demo = () => phase === 'brush' ? demoMove($('#brush'), $('#petdrop')) : phase === 'bed' ? demoMove($('#petdrop'), $('#bed')) : phase === 'light' ? pointHand($('#lamp')) : hopSeq($('#stars'));
+      // 1) diş fırçası → hayvan
+      T.placer = makePlacer(b, {
+        target: $('#petdrop'),
+        locked: () => phase !== 'brush' || !T.ready(),
+        onSelect: el => { if (el.id !== 'brush') return; sfx.tap(); if (!T.speaking) T.say([['en', 'Toothbrush!']]); },
+        onSelectIdle: () => { demoMove($('#brush'), $('#petdrop')); T.talk([['en', `Now tap ${R.name}!`]], lines.brush); },
+        onEmptyTarget: () => { pointHand($('#brush')); T.talk(lines.brush, lines.brush); },
+        onPlace: el => {
+          if (el.id !== 'brush') return false;
+          phase = 'wait'; sfx.scrub(); petClass('brushing', 1500); el.classList.add('gone');
+          doneThen(Promise.all([T.talk([['en', 'Brush, brush!'], ['en', 'Clean teeth!']]), wait(1500)]).then(r => r[0]), () => {
+            // 2) hayvan → yatak (ayrı yerleştirici: sürükle ya da dokun-dokun)
+            phase = 'bed'; T.placer.destroy();
+            $('#petdrop').setAttribute('data-item', '');          // artık hayvan taşınabilir (yatağa)
+            T.placer = makePlacer($('#bedroom'), {
+              target: $('#bed'),
+              locked: () => phase !== 'bed' || !T.ready(),
+              onSelect: () => { sfx.tap(); },
+              onSelectIdle: () => { demoMove($('#petdrop'), $('#bed')); T.talk([['en', 'Now tap the bed!']], lines.bed); },
+              onEmptyTarget: () => { pointHand($('#petdrop')); T.talk([['en', `Tap ${R.name} first!`]], lines.bed); },
+              onPlace: () => {
+                phase = 'light'; sfx.good();
+                const p = $('#petdrop'); p.classList.add('in-bed'); p.removeAttribute('data-item');
+                const lamp = $('#lamp'); lamp.disabled = false; glow(lamp);
+                T.talk([['en', 'Cozy!'], ['en', 'Turn off the light!']], lines.light);
+                if (T.pic) T.later(T.demo, 600);
+                return true;
+              }
+            });
+            T.talk(lines.bed, lines.bed);
+            if (T.pic || R.days === 0) T.later(T.demo, 700);
+          });
+          return true;
+        }
+      });
+      viewActs.lamp = el => {
+        if (phase !== 'light' || !T.ready()) return;
+        phase = 'stars'; el.classList.remove('hint-glow'); el.classList.add('off'); sfx.tap();
+        $('#bedroom').classList.add('dark');
+        $$('#stars .star-btn').forEach(s => { s.disabled = false; });
+        T.talk([['en', 'Click!'], ['en', "Let's count the stars!"]], lines.stars);
+        T.later(() => hopSeq($('#stars')), 400);
+      };
+      viewActs.star = el => {
+        if (phase !== 'stars' || el.classList.contains('lit')) return;
+        el.classList.add('lit'); el.innerHTML = star(); sfx.star();
+        const n = count++;
+        if (count < 5){ T.say([['en', NUMS[n]]]); return; }
+        phase = 'done';
+        const p = pet(); if (p) p.classList.add('sleeping');
+        doneThen(T.talk([['en', NUMS[n]], ['en', 'Five stars!'], ['en', `Good night, ${R.name}!`]]), () => {
+          R.step = 6; save(); T.later(() => render('night'), 600);
+        });
+      };
+      T.setIdle([() => { T.talk(lines[phase] || []); T.demo(); }, () => {
+        const t = phase === 'brush' ? $('#brush') : phase === 'bed' ? $('#bed') : phase === 'light' ? $('#lamp') : null;
+        if (t) glow(t);
+      }]);
+    },
+    night(b){
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene bedroom dark" data-time="night"><span class="window"><span class="emo">🌙</span></span>
+        <span class="sky-stars lit-all">${[0, 1, 2, 3, 4].map(() => `<span class="star-btn lit">${star()}</span>`).join('')}</span>
+        <span class="pet-drop sleeper in-bed">${petHTML(R, 'sleeping')}</span><span class="bed"><span class="bed-blanket"></span></span></div></div>
+        <div class="go-row"><button class="sun-btn" data-act="morning" aria-label="Günaydın"><span class="emo">☀️</span></button></div>`;
+      T.bubble('<b lang="en">Zzz…</b>');
+      T.talk([['en', 'Sweet dreams!'], ['en', 'Tap the sun!']], [['en', 'Tap the sun!']]);
+      T.demo = () => pointHand($('.sun-btn'));
+      if (T.pic) T.later(T.demo, 900);
+      viewActs.morning = () => {
+        if (!T.ready()) return;
+        const before = petStage(R);
+        R.day += 1; R.days += 1; R.step = 0; R.outfit = []; R.muddy = false; save();
+        const grew = petStage(R) !== before;
+        sfx.win(); confettiBig();
+        render('room');
+        const p = pet(); if (p) petClass(grew ? 'grow' : 'happy', 1200);
+        T.talk([['en', 'Good morning!']].concat(grew ? [['en', "Look! I'm bigger!"]] : [], roomNeed()), roomNeed());
+      };
+      T.setIdle([() => { T.talk([['en', 'Tap the sun!']]); T.demo(); }]);
+    }
+  };
+  render(R.kind ? (R.step >= 6 ? 'night' : 'room') : 'adopt');
+}
+
 /* ---------- etkinlikten çıkış: ana sayfa düğmesi, Escape ve telefonun "geri" hareketi ---------- */
-const ACT_VIEWS = ['story', 'market'];
+const ACT_VIEWS = ['story', 'market', 'pet'];
 const inAct = () => ACT_VIEWS.indexOf(current.name) > -1;
 let pendingRoute = null;
 function actHistoryState(){ try { return !!(history.state && history.state.bubuAct); } catch (e) { return false; } }
@@ -2502,7 +3126,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-const VIEWS = { home: viewHome, cat: viewCat, find: viewFind, memory: viewMemory, balloon: viewBalloon, album: viewAlbum, story: viewStory, market: viewMarket };
+const VIEWS = { home: viewHome, cat: viewCat, find: viewFind, memory: viewMemory, balloon: viewBalloon, album: viewAlbum, story: viewStory, market: viewMarket, pet: viewPet };
 
 /* ================= tıklama eylemleri ================= */
 const ACT = {
@@ -2510,6 +3134,7 @@ const ACT = {
   exit(){ sfx.tap(); leaveTo('home'); },
   story(){ go('story'); },
   market(){ go('market'); },
+  pet(){ go('pet'); },
   cat(t){ go('cat', t.dataset.id); },
   album(){ if (inAct()) leaveTo('album'); else go('album'); },
   close(){ closeModal(); },
@@ -2524,7 +3149,7 @@ const ACT = {
   lockedsticker(t){
     nope(t);
     const k = t.dataset.key;
-    if (k.indexOf('story:') === 0){ toast('Bubu’nun Pikniği’nin sonunda seçebilirsin!'); speakLine([['tr', 'Bunu Bubu’nun Pikniği hikâyesinin sonunda seçebilirsin.']]); return; }
+    if (k.indexOf('story:') === 0){ toast('Bubu’nun Pikniği’nin sonunda seçebilirsin!'); return; }
     toast(k.indexOf('special:') === 0 ? 'Hazine sandıklarından çıkacak!' : 'Bunu oyunlarda bulacaksın!');
   },
   wod(t){ const w = wordOfDay(); sfx.tap(); speak(say(w)); confettiAt(t, 10); },
@@ -2548,14 +3173,8 @@ const ACT = {
     if (k === 'sfx' && v) sfx.tap();
     if (k === 'accent') speak(v === 'uk' ? 'Hello! This is British English.' : 'Hello! This is American English.');
     if (k === 'slow') speak("Hello! Let's learn English.");
-    if (k === 'trVoice' && v) speakLine([['tr','Türkçe yönlendirme açık.']]);
   },
   testvoice(){ speakLine([['en', 'Hello! I am Bubu. Cat, dog, apple!']]); },
-  testtr(){
-    if (trState() === 'off'){ toast('Türkçe yönlendirme kapalı'); return; }
-    speakLine(canSpeakTr() ? [['tr', 'Merhaba! Ben Bubu. Hadi oynayalım!'], ['en', 'Hello!']] : [['en', 'Hello!']]);
-    if (!canSpeakTr()) toast('Türkçe ses bulunamadı');
-  },
   reset(){
     if (!resetArmed){
       resetArmed = true; renderSettings();

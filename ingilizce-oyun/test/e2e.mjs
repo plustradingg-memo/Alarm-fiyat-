@@ -139,6 +139,75 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
   await page.waitForTimeout(800);
 }
 
+
+// Evcil hayvanın bir gününü oynatır. mode: 'tap' | 'drag'
+async function playPetDay(page, { mode = 'tap', shots = '' } = {}){
+  const t = sel => tap(page, sel);
+  const lastSaid = re => page.evaluate(src => { const r = new RegExp(src); const m = window.__spoken.slice().reverse().find(x => r.test(x.text)); return m ? m.text : ''; }, re.source);
+  const place = async (itemSel, targetSel) => { if (mode === 'drag') await drag(page, itemSel, targetSel); else { await t(itemSel); await t(targetSel); } };
+  const roomReady = async label => {
+    try { await page.waitForSelector('.pet-scene.room'); await page.waitForSelector('#acts .pet-do.now', { timeout: 15000 }); }
+    catch (e){ const info = await page.evaluate(() => ({ screen: (document.querySelector('.pet-scene') || {}).className, said: window.__spoken.slice(-4).map(x => x.text) })); throw new Error('oda gelmedi (' + label + '): ' + JSON.stringify(info)); }
+    await page.waitForTimeout(600);
+  };
+  const feed = async () => {
+    await t('.pet-do.now'); await waitFor(page, '#bowl'); await page.waitForTimeout(650);
+    for (let r = 0; r < 2; r++){
+      const w = (await lastSaid(/, please!$/)).replace(', please!', '').toLowerCase();
+      const key = await page.$$eval('#field .item[data-item]', (els, w) => { const e = els.find(x => x.dataset.name.toLowerCase() === w); return e && e.dataset.key; }, w);
+      assert.ok(key, 'istenen yiyecek masada yok: ' + w);
+      await place(`#field [data-key="${key}"]`, '#bowl');
+      await page.waitForFunction(n => document.querySelectorAll('#field .item.gone').length >= n, r + 1, { timeout: 6000 });
+      await page.waitForTimeout(2200);
+    }
+  };
+  await roomReady('başlangıç'); if (shots) await page.screenshot({ path: path.join(SHOTS, shots + '-1-room.png') });
+  await feed();                                                   // kahvaltı
+  await roomReady('kahvaltı');
+  await t('.pet-do.now'); await waitFor(page, '#petdrop'); await page.waitForTimeout(650);   // giyinme
+  if (shots) await page.screenshot({ path: path.join(SHOTS, shots + '-2-dress.png') });
+  for (let r = 0; r < 2; r++){
+    const w = (await lastSaid(/^Put on the /)).replace('Put on the ', '').replace('!', '').toLowerCase();
+    const key = await page.$$eval('#field .item[data-item]', (els, w) => { const e = els.find(x => x.dataset.name.toLowerCase() === w); return e && e.dataset.key; }, w);
+    assert.ok(key, 'istenen giysi yok: ' + w);
+    await place(`#field [data-key="${key}"]`, '#petdrop');
+    await page.waitForFunction(n => document.querySelectorAll('#wear .wear-item').length >= n, r + 1, { timeout: 6000 });
+    await page.waitForTimeout(1800);
+  }
+  await roomReady('giyinme');
+  await t('.pet-do.now'); await waitFor(page, '#park'); await page.waitForTimeout(650);       // yürüyüş
+  for (let r = 0; r < 3; r++){
+    const w = (await lastSaid(/^Where is the /)).replace('Where is the ', '').replace('?', '');
+    await t(`.park-obj[aria-label="${w}"]`);
+    await page.waitForTimeout(1400);
+  }
+  await page.waitForSelector('.park-obj.ball:not([disabled])', { timeout: 6000 });
+  if (shots) await page.screenshot({ path: path.join(SHOTS, shots + '-3-park.png') });
+  await t('.park-obj.ball');
+  await roomReady('yürüyüş');
+  assert.ok(await page.$eval('#pet', e => e.classList.contains('muddy')), 'yürüyüşten sonra çamurlu olmalı');
+  await t('.pet-do.now'); await waitFor(page, '.pet-scene.bathroom'); await page.waitForTimeout(650);   // banyo
+  for (let k = 0; k < 4; k++){ await place('#field [data-key="tool:soap"]', '#petdrop'); await page.waitForTimeout(300); }
+  if (shots) await page.screenshot({ path: path.join(SHOTS, shots + '-4-bath.png') });
+  await page.waitForSelector('#shower:not([disabled])'); await t('#shower');
+  await page.waitForSelector('#towel:not([disabled])'); await page.waitForTimeout(300);
+  await place('#towel', '#petdrop');
+  await roomReady('banyo');
+  assert.ok(!(await page.$eval('#pet', e => e.classList.contains('muddy'))), 'banyodan sonra temiz olmalı');
+  await feed();                                                   // akşam yemeği
+  await roomReady('akşam');
+  await t('.pet-do.now'); await waitFor(page, '.pet-scene.bedroom'); await page.waitForTimeout(650);  // uyku
+  await place('#brush', '#petdrop'); await page.waitForTimeout(2800);
+  await place('#petdrop', '#bed'); await page.waitForSelector('#lamp:not([disabled])', { timeout: 6000 });
+  if (shots) await page.screenshot({ path: path.join(SHOTS, shots + '-5-bed.png') });
+  await t('#lamp'); await page.waitForTimeout(600);
+  for (let k = 0; k < 5; k++){ await t(`.star-btn[data-i="${k}"]`); await page.waitForTimeout(250); }
+  await page.waitForSelector('.sun-btn', { timeout: 12000 }); await page.waitForTimeout(600);
+  if (shots) await page.screenshot({ path: path.join(SHOTS, shots + '-6-night.png') });
+  await t('.sun-btn');
+  await roomReady('sabah');
+}
+
 (async () => {
   const browser = await chromium.launch();
 
@@ -154,7 +223,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.equal(await page.isVisible('.topbar'), true);
   });
   await step('ana sayfada hikâye ve market kartları + 15 dünya', async () => {
-    assert.equal(await page.locator('.feature').count(), 2);
+    assert.equal(await page.locator('.feature').count(), 3);
     assert.equal(await page.locator('.cat-tile').count(), 15);
     await page.screenshot({ path: path.join(SHOTS, 'home-light.png') });
   });
@@ -215,7 +284,8 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.waitForFunction(() => document.querySelector('#demo-bread').classList.contains('gone'), null, { timeout: 15000 });
     await page.waitForFunction(() => document.querySelector('#basket-in').textContent.includes('🍞'));
     const sp = await spoken(page);
-    assert.ok(sp.some(s => /önce ben yapayım/.test(s.text) && s.lang.startsWith('tr')), 'gösterim Türkçe anlatılmalı');
+    assert.ok(sp.some(s => /Watch me!/.test(s.text)), 'gösterim anlatılmalı');
+    assert.equal(sp.filter(s => s.lang.startsWith('tr')).length, 0, 'uygulama Türkçe konuşmamalı');
     await tap(page, '[data-act="exit"]');
     await page.waitForSelector('.feature');
     assert.equal(await page.isVisible('.topbar'), true);          // çıkışta üst çubuk geri gelir
@@ -226,13 +296,13 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
   await step('hikâye baştan sona: elma, kırmızı, tavşan + ipuçları', async () => {
     await playStory(page, { mode: 'tap', wrong: true, shots: 'story-light' });
     const sp = await spoken(page);
-    const tr = sp.filter(s => s.lang.startsWith('tr')).map(s => s.text).join(' | ');
+    const all = sp.map(s => s.text).join(' | ');
     const en = sp.filter(s => s.lang.startsWith('en')).map(s => s.text);
     for (const w of ['Apple!', 'Red!', 'Rabbit!']) assert.ok(en.includes(w), 'İngilizce söylenmeli: ' + w);
-    assert.match(tr, /Elma kırmızı ve yuvarlak/, 'elma için açıklayıcı ipucu');
-    assert.match(tr, /Kırmızı, elma gibi/, 'kırmızı için açıklayıcı ipucu');
-    assert.match(tr, /Tavşanın uzun kulakları var/, 'tavşan için açıklayıcı ipucu');
-    assert.ok(sp.every(s => !s.lang.startsWith('tr') || s.voice === 'Yelda'), 'Türkçe yalnızca Türkçe sesle okunmalı');
+    assert.match(all, /That's a banana\./, 'elma için açıklayıcı ipucu');
+    assert.match(all, /That's blue\./, 'kırmızı için açıklayıcı ipucu');
+    assert.match(all, /Look for the long ears!/, 'tavşan için açıklayıcı ipucu');
+    assert.ok(sp.every(s => s.lang.startsWith('en')), 'yalnızca İngilizce konuşulmalı (Türkçe ses olsa bile)');
   }, 'story');
   await step('çıkartma seçimi: rastgele değil, çocuk seçer ve kaydedilir', async () => {
     assert.equal(await page.locator('#picks .pick').count(), 3);
@@ -336,8 +406,9 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.equal(Object.values(st.market.bought).reduce((a, b) => a + b, 0), 4);
     const sp = await spoken(page);
     assert.ok(sp.some(s => /please!$/.test(s.text) && s.lang.startsWith('en')));
-    assert.ok(sp.some(s => /Önce ona dokun, sonra sepete/.test(s.text)), 'ilk ziyarette ısınma gösterimi');
-    assert.ok(sp.some(s => /Bubu başka bir şey istiyor/.test(s.text)), '1. yanlışta açıklayıcı ipucu');
+    assert.ok(sp.some(s => /Tap it, then tap the basket!/.test(s.text)), 'ilk ziyarette ısınma gösterimi');
+    assert.ok(sp.some(s => /^That's|^Those are/.test(s.text)), '1. yanlışta açıklayıcı ipucu');
+    assert.ok(sp.every(s => s.lang.startsWith('en')), 'markette yalnızca İngilizce');
     await tap(page, '.end-actions [data-act="exit"]');
     await page.waitForSelector('.feature');
   } catch (e){ const ev = await page.evaluate(() => window.__ev.slice(-14)).catch(() => []); e.message += ' | olaylar: ' + ev.join(' '); throw e; } }, 'market');
@@ -368,6 +439,61 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.ok(ext.every(u => /^https:\/\/fonts\.(googleapis|gstatic)\.com\//.test(u)), ext.join('\n'));
   });
   await page.context().close();
+
+  console.log('Minik Dostum (evcil hayvan)');
+  if (want('pet')){
+    const pp = await openPage(browser, { save: { ...OLD_SAVE } });
+    await step('hayvan seçilir, bütün gün oynanır (dokunarak), büyür ve kaydedilir', async () => {
+      await tap(pp, '[data-act="pet"]');
+      assert.equal(await pp.isVisible('.topbar'), false);
+      await waitFor(pp, '#adopt'); await pp.waitForTimeout(800);
+      await pp.screenshot({ path: path.join(SHOTS, 'pet-0-adopt.png') });
+      await tap(pp, '.adopt-card[data-kind="kitten"]');
+      await playPetDay(pp, { mode: 'tap', shots: 'pet-light' });
+      const st = await store(pp);
+      assert.equal(st.pet.kind, 'kitten'); assert.equal(st.pet.day, 2); assert.equal(st.pet.days, 1); assert.equal(st.pet.step, 0);
+      assert.ok(await pp.$eval('#pet', e => e.classList.contains('stage-kid')), 'bir günden sonra büyümüş olmalı');
+      assert.equal(st.stars, OLD_SAVE.stars, 'hayvan yıldız/sandık ekonomisini değiştirmez');
+      const sp = await spoken(pp);
+      assert.ok(sp.length > 20 && sp.every(x => x.lang.startsWith('en')), 'yalnızca İngilizce konuşulmalı');
+      assert.ok(sp.some(x => x.text === "Look! I'm bigger!"));
+      assert.deepEqual(pp.__errors, []);
+    }, 'pet');
+    await step('ikinci gün sürükleyerek oynanır; yanlış yiyecekte ipucu, ceza yok', async () => {
+      await tap(pp, '.pet-do.now'); await waitFor(pp, '#bowl'); await pp.waitForTimeout(650);
+      const w = await pp.evaluate(() => (window.__spoken.slice().reverse().find(x => /, please!$/.test(x.text)) || {}).text.replace(', please!', '').toLowerCase());
+      const wrong = await pp.$$eval('#field .item[data-item]', (els, w) => els.find(x => x.dataset.name.toLowerCase() !== w).dataset.key, w);
+      await clearSpoken(pp);
+      await drag(pp, `#field [data-key="${wrong}"]`, '#bowl'); await pp.waitForTimeout(1500);
+      const sp = (await spoken(pp)).map(x => x.text).join(' | ');
+      assert.match(sp, /No, thank you!/);
+      assert.equal(await pp.$$eval('#field .item.gone', e => e.length), 0, 'yanlış yiyecek yenmemeli, yerine dönmeli');
+      await tap(pp, '[data-act="petroom"]'); await waitFor(pp, '.pet-scene.room');
+      await tap(pp, '[data-act="exit"]'); await pp.waitForSelector('.feature');
+      assert.equal(await pp.isVisible('.topbar'), true);
+      assert.match(await pp.textContent('[data-act="pet"] small'), /Luna · 2\. gün/);
+      await tap(pp, '[data-act="pet"]');
+      await playPetDay(pp, { mode: 'drag' });
+      assert.equal((await store(pp)).pet.days, 2);
+      assert.deepEqual(pp.__errors, []);
+    }, 'pet');
+    await pp.context().close();
+    for (const [w, h, dark] of [[375, 548, false], [375, 548, true], [667, 320, false]]){
+      const sp2 = await openPage(browser, { viewport: { width: w, height: h }, dark, save: { ...OLD_SAVE, pet: { kind: 'bunny', day: 3, step: 0, days: 3 } } });
+      await step(`${w}×${h}${dark ? ' koyu' : ''}: hayvan odası ve mutfak sığar`, async () => {
+        await tap(sp2, '[data-act="pet"]'); await waitFor(sp2, '.pet-scene.room'); await sp2.waitForTimeout(600);
+        let f = await fits(sp2); assert.ok(f.docOverflow <= 0 && f.bodyOverflow <= 2 && f.wide <= 0, 'oda ' + JSON.stringify(f));
+        await sp2.screenshot({ path: path.join(SHOTS, `pet-room-${w}x${h}${dark ? '-dark' : ''}.png`) });
+        await tap(sp2, '.pet-do.now'); await waitFor(sp2, '#bowl'); await sp2.waitForTimeout(600);
+        f = await fits(sp2); assert.ok(f.bodyOverflow <= 2 && f.wide <= 0, 'mutfak ' + JSON.stringify(f));
+        const sizes = await sp2.$$eval('#field .item, .act-btn, #bowl', els => els.map(e => Math.round(Math.min(e.getBoundingClientRect().width, e.getBoundingClientRect().height))));
+        assert.ok(Math.min(...sizes) >= 50, 'hedef çok küçük: ' + Math.min(...sizes));
+        await sp2.screenshot({ path: path.join(SHOTS, `pet-kitchen-${w}x${h}${dark ? '-dark' : ''}.png`) });
+        assert.deepEqual(sp2.__errors, []);
+      }, 'pet');
+      await sp2.context().close();
+    }
+  }
 
   console.log('Telefon ekranları (açık / koyu), sığma kontrolü');
   if (want('screens')) {
@@ -443,11 +569,11 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     });
     await sp.context().close();
   }
-  console.log('Türkçe ses olmayan / bulutta olan cihaz');
+  console.log('Ses durumları: Türkçe ses yok / bulutta, bulut İngilizce');
   if (want('notr'))
   for (const tr of ['none', 'remote']){
     const p = await openPage(browser, { tr });
-    await step(`Türkçe ses ${tr}: Türkçe parçalar okunmaz, hikâye yine tamamlanır`, async () => {
+    await step(`Türkçe ses ${tr}: yalnızca İngilizce konuşulur, hikâye tamamlanır`, async () => {
       await playStory(p, { mode: 'tap', wrong: true });
       const sp = await spoken(p);
       assert.ok(sp.length > 0);
