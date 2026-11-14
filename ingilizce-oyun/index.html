@@ -770,7 +770,7 @@ const DIGIT_COLORS = ['var(--c-red)','var(--c-orange)','var(--c-yellow)','var(--
 const STORE_KEY = 'bubu-english-v1';
 const fresh = () => ({ stars:0, chest:0, seen:{}, best:{}, specials:[],
   story:{}, market:{ visits:0, bought:{} },
-  settings:{ slow:false, accent:'us', showTr:true, sfx:true, trVoice:true } });
+  settings:{ slow:false, accent:'us', showTr:true, sfx:true, trVoice:true, onlineVoice:false } });
 let S = load();
 function load(){
   const d = fresh();
@@ -913,19 +913,29 @@ function trState(){
   if (!voices.length) return 'unknown';
   return trVoice() ? 'ok' : 'none';
 }
-const canSpeakTr = () => { const s = trState(); return s === 'ok' || s === 'unknown'; };
+// Türkçe yalnızca cihazda gerçek bir Türkçe ses varken okunur (ses listesi boşken tahmin edilmez).
+const canSpeakTr = () => trState() === 'ok';
+// İngilizce: 'ok' | 'unknown' (liste henüz boş) | 'none' (izin verilen ses yok) | 'nosynth'
+function enState(){
+  if (!synth) return 'nosynth';
+  if (!voices.length) loadVoices();
+  if (!voices.length) return 'unknown';
+  return pickVoice() ? 'ok' : 'none';
+}
 function pickVoice(){
   if (!voices.length) loadVoices();
   const want = uk() ? 'en-gb' : 'en-us';
   const en = voices.filter(v => vlang(v).startsWith('en') && !NOVELTY.test(v.name));
   const isLocal = v => v.localService !== false;
+  const online = !!S.settings.onlineVoice;
   const exact = en.filter(v => vlang(v) === want);
-  // Önce aksanı tutan cihaz üstü ses. Ebeveyn İngiliz aksanını seçtiyse ve cihazda yerel en-GB yoksa
-  // aksanı tutan (önceden de kullanılan) ses; yoksa herhangi bir cihaz üstü İngilizce ses.
+  // Önce aksanı tutan CİHAZ ÜSTÜ ses, sonra herhangi bir cihaz üstü İngilizce ses.
+  // Çevrim içi (bulut) sesler metni dışarı gönderir: yalnızca ebeveyn "Çevrim içi ses"i açtıysa kullanılır.
   let pool = exact.filter(isLocal);
-  if (!pool.length && uk()) pool = exact;
+  if (!pool.length && online) pool = exact;
   if (!pool.length) pool = en.filter(isLocal);
-  if (!pool.length) pool = exact.length ? exact : en;
+  if (!pool.length && online) pool = en;
+  if (!pool.length) return null;
   const prefer = ['Samantha','Google US English','Google UK English Female','Microsoft Aria','Microsoft Jenny','Microsoft Libby','Microsoft Sonia','Karen','Serena','Moira','Daniel','Microsoft Zira'];
   for (const p of prefer){ const v = pool.find(x => x.name.indexOf(p) > -1); if (v) return v; }
   return pool.find(v => v.localService) || pool[0] || null;
@@ -933,7 +943,7 @@ function pickVoice(){
 function speak(text){
   const id = ++speakId;
   caption(text);
-  if (!synth) return wait(700 + text.length * 60).then(() => id);
+  if (!synth || enState() === 'none') return wait(700 + text.length * 60).then(() => id);
   return new Promise(res => {
     let done = false;
     const fin = () => { if (!done){ done = true; res(id); } };
@@ -975,7 +985,8 @@ function speakLine(segs){
   const text = lineText(segs);
   caption(text, segs.some(s => s && s[0] === 'tr') ? 'tr' : 'en');
   announce(text);
-  const spoken = segs.filter(s => s && s[1] && (s[0] !== 'tr' || canSpeakTr()));
+  const enOk = enState() !== 'none';
+  const spoken = segs.filter(s => s && s[1] && (s[0] === 'pause' || (s[0] === 'tr' ? canSpeakTr() : enOk)));
   const groups = [[]], pauses = [];
   spoken.forEach(s => { if (s[0] === 'pause'){ groups.push([]); pauses.push(s[1]); } else groups[groups.length - 1].push(s); });
   return (async () => {
@@ -1232,10 +1243,11 @@ function renderSettings(){
       <div class="set-row"><span>Türkçe anlamı</span>${seg('showTr', [['true','Göster'], ['false','Gizle']])}</div>
       <div class="set-row"><span>Oyun sesleri</span>${seg('sfx', [['true','Açık'], ['false','Kapalı']])}</div>
       <div class="set-row"><span>Türkçe sesli yönlendirme</span>${seg('trVoice', [['true','Açık'], ['false','Kapalı']])}</div>
+      <div class="set-row"><span>Çevrim içi ses</span>${seg('onlineVoice', [['false','Kapalı'], ['true','Açık']])}</div>
     </div>
-    <div class="voice-box"><p>İngilizce ses: <b>${v ? v.name + ' (' + v.lang + (v.localService === false ? ', çevrim içi' : '') + ')' : (synth ? 'cihazın varsayılan sesi' : 'bu tarayıcı sesli okumayı desteklemiyor')}</b></p><button class="btn small" data-act="testvoice">${ICON.speaker} İngilizce dene</button></div>
+    <div class="voice-box"><p>İngilizce ses: <b>${v ? v.name + ' (' + v.lang + (v.localService === false ? ', çevrim içi' : '') + ')' + (uk() && vlang(v) !== 'en-gb' ? ' — bu cihazda İngiliz aksanlı ses yok' : '') : (!synth ? 'bu tarayıcı sesli okumayı desteklemiyor' : voices.length ? 'cihazda yerel İngilizce ses yok' : 'cihazın varsayılan sesi')}</b></p><button class="btn small" data-act="testvoice">${ICON.speaker} İngilizce dene</button></div>
     <div class="voice-box"><p>Türkçe ses: <b>${trState() === 'off' ? 'yönlendirme kapalı' + (tv ? ' (' + tv.name + ')' : '') : tv ? tv.name + ' (' + tv.lang + ')' : ({ nosynth: '—', unknown: 'cihaz seçecek' }[trState()] || 'cihazda bulunamadı; yönergeler resim ve el işaretiyle gösterilir')}</b></p><button class="btn small" data-act="testtr">${ICON.speaker} Türkçe dene</button></div>
-    <p class="note">Sesleri cihazın kendisi üretir; Türkçe yönlendirme için yalnızca cihaz üstündeki sesler kullanılır. Ses gelmezse sessiz modu kapatıp sesi açın. Türkçe ses yoksa: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › Türkçe; Android’de Ayarlar › Genel yönetim (veya Sistem) › Dil › Metin okuma çıkışı › Google › Dil verilerini yükle › Türkçe. Menü adları cihaza göre değişebilir; Ayarlar’da “Metin okuma” diye arayın.</p>
+    <p class="note">${v && v.localService === false ? 'İngilizce ses çevrim içi bir hizmetten geliyor (söylenen kelimeler o hizmete gider); istemezseniz “Çevrim içi ses”i kapatın.' : 'Sesleri cihazın kendisi üretir; çevrim içi (bulut) sesler yalnızca “Çevrim içi ses” açıksa kullanılır.'} Türkçe yönlendirme yalnızca cihaz üstündeki Türkçe sesle okunur. Ses gelmezse sessiz modu kapatıp sesi açın. Türkçe ses yoksa: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › Türkçe; Android’de Ayarlar › Genel yönetim (veya Sistem) › Dil › Metin okuma çıkışı › Google › Dil verilerini yükle › Türkçe. Menü adları cihaza göre değişebilir; Ayarlar’da “Metin okuma” diye arayın.</p>
     <div class="tally"><span><b>${S.stars}</b> yıldız</span><span><b>${totalSeen()}</b>/${TOTAL} kelime</span><span><b>${S.specials.length}</b>/${SPECIALS.length} hazine</span><span><b>${storyStickers().length}</b>/${STORY_STICKERS.length} hikâye çıkartması</span></div>
     <div class="modal-actions"><button class="btn small danger ${resetArmed ? 'armed' : ''}" data-act="reset">${resetArmed ? 'Emin misiniz? Evet, sıfırla' : 'İlerlemeyi sıfırla'}</button><button class="btn primary" data-act="close">Kapat</button></div>`, 'settings-modal');
   const mb = $('.modal-back'); if (mb && keepScroll) mb.scrollTop = keepScroll;
@@ -1916,6 +1928,20 @@ function demoMove(fromEl, toEl){
   setTimeout(() => h.classList.add('fade'), 2000);
   setTimeout(() => h.remove(), 2400);
 }
+// Genel "önce resme, sonra sepete" gösterimi: resimler sırayla zıplar, el sıranın ALTINDAN sepete gider
+// (hiçbir resme dokunmaz; cevabı göstermez).
+function demoRow(rowEl, toEl){
+  if (!rowEl || !toEl) return;
+  hopSeq(rowEl);
+  const r = rowEl.getBoundingClientRect(), h = makeHand();
+  h.classList.add('nomove');
+  h.style.transform = `translate(${r.left + r.width / 2 - 18}px,${r.bottom + 6}px)`;
+  void h.offsetWidth; h.classList.remove('nomove');
+  setTimeout(() => handAt(h, toEl), 900);
+  setTimeout(() => handTap(h), 1700);
+  setTimeout(() => h.classList.add('fade'), 2200);
+  setTimeout(() => h.remove(), 2600);
+}
 function pointHand(el){
   if (!el) return;
   const h = makeHand(el);
@@ -1933,7 +1959,7 @@ function makeTask(){
   t.guard = ms => { t.readyAt = performance.now() + ms; };          // sahne değişince çift dokunuş taşmasın
   t.ready = () => performance.now() >= t.readyAt;
   // Resimli mod: cihazda Türkçe ses yoksa (ya da kapalıysa) yönergeler el gösterimi ve resimle verilir.
-  t.checkPic = () => { t.pic = trState() !== 'ok'; return t.pic; };
+  t.checkPic = () => { t.pic = trState() !== 'ok' || enState() === 'none'; return t.pic; };
   // Balon her sahnede sabit, kısa içerik gösterir (İngilizce kelime); ipuçları balonu değiştirmez.
   t.bubble = html => { const el = $('#tell-text'); if (el) el.innerHTML = html; };
   t.fly = (from, toEl, w, into) => {
@@ -2060,7 +2086,13 @@ function viewStory(){
       <span class="teach-word" lang="en">${say(w)}</span>${S.settings.showTr ? `<span class="teach-tr">${w.tr}</span>` : ''}</div></div>` + goRow('Devam', true);
     T.bubble(word(w));
     const segs = [['tr', intro], ['en', A(say(w))], ['tr', 'Sen de söyle!'], ['pause', 1500], ['en', A(say(w))]];
-    const showNext = () => { const n = $('.next-btn', b); if (n) n.hidden = false; };   // ▶ kelime duyulduktan sonra çıkar
+    let shown = false;
+    const showNext = () => {                                   // ▶ kelime duyulduktan sonra çıkar
+      const n = $('.next-btn', b); if (!n || shown) return;
+      shown = true; n.hidden = false;
+      T.demo = () => pointHand($('.next-btn', b));
+      if (T.pic) T.later(T.demo, 400);
+    };
     T.talk(segs).then(showNext);
     T.later(showNext, 7000);
     viewActs.teachhear = el => { retrigger(el, 'bounce'); sfx.tap(); if (!T.speaking) T.say([['en', A(say(w))]]); };
@@ -2070,6 +2102,8 @@ function viewStory(){
     intro(b){
       b.innerHTML = tellHTML() + `<div class="act-main"><div class="stage scene-intro">${ORB}<span class="scene-tree emo" aria-hidden="true">🌳</span><span class="scene-basket">${basketSVG()}</span><span class="scene-flower emo" aria-hidden="true">🌼</span></div></div>` + goRow('Başla');
       T.bubble('<span lang="tr">Bubu’nun Pikniği</span>');
+      T.demo = () => pointHand($('.next-btn'));
+      if (T.pic) T.later(T.demo, 900);
       const go = [['tr', 'Yeşil düğmeye dokun.']];
       T.talk((firstPlay ? [['tr', 'Bugün Bubu pikniğe gidiyor!'], ['tr', 'Hadi, ona yardım edelim.']] : [['tr', 'Yine pikniğe gidiyoruz!']]).concat(go));
       T.setIdle([() => { T.talk(go); const n = $('.next-btn'); if (n) retrigger(n, 'hop'); }]);
@@ -2086,15 +2120,16 @@ function viewStory(){
       T.bubble(word(APPLE));
       if (T.pic) setWant(pic(APPLE, true), 2);
       let miss = 0, done = false, demoing = demoing0;
+      const tried = {};
       const prompt = [['tr', 'Elmayı sepete koy.'], ['en', A(say(APPLE))]];
       const appleEl = () => $(`#field [data-key="${CSS.escape(APPLE.key)}"]`);
-      T.demo = () => demoMove($('#field'), $('#basket'));
+      T.demo = () => demoRow($('#field'), $('#basket'));
       T.placer = makePlacer(b, {
         target: $('#basket'),
         locked: () => done || demoing || !T.ready(),
         onSelect: el => { sfx.tap(); if (!T.speaking) T.say([['en', A(say(WORD[el.dataset.key]))]]); },
         onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], prompt); },
-        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['tr', 'Önce birine dokun, sonra sepete.'], ['en', A(say(APPLE))]], prompt); },
+        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['tr', 'Önce bir resme dokun, sonra sepete.'], ['en', A(say(APPLE))]], prompt); },
         onPlace: (el, from) => {
           const w = WORD[el.dataset.key];
           if (w === APPLE){
@@ -2104,14 +2139,16 @@ function viewStory(){
             praiseThen(T.talk([['en', A(say(APPLE))], ['tr', 'Harika! Elma sepette.']]), 600);
             return true;
           }
-          miss++; sfx.hmm(); retrigger(el, 'soft');
+          sfx.hmm(); retrigger(el, 'soft');
+          if (tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return false; }
+          tried[w.key] = 1; miss++;
           if (miss === 1 && !T.pic) T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Elma kırmızı ve yuvarlak.'], ['en', A(say(APPLE))]], prompt);
           else if (miss <= 2){ glow(appleEl()); T.talkSoon([['tr', 'Bak, elma burada!'], ['en', A(say(APPLE))]], prompt); }
           else { const a = appleEl(); glow(a); T.placer.preselect(a); pointHand($('#basket')); T.talkSoon([['tr', 'Elmayı seçtim. Şimdi sepete dokun.']], prompt); }
           return false;
         }
       });
-      T.setIdle([() => { T.talk(prompt); demoMove($('#field'), $('#basket')); }, () => glow(appleEl())]);
+      T.setIdle([() => { T.talk(prompt); demoRow($('#field'), $('#basket')); }, () => glow(appleEl())]);
       if (!demoing){ T.talk([['tr', 'Bubu acıktı.']].concat(prompt), prompt); return; }
       // "Önce ben yapayım": el ekmeğe dokunur, sonra sepete; ekmek sepete girer. İlk oyunda ve resimli modda.
       (async () => {
@@ -2175,6 +2212,7 @@ function viewStory(){
       const prompt = [['tr', 'Tavşanı bul!'], ['en', A(say(RABBIT))]];
       const rabbitEl = () => $(`#bushes [data-key="${CSS.escape(RABBIT.key)}"]`);
       T.demo = () => {
+        if (found > 0){ const r = rabbitEl(); if (r && !r.classList.contains('open')){ retrigger(r, 'hop'); if (T.pic) pointHand(r); } return; }
         hopSeq($('#bushes'));
         if (T.pic){ const other = $$('#bushes .bush:not(.open)').find(x => x.dataset.key !== RABBIT.key); if (other) T.later(() => pointHand(other), 700); }
       };
@@ -2215,7 +2253,7 @@ function viewStory(){
       b.innerHTML = tellHTML() + `<div class="act-main"><div class="picks" id="picks">${STORY_STICKERS.map((w, k) => `<button class="pick${rec.stickers.indexOf(w.key) > -1 ? ' owned' : ''}" data-act="pick" data-key="${w.key}" style="--r:${[-4, 2, -2][k]}deg"><span class="pic">${pic(w)}</span><b lang="en">${say(w)}</b></button>`).join('')}</div></div><div class="go-row end-row" id="after-pick"></div>`;
       T.bubble('<span lang="tr">Bir çıkartma seç</span>');
       const names = STORY_STICKERS.map(w => ['en', A(say(w))]);
-      const full = [['tr', 'Sana bir çıkartma var! Hangisini istersin?']].concat(names, [['tr', 'Birine dokun.']]);
+      const full = [['tr', 'Sana bir çıkartma var! Hangisini istersin?']].concat(names, [['tr', 'Bir çıkartmaya dokun.']]);
       T.demo = () => hopSeq($('#picks'));
       (async () => {
         const tok = T.step, live = () => T.alive && tok === T.step && !chosen;
@@ -2229,7 +2267,7 @@ function viewStory(){
           els[k].classList.remove('spot');
           if (!r[0]) return;
         }
-        if (live()) T.talk([['tr', 'Birine dokun.']], full);
+        if (live()) T.talk([['tr', 'Bir çıkartmaya dokun.']], full);
       })();
       viewActs.pick = el => {
         if (chosen || !T.ready()) return;
@@ -2241,7 +2279,7 @@ function viewStory(){
         el.classList.add('chosen'); sfx.good(); confettiAt(el, 50);
         $('#after-pick').innerHTML = endActions(true);
         T.setIdle([]);
-        T.talk([['en', A(say(w))], ['tr', had ? 'Yine bunu seçtin! Çok güzel.' : 'Bu çıkartma artık senin!'], ['tr', 'Teşekkürler! Bubu çok mutlu. Bir daha oynayalım mı?']]);
+        T.talk([['en', A(say(w))], ['tr', had ? 'Yine bunu seçtin! Çok güzel.' : 'Bu çıkartma artık senin!'], ['tr', 'Teşekkürler! Bubu çok mutlu. Bir daha oynamak istersen yeşil düğmeye dokun.']]);
       };
       T.setIdle([() => { T.talk([['tr', 'Bir çıkartmaya dokun.']], full); hopSeq($('#picks')); }]);
     }
@@ -2277,7 +2315,7 @@ function viewMarket(){
   cleanup = T.end;
   T.checkPic();
   const warm = !(S.market.visits > 0) || T.pic;             // ilk ziyarette ve resimli modda ısınma gösterimi
-  let round = 0, miss = 0, busy = true;
+  let round = 0, miss = 0, busy = true, tried = {};
   const bought = [];
   const setBusy = v => { busy = v; const m = $('#mk'); if (m) m.dataset.turn = v ? 'bubu' : 'child'; };
   if (!S.market.bought || typeof S.market.bought !== 'object') S.market.bought = {};
@@ -2304,15 +2342,15 @@ function viewMarket(){
     el.innerHTML = orders.map((w, k) => `<span class="slot${k < bought.length ? ' full' : ''}${k === bought.length ? ' now' : ''}">${k < bought.length ? pic(bought[k], true) : ''}</span>`).join('');
   }
   function ask(firstReq){
-    const w = want(); miss = 0;
+    const w = want(); miss = 0; tried = {};
     T.checkPic();
     $('#shelf').dataset.want = w.key;
     $$('#shelf .hint-glow').forEach(x => x.classList.remove('hint-glow'));
     T.bubble(`<b lang="en">${A(say(w)).slice(0, -1)}</b>, please!`);
     slots();
-    T.demo = () => demoMove($('#shelf'), $('#basket'));
+    T.demo = () => demoRow($('#shelf'), $('#basket'));
     T.setIdle([
-      () => { T.talk(replayLine(w)); demoMove($('#shelf'), $('#basket')); },
+      () => { T.talk(replayLine(w)); demoRow($('#shelf'), $('#basket')); },
       () => setWant(1)
     ]);
     if (warm && firstReq){ setWant(2); warmup(w); return; }
@@ -2372,7 +2410,7 @@ function viewMarket(){
       if (!live()) return;
       await T.beat([['en', 'Thank you! Bye-bye!']], 0);
       await T.whenActive();
-      if (live()) T.talk([['tr', 'Bir daha oynayalım mı?']]);
+      if (live()) T.talk([['tr', 'Bir daha oynamak istersen yeşil düğmeye dokun.']]);
     })();
   }
   viewActs.rhear = el => { const w = WORD[el.dataset.key]; sfx.tap(); retrigger(el, 'bounce'); T.say([['en', A(say(w))]]); };
@@ -2384,7 +2422,7 @@ function viewMarket(){
       const bk = $('#basket'); if (bk && bk.getBoundingClientRect().bottom > innerHeight) bk.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
     },
     onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], replayLine(want())); },
-    onEmptyTarget: () => { hopSeq($('#shelf')); T.talk([['tr', 'Önce birine dokun, sonra sepete.'], please(want())], replayLine(want())); },
+    onEmptyTarget: () => { hopSeq($('#shelf')); T.talk([['tr', 'Önce bir resme dokun, sonra sepete.'], please(want())], replayLine(want())); },
     onPlace: (el, from) => {
       const w = WORD[el.dataset.key], target = want();
       if (w === target){
@@ -2400,7 +2438,9 @@ function viewMarket(){
           .then(() => T.whenActive()).then(() => T.later(last ? finish : () => ask(false), 400));
         return true;
       }
-      miss++; sfx.hmm(); retrigger(el, 'soft');
+      sfx.hmm(); retrigger(el, 'soft');
+      if (tried[w.key]){ if (!T.speaking) T.say([['en', A(say(w))]]); return false; }
+      tried[w.key] = 1; miss++;
       if (miss === 1 && !T.pic){ setWant(1); T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Bubu başka bir şey istiyor. Dinle:'], please(target)], replayLine(target)); }
       else if (miss <= 2){ setWant(2); glow(itemEl(target)); T.talkSoon([['tr', `Bubu ${target.tr} istiyor. Bak, burada!`], ['en', A(say(target))]], replayLine(target)); }
       else { setWant(2); const t = itemEl(target); glow(t); T.placer.preselect(t); pointHand($('#basket')); T.talkSoon([['tr', 'Şimdi sepete dokun.']], replayLine(target)); }

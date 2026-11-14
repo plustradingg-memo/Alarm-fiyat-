@@ -19,7 +19,7 @@ Eski kayıtlar (yıldız, kelimeler, hazineler, ayarlar) olduğu gibi korunur. K
 
 ## Gerçek telefonda ses testi
 
-Sesleri telefonun kendi metin okuma motoru üretir. Türkçe yönlendirme için **yalnızca cihaz üstündeki** Türkçe ses kullanılır; yoksa yönergeler el işareti ve resimle gösterilir.
+Sesleri telefonun kendi metin okuma motoru üretir. Türkçe yönlendirme için **yalnızca cihaz üstündeki** Türkçe ses kullanılır; yoksa yönergeler el işareti ve resimle gösterilir. İngilizce için de önce cihaz üstü ses seçilir; çevrim içi (bulut) sesler metni dışarı gönderdiği için yalnızca Ebeveyn köşesinde **“Çevrim içi ses”** açılırsa kullanılır (varsayılan: kapalı).
 
 1. Bilgisayarda depo kökünden yerel sunucu açın:
    ```bash

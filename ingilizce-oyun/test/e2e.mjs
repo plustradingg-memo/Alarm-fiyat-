@@ -25,7 +25,7 @@ function fakeSpeech(opts){
     window.__ev.push(t + ':' + (el && (el.dataset && el.dataset.key || el.id || el.className || el.tagName)) + '@' + Math.round(e.clientX) + ',' + Math.round(e.clientY));
     if (window.__ev.length > 30) window.__ev.shift();
   }, true));
-  const voices = [{ name: 'Samantha', lang: 'en-US', localService: true, default: true, voiceURI: 'sam' }];
+  const voices = [{ name: opts.en === 'remote' ? 'Google US English' : 'Samantha', lang: 'en-US', localService: opts.en !== 'remote', default: true, voiceURI: 'sam' }];
   if (opts.tr === 'local') voices.push({ name: 'Yelda', lang: 'tr-TR', localService: true, default: false, voiceURI: 'yel' });
   if (opts.tr === 'remote') voices.push({ name: 'Microsoft Emel Online (Natural)', lang: 'tr-TR', localService: false, default: false, voiceURI: 'emel' });
   class FakeU extends EventTarget {
@@ -63,14 +63,14 @@ async function step(name, fn, section){
   catch (e){ results.push(['FAIL', name, e.message]); console.log('  ✗', name, '\n    ', e.message.split('\n').filter(l => /waiting for|Expected|actual|expected|Error|assert|^[^ ]/.test(l)).slice(0, 4).join(' / ')); }
 }
 
-async function openPage(browser, { viewport = { width: 375, height: 667 }, dark = false, reducedMotion = false, tr = 'local', save = OLD_SAVE } = {}){
+async function openPage(browser, { viewport = { width: 375, height: 667 }, dark = false, reducedMotion = false, tr = 'local', en = 'local', save = OLD_SAVE } = {}){
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, hasTouch: true, colorScheme: dark ? 'dark' : 'light', reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   page.__errors = []; page.__requests = [];
   page.on('pageerror', e => page.__errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') page.__errors.push('console: ' + m.text()); });
   page.on('request', r => page.__requests.push(r.url()));
-  await page.addInitScript(fakeSpeech, { tr });
+  await page.addInitScript(fakeSpeech, { tr, en });
   if (save) await page.addInitScript(s => { if (!sessionStorage.getItem('seeded')){ localStorage.setItem('bubu-english-v1', JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } }, save);
   await page.goto(PAGE);
   await page.waitForTimeout(300);
@@ -300,10 +300,12 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
       await page.waitForTimeout(550);
       const key = await page.$eval('#shelf', e => e.dataset.want);                  // sonra yeni hedef okunur
       if (r === 1){
-        const wrong = await page.$$eval('#shelf .item[data-item]', (els, k) => els.find(e => e.dataset.key !== k).dataset.key, key);
-        await tap(page, `#shelf [data-key="${wrong}"]`); await tap(page, '#basket'); await page.waitForTimeout(300);
+        const wrongs = await page.$$eval('#shelf .item[data-item]', (els, k) => els.filter(e => e.dataset.key !== k).map(e => e.dataset.key), key);
+        await tap(page, `#shelf [data-key="${wrongs[0]}"]`); await tap(page, '#basket'); await page.waitForTimeout(300);
         assert.equal(await page.$eval('#want-pic', e => e.className.includes('lvl1')), true);
-        await tap(page, `#shelf [data-key="${wrong}"]`); await tap(page, '#basket'); await page.waitForTimeout(300);
+        await tap(page, `#shelf [data-key="${wrongs[0]}"]`); await tap(page, '#basket'); await page.waitForTimeout(300);
+        assert.equal(await page.$eval('#want-pic', e => e.className.includes('lvl1')), true, 'aynı yanlış tırmanmamalı');
+        await tap(page, `#shelf [data-key="${wrongs[1]}"]`); await tap(page, '#basket'); await page.waitForTimeout(300);
         assert.equal(await page.$eval('#want-pic', e => e.className.includes('lvl2')), true);
         await page.screenshot({ path: path.join(SHOTS, 'market-light-2-hint.png') });
       }
@@ -407,13 +409,30 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await p.context().close();
   }
 
+  if (want('notr')){
+    for (const allow of [false, true]){
+      const op = await openPage(browser, { en: 'remote', save: { ...OLD_SAVE, settings: { ...OLD_SAVE.settings, onlineVoice: allow } } });
+      await step(`yalnızca bulut İngilizce sesi var, çevrim içi ses ${allow ? 'açık: kullanılır' : 'kapalı: hiçbir söz gönderilmez'}`, async () => {
+        await tap(op, '[data-act="cat"][data-id="animals"]');
+        await tap(op, '.word-card >> nth=0'); await op.waitForTimeout(400);
+        await tap(op, '[data-act="home"]');
+        await tap(op, '[data-act="story"]'); await op.waitForTimeout(800);
+        const en = (await spoken(op)).filter(x => x.lang.startsWith('en'));
+        if (allow) assert.ok(en.length > 0, 'izin varken İngilizce okunmalı');
+        else assert.equal(en.length, 0, 'izin yokken bulut sesine söz gitmemeli: ' + en.map(x => x.text).join(','));
+        assert.deepEqual(op.__errors, []);
+      });
+      await op.context().close();
+    }
+  }
+
   console.log('Azaltılmış hareket ve klavye');
   if (want('a11y')) {
   page = await openPage(browser, { reducedMotion: true, save: { ...OLD_SAVE, story: { picnic: { plays: 2, stickers: [] } } } });
   await step('azaltılmış harekette ikinci yanlışta durağan halka ipucu', async () => {
     await tap(page, '[data-act="story"]'); await page.waitForTimeout(550); await tap(page, '.next-btn');
     await nextVisible(page); await waitFor(page, '#field'); await page.waitForTimeout(600);
-    for (let k = 0; k < 2; k++){ await tap(page, '#field [data-key="vegetables:carrot"]'); await tap(page, '#basket'); await page.waitForTimeout(200); }
+    for (const k of ['vegetables:carrot', 'fruits:banana']){ await tap(page, `#field [data-key="${k}"]`); await tap(page, '#basket'); await page.waitForTimeout(200); }
     const sh = await page.$eval('#field [data-key="fruits:apple"]', e => getComputedStyle(e).boxShadow);
     assert.ok(/\b10px\b/.test(sh), 'durağan halka yok: ' + sh);
   });
