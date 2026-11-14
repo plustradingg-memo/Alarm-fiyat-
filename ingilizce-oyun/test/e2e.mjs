@@ -19,6 +19,12 @@ fs.mkdirSync(SHOTS, { recursive: true });
 // --- sahte konuşma motoru (sayfa betiklerinden önce yüklenir) ---
 function fakeSpeech(opts){
   window.__spoken = [];
+  window.__ev = [];                       // takılma olursa son dokunuş hedefleri raporlanır
+  ['pointerdown', 'pointerup', 'click'].forEach(t => document.addEventListener(t, e => {
+    const el = e.target && e.target.closest ? (e.target.closest('[data-key],[id]') || e.target) : e.target;
+    window.__ev.push(t + ':' + (el && (el.dataset && el.dataset.key || el.id || el.className || el.tagName)));
+    if (window.__ev.length > 30) window.__ev.shift();
+  }, true));
   const voices = [{ name: 'Samantha', lang: 'en-US', localService: true, default: true, voiceURI: 'sam' }];
   if (opts.tr === 'local') voices.push({ name: 'Yelda', lang: 'tr-TR', localService: true, default: false, voiceURI: 'yel' });
   if (opts.tr === 'remote') voices.push({ name: 'Microsoft Emel Online (Natural)', lang: 'tr-TR', localService: false, default: false, voiceURI: 'emel' });
@@ -286,7 +292,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
       else { await tap(page, `#shelf [data-key="${key}"]`); await tap(page, '#basket'); }
       try { await page.waitForFunction(n => document.querySelectorAll('#slots .slot.full').length >= n, r + 1, { timeout: 8000 }); }
       catch (e){
-        const info = await page.evaluate(() => ({ want: document.querySelector('#shelf') && document.querySelector('#shelf').dataset.want, turn: document.querySelector('#mk') && document.querySelector('#mk').dataset.turn, full: document.querySelectorAll('#slots .slot.full').length, sel: [...document.querySelectorAll('#shelf .selected')].map(x => x.dataset.key), last: window.__spoken.slice(-3).map(x => x.text) }));
+        const info = await page.evaluate(() => ({ want: document.querySelector('#shelf') && document.querySelector('#shelf').dataset.want, turn: document.querySelector('#mk') && document.querySelector('#mk').dataset.turn, full: document.querySelectorAll('#slots .slot.full').length, sel: [...document.querySelectorAll('#shelf .selected')].map(x => x.dataset.key), last: window.__spoken.slice(-3).map(x => x.text), ev: window.__ev.slice(-12) }));
         throw new Error(`market turu ${r} takıldı (${r === 2 ? 'sürükle' : 'dokun'}): ` + JSON.stringify(info));
       }
     }
