@@ -19,6 +19,8 @@
   --paper:#FFFFFF; --paper-2:#EAF4FF; --empty:#DCE6F2;
   --line:#1E2A4A; --text:#1E2A4A; --text-soft:#4D5C82; --on-candy:#1E2A4A;
   --sun:#FFC52E; --hl:#FFE27A; --good-soft:#C9F3D9; --focus:#1E2A4A;
+  --go:#3CC46E; --wood:#E9BC80; --wood-2:#C98F4E;
+  --orb:#FFC52E; --orb-shade:transparent; --sil-hint:brightness(0) opacity(.5);
   --scrim:rgba(22,34,70,.55);
   --sil:brightness(0) opacity(.14);
   --c-red:#FF8A7A; --c-orange:#FFB347; --c-yellow:#FFD84D; --c-lime:#CBE96A; --c-green:#8BDB76;
@@ -35,6 +37,8 @@
     --paper:#24366A; --paper-2:#1B2A58; --empty:#31447A;
     --line:#060A1A; --text:#F3F6FF; --text-soft:#B7C3EA; --on-candy:#1E2A4A;
     --sun:#FFCB3D; --hl:rgba(255,203,61,.38); --good-soft:#1E5C46; --focus:#FFCB3D;
+  --go:#46D07C; --wood:#8C6236; --wood-2:#6B4723;
+  --orb:#F3EDC4; --orb-shade:#D3CA94; --sil-hint:brightness(0) invert(1) opacity(.55);
     --scrim:rgba(0,0,0,.62);
     --sil:brightness(0) invert(1) opacity(.16);
     --c-red:#F58676; --c-orange:#F7AA42; --c-yellow:#F7D24A; --c-lime:#C2E063; --c-green:#80D06D;
@@ -48,6 +52,8 @@
   --paper:#24366A; --paper-2:#1B2A58; --empty:#31447A;
   --line:#060A1A; --text:#F3F6FF; --text-soft:#B7C3EA; --on-candy:#1E2A4A;
   --sun:#FFCB3D; --hl:rgba(255,203,61,.38); --good-soft:#1E5C46; --focus:#FFCB3D;
+  --go:#46D07C; --wood:#8C6236; --wood-2:#6B4723;
+  --orb:#F3EDC4; --orb-shade:#D3CA94; --sil-hint:brightness(0) invert(1) opacity(.55);
   --scrim:rgba(0,0,0,.62);
   --sil:brightness(0) invert(1) opacity(.16);
   --c-red:#F58676; --c-orange:#F7AA42; --c-yellow:#F7D24A; --c-lime:#C2E063; --c-green:#80D06D;
@@ -345,7 +351,252 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.05;margin:0;text-wrap:bal
 .fly-star{position:fixed;width:30px;height:30px;z-index:90;pointer-events:none}
 .fly-star svg{width:100%;height:100%;display:block}
 
+/* ---------- ana sayfa: hikâye ve oyun kartları ---------- */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;margin-bottom:28px}
+.feature{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;text-align:left;background:var(--cat);color:var(--on-candy);border:3px solid var(--line);border-radius:var(--r-lg);box-shadow:0 6px 0 var(--line);padding:12px 14px 12px 10px;min-height:104px;transition:transform .08s,box-shadow .08s}
+.feature:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.f-art{position:relative;width:78px;height:72px;flex:none}
+.f-main{position:absolute;left:4px;top:6px;font-size:54px}
+.f-a,.f-b{position:absolute;font-size:30px}
+.f-a{right:-2px;top:0;transform:rotate(12deg)}
+.f-b{right:4px;bottom:-4px;transform:rotate(-8deg)}
+.f-text{display:grid;gap:1px;min-width:0}
+.f-tag{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.f-text b{font-family:var(--font-display);font-size:23px;line-height:1.05}
+.f-text small{font-weight:800;font-size:14px;opacity:.8}
+.f-play{width:58px;height:58px;border-radius:50%;background:var(--paper);color:var(--text);border:3px solid var(--line);display:grid;place-items:center}
+.f-play svg{width:28px;height:28px;margin-left:3px}
+.f-badge{position:absolute;top:-14px;left:-8px;width:40px;height:40px;border-radius:50%;background:var(--paper);border:3px solid var(--line);display:grid;place-items:center;font-size:22px;line-height:1;transform:rotate(-10deg)}
+
+/* ---------- hikâye ve market: odak modu (tam ekran, kaydırmasız) ---------- */
+body.focus-mode{overflow:hidden}
+body.focus-mode .topbar,body.focus-mode #caption{display:none}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.act{position:fixed;inset:0;z-index:20;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:8px;
+  padding:max(8px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  --item:clamp(72px,min(26vw,16vh),116px); --item:clamp(72px,min(26vw,16svh),116px);
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.act-bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.act-btn{position:relative;width:64px;height:64px;flex:none;border-radius:20px;border:3px solid var(--line);background:var(--paper);color:var(--text);box-shadow:0 4px 0 var(--line);display:grid;place-items:center;padding:0;transition:transform .08s,box-shadow .08s}
+.act-btn svg{width:32px;height:32px}
+.act-btn.replay{border-radius:50%;background:var(--sun);color:var(--on-candy)}
+.act-btn.muted::after{content:"";position:absolute;width:46px;height:5px;border-radius:3px;background:var(--line);transform:rotate(-45deg)}
+.act-btn:active,.next-btn:active,.big-act:active .big-round,.item:active,.blanket:active,.pick:active,.r-item:active,.teach-pic:active,.want-pic:active{box-shadow:0 1px 0 var(--line);transform:translateY(3px)}
+.act-mid{flex:1;min-width:0;display:flex;justify-content:center;pointer-events:none}
+.steps,.slots{display:flex;align-items:center;gap:6px}
+.step{width:40px;height:40px;border-radius:50%;background:var(--paper-2);display:grid;place-items:center;font-size:24px;line-height:1;filter:grayscale(1);opacity:.55}
+.step svg{width:24px;height:24px}
+.step .blob{font-size:22px}
+.step.done{filter:none;opacity:1;background:var(--good-soft)}
+.step.now{filter:none;opacity:1;background:var(--paper);box-shadow:0 0 0 4px var(--sun)}
+.slot{width:36px;height:36px;border-radius:12px;border:3px dashed var(--line);background:var(--paper-2);display:grid;place-items:center;font-size:21px;line-height:1}
+.slot.full{border-style:solid;background:var(--paper);animation:pop-in .4s}
+.slot.now{box-shadow:0 0 0 3px var(--sun)}
+.act-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;overflow-y:auto;overflow-x:hidden;outline:none}
+.act-main{flex:1;min-height:0;display:grid;place-items:center}
+.go-row,.basket-row{flex:none;display:flex;align-items:flex-end;justify-content:center;gap:16px;min-height:92px}
+.end-row{min-height:116px}
+
+/* Bubu'nun balonu: o an söylenen cümle (yetişkin için yazı; çocuk için ses + resim) */
+.tell{flex:none;display:flex;align-items:flex-end;gap:10px}
+.owl-say{position:relative;width:62px;flex:none;background:none;border:0;padding:0}
+.owl-say .owl{width:100%;height:auto;display:block}
+.tell.talking .owl-say .owl{animation:bob .7s ease-in-out infinite}
+.tell.talking .owl-say::after{content:"";position:absolute;right:-10px;top:14px;width:14px;height:22px;border:3px solid var(--line);border-left-color:transparent;border-radius:50%;opacity:.8}
+.tell-bubble{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-start;gap:10px;margin-bottom:8px;padding:6px 8px 6px 16px;height:76px}
+.tell-bubble p{flex:1;min-width:0;margin:0;font-weight:800;font-size:16px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tell-bubble b{font-family:var(--font-display);font-size:1.5em;line-height:1.05;background:linear-gradient(transparent 62%,var(--hl) 62%);padding:0 .06em}
+.want-pic{flex:none;width:60px;height:60px;border-radius:18px;border:3px solid var(--line);background:var(--paper-2);color:var(--text);box-shadow:0 3px 0 var(--line);display:grid;place-items:center;font-size:40px;line-height:1;padding:0}
+.want-pic svg{width:30px;height:30px}
+.want-pic.lvl1 > *{filter:var(--sil-hint)}
+.want-pic.reveal-pic{animation:pop-in .45s}
+.next-btn{display:grid;place-items:center;width:88px;height:88px;border-radius:50%;background:var(--go);color:var(--on-candy);border:3px solid var(--line);box-shadow:0 6px 0 var(--line);padding:0;animation:breathe 1.8s ease-in-out infinite}
+.next-btn svg{width:44px;height:44px;margin-left:6px}
+
+/* sahne */
+.stage{position:relative;width:100%;min-height:min(210px,30vh);min-height:min(210px,30svh);border:3px solid var(--line);border-radius:var(--r-lg);overflow:hidden;background:linear-gradient(var(--sky-deep) 0,var(--sky) 64%,var(--hill-1) 64%);box-shadow:0 6px 0 var(--line);display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:12px}
+.scene-sun{position:absolute;top:14px;right:18px;width:50px;height:50px;border-radius:50%;background:var(--orb);border:3px solid var(--line);box-shadow:inset -13px -5px 0 0 var(--orb-shade),0 0 0 9px var(--hl)}
+.stage .cloud.c-a{top:34px;left:-20px;transform:scale(.7);animation:none;opacity:.9}
+.scene-basket{position:relative;z-index:1;width:clamp(96px,30vw,140px)}
+.scene-basket .basket-svg{width:100%;height:auto;display:block}
+.scene-tree{position:relative;z-index:1;font-size:clamp(64px,19vw,96px);line-height:1}
+.scene-flower{position:relative;z-index:1;font-size:40px;line-height:1;margin-bottom:4px}
+
+/* öğretme kartı */
+.teach{position:relative;display:grid;justify-items:center;gap:2px;background:var(--paper);border:3px solid var(--line);border-radius:28px;box-shadow:0 6px 0 var(--line);padding:10px 22px 14px;text-align:center}
+.teach-pic{font-size:min(30vw,18vh,150px);font-size:min(30vw,18svh,150px);line-height:1.05;background:none;border:0;padding:6px;border-radius:24px;display:grid;place-items:center}
+.teach-pic.bounce > *{animation:boing .55s}
+.teach-word{font-family:var(--font-display);font-weight:800;font-size:clamp(34px,min(11vw,7svh),54px);line-height:1}
+.teach-tr{font-weight:800;color:var(--text-soft);font-size:17px}
+.teach-extra .emo{position:absolute;font-size:40px;line-height:1}
+.teach-extra .emo:first-child{left:-16px;top:22%;transform:rotate(-12deg)}
+.teach-extra .emo:last-child{right:-14px;top:12%;transform:rotate(10deg)}
+
+/* yerleştirilebilir nesneler + sepet */
+.field{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.item{position:relative;width:var(--item);height:var(--item);flex:none;border-radius:24px;border:3px solid var(--line);background:var(--paper);box-shadow:0 5px 0 var(--line);font-size:calc(var(--item) * .58);line-height:1;display:grid;place-items:center;padding:0;touch-action:none;-webkit-touch-callout:none;transition:transform .15s,box-shadow .15s,opacity .2s}
+.item.selected{transform:translateY(-8px) scale(1.06);box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun),0 0 0 13px var(--line);z-index:2}
+.item.selected::after{content:"✋";position:absolute;top:-18px;right:-14px;font-size:24px;line-height:1;font-family:var(--font-emoji)}
+.item.dragging{opacity:.25}
+.item.gone,.item.waiting{visibility:hidden}
+.item.soft{animation:boing .5s}
+.item.arrive{animation:pop-in .45s}
+.demo-item{width:calc(var(--item) * .8);height:calc(var(--item) * .8);font-size:calc(var(--item) * .48);align-self:center}
+.drag-ghost{position:fixed!important;left:0;top:0;margin:0!important;z-index:95;pointer-events:none;opacity:.95;transition:none;box-shadow:0 14px 0 rgba(0,0,0,.18)}
+.basket-drop{position:relative;display:block;flex:none;width:clamp(128px,min(44vw,30vh),210px);width:clamp(128px,min(44vw,30svh),210px);padding:26px 6px 2px;background:none;border:0;border-radius:26px;transition:transform .15s}
+.basket-drop .basket-svg{width:100%;height:auto;display:block;position:relative;z-index:1}
+.basket-drop.awaiting,.basket-drop.hover{outline:4px dashed var(--sun);outline-offset:2px}
+.basket-drop.awaiting{animation:breathe 1.1s ease-in-out infinite}
+.basket-drop.hover{transform:scale(1.08)}
+.basket-in{position:absolute;left:14%;right:14%;top:2px;z-index:2;display:flex;justify-content:center;flex-wrap:wrap-reverse;font-size:30px;line-height:.9;pointer-events:none}
+.basket-in > span{animation:pop-in .4s;margin:0 -3px}
+.fly-item{position:fixed;left:0;top:0;z-index:96;display:grid;place-items:center;pointer-events:none;line-height:1}
+.hand{position:fixed;left:0;top:0;z-index:97;font-size:50px;line-height:1;pointer-events:none;font-family:var(--font-emoji);filter:drop-shadow(0 3px 0 var(--line));transition:transform .75s cubic-bezier(.45,0,.3,1),opacity .3s}
+.hand.nomove{transition:none}
+.hand.tap{animation:handtap .35s}
+.hand.fade{opacity:0}
+.hint-glow{box-shadow:0 5px 0 var(--line),0 0 0 8px var(--sun);animation:glow 1s ease-in-out 3}
+.item.hint-glow{transform:scale(1.06)}
+.hop{animation:hop .6s}
+.hop-seq > *{animation:hop .55s backwards}
+.hop-seq > *:nth-child(2){animation-delay:.18s}
+.hop-seq > *:nth-child(3){animation-delay:.36s}
+.hop-seq > *:nth-child(4){animation-delay:.54s}
+.hop-seq > *:nth-child(5){animation-delay:.72s}
+.hop-seq > *:nth-child(6){animation-delay:.9s}
+.ring-all > *{box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun)!important}
+.ring-all > .bush{box-shadow:none!important}
+.ring-all > .bush .leaves svg{filter:drop-shadow(0 0 5px var(--sun)) drop-shadow(0 0 3px var(--sun))}
+
+/* örtüler: öğretilen renkler tema renkleri değil, gerçek kırmızı/mavi/sarı */
+.blankets{display:grid;grid-template-columns:repeat(3,var(--item));gap:14px;justify-content:center}
+.blanket{width:var(--item);height:var(--item);border:3px solid var(--line);border-radius:20px;box-shadow:0 5px 0 var(--line);background:repeating-conic-gradient(var(--b) 0 25%,#FFFFFF 0 50%) 50% 50%/34px 34px;padding:0;transition:transform .15s}
+.blanket.soft{animation:boing .5s}
+.blanket.chosen{transform:scale(1.08) rotate(-3deg);box-shadow:0 5px 0 var(--line),0 0 0 7px var(--go)}
+
+/* çalılar */
+.scene-bushes{min-height:0;padding:30px 10px 10px;align-items:stretch}
+.bushes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;align-items:end}
+.bush{position:relative;height:calc(var(--item) * 1.45);padding:0;border:0;background:none;border-radius:20px}
+.bush .behind{position:absolute;left:50%;bottom:24%;z-index:1;font-size:calc(var(--item) * .64);line-height:1;transform:translate(-50%,30%) scale(.5);opacity:0;transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .2s}
+.bush .leaves{position:absolute;left:0;right:0;bottom:0;height:74%;z-index:2;transition:transform .4s}
+.bush .leaves svg{width:100%;height:100%;display:block;overflow:visible}
+.bush.open .behind{opacity:1;transform:translate(-50%,-38%) scale(1)}
+.bush.open .leaves{transform:translateY(34%) scale(.82)}
+.bush.peek .behind{opacity:1;transform:translate(-50%,-52%) scale(.8)}
+.bush.peek .leaves{animation:rustle .5s 3}
+.bush.hint-glow{box-shadow:none;animation:none}
+.bush.hint-glow .leaves svg{filter:drop-shadow(0 0 5px var(--sun)) drop-shadow(0 0 3px var(--sun))}
+
+/* final sahnesi */
+.scene-finale{min-height:min(220px,34vh);min-height:min(220px,34svh);align-items:flex-end;padding-bottom:16px;gap:4px}
+.fin-blanket{position:absolute;left:8%;right:8%;bottom:10px;height:62px;border:3px solid var(--line);border-radius:16px;background:repeating-conic-gradient(var(--b) 0 25%,#FFFFFF 0 50%) 50% 50%/30px 30px;transform:perspective(300px) rotateX(38deg)}
+.fin-basket{position:relative;z-index:1;width:clamp(86px,26vw,118px);padding-top:22px}
+.fin-basket .basket-svg{width:100%;height:auto;display:block;position:relative;z-index:1}
+.fin-basket .basket-in{font-size:30px}
+.fin-rabbit{position:relative;z-index:1;font-size:clamp(54px,16vw,74px);line-height:1;margin-bottom:6px}
+.r0,.r1,.r2{animation:hop .7s backwards}
+.r0{animation-delay:.3s}
+.r1{animation-delay:1.4s}
+.r2{animation-delay:2.5s}
+.fin-blanket.r1{animation:none}
+
+/* çıkartma seçimi */
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;width:100%;max-width:420px}
+.pick{position:relative;display:grid;justify-items:center;gap:6px;padding:14px 4px 12px;background:var(--paper);border:3px solid var(--line);border-radius:22px;box-shadow:0 5px 0 var(--line);transform:rotate(var(--r));min-width:0;transition:transform .2s,opacity .2s,box-shadow .2s}
+.pick .pic{font-size:calc(var(--item) * .62);line-height:1}
+.pick b{font-family:var(--font-display);font-weight:800;font-size:15px;line-height:1.05;text-align:center}
+.pick.spot{transform:scale(1.12) rotate(0);box-shadow:0 5px 0 var(--line),0 0 0 6px var(--hl)}
+.pick.owned::after{content:"";position:absolute;top:-12px;right:-10px;width:32px;height:32px;border-radius:50%;background:var(--go) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7' fill='none' stroke='%231E2A4A' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat;border:2.5px solid var(--line)}
+.pick.chosen{background:var(--good-soft);transform:scale(1.1) rotate(0);box-shadow:0 5px 0 var(--line),0 0 0 6px var(--sun)}
+.pick:disabled{opacity:.35}
+
+/* bitiş düğmeleri */
+.end-actions{display:flex;justify-content:center;gap:18px;flex-wrap:wrap}
+.big-act{display:grid;justify-items:center;gap:4px;background:none;border:0;padding:0;font-weight:800;font-size:15px;color:var(--text)}
+.big-round{width:80px;height:80px;border-radius:50%;background:var(--paper);color:var(--text);border:3px solid var(--line);box-shadow:0 5px 0 var(--line);display:grid;place-items:center;transition:transform .08s,box-shadow .08s}
+.big-round.go{background:var(--go);color:var(--on-candy);animation:breathe 1.6s ease-in-out infinite}
+.big-round svg{width:38px;height:38px}
+
+/* market */
+.market{position:relative}
+.awning{height:26px;border:3px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;background:repeating-linear-gradient(90deg,var(--c-red) 0 30px,#FFFFFF 30px 60px)}
+.shelf{display:grid;grid-template-columns:repeat(3,var(--item));gap:10px 12px;justify-content:center;padding:10px 12px 12px;border:3px solid var(--line);border-radius:0 0 22px 22px;box-shadow:0 6px 0 var(--line);background:linear-gradient(transparent calc(50% - 3px),var(--wood-2) calc(50% - 3px),var(--wood-2) calc(50% + 3px),transparent calc(50% + 3px)),var(--wood)}
+.cell{width:var(--item);height:var(--item);border-radius:24px}
+.cell.empty{border:3px dashed var(--wood-2)}
+.full-basket{display:grid;justify-items:center}
+.fb-items{position:relative;z-index:1;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:-24px;max-width:360px}
+.fb-basket{width:clamp(150px,50vw,230px)}
+.fb-basket .basket-svg{width:100%;height:auto;display:block}
+.r-item{display:grid;justify-items:center;gap:1px;width:calc(var(--item) * .95);padding:8px 2px 6px;background:var(--paper);border:3px solid var(--line);border-radius:18px;box-shadow:0 4px 0 var(--line);min-width:0}
+.r-item .pic{font-size:calc(var(--item) * .42);line-height:1.05}
+.r-item.bounce .pic{animation:boing .55s}
+.r-item b{font-family:var(--font-display);font-size:15px;line-height:1.05}
+.r-item small{font-weight:700;font-size:12px;color:var(--text-soft)}
+
+/* kısa ekran (iPhone Safari'nin görünür alanı ~375×548 dahil): yer, öğelerden değil çerçeveden alınır */
+@media (max-height:760px){
+  .act{gap:6px}
+  .act-body{gap:8px}
+  .tell-bubble{height:62px;margin-bottom:6px}
+  .tell-bubble p{font-size:15px}
+  .owl-say{width:52px}
+  .want-pic{width:52px;height:52px;font-size:34px}
+  .awning{height:20px}
+  .shelf{gap:8px;padding:8px 10px}
+  .basket-drop{width:min(150px,42vw);padding-top:16px}
+  .go-row,.basket-row{min-height:84px}
+  .next-btn{width:80px;height:80px}
+  .end-row{min-height:110px}
+  .big-round{width:72px;height:72px}
+}
+@media (max-height:640px){
+  .act-btn{width:56px;height:56px}
+  .stage{min-height:min(170px,26svh)}
+  .teach{padding:6px 18px 10px}
+}
+/* dar ekran: adım resimleri küçülür, ana sayfa ve tekrar düğmeleri sıkışmaz */
+@media (max-width:380px){
+  .act-bar{gap:10px}
+  .step{width:30px;height:30px;font-size:18px}
+  .step svg{width:18px;height:18px}
+  .step .blob{font-size:17px}
+  .steps,.slots{gap:4px}
+  .slot{width:30px;height:30px;font-size:17px}
+}
+/* yatay telefon: balon sağ üstte, nesneler solda, sepet / düğme sağ altta */
+@media (orientation:landscape) and (max-height:540px){
+  .act{--item:clamp(64px,min(15vw,24vh),100px);--item:clamp(64px,min(15vw,24svh),100px);max-width:none;gap:6px}
+  .act-btn{width:56px;height:56px}
+  .act-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,32%);grid-template-rows:auto minmax(0,1fr);align-items:center;column-gap:16px;row-gap:6px}
+  .act-body > .tell{grid-column:2;grid-row:1}
+  .act-body > .act-main{grid-column:1;grid-row:1 / 3}
+  .act-body > .go-row,.act-body > .basket-row{grid-column:2;grid-row:2;min-height:0;align-items:center}
+  .owl-say{display:none}
+  .tell-bubble{height:58px;margin-bottom:0}
+  .tell-bubble::before{display:none}
+  .stage{min-height:0}
+  .scene-bushes{padding-top:16px}
+  .awning{height:16px}
+  .shelf{gap:6px 8px;padding:6px 8px}
+  .basket-drop{width:min(150px,22vw);padding-top:14px}
+  .teach-pic{font-size:min(16vw,30vh,120px);font-size:min(16vw,30svh,120px)}
+}
+
+/* azaltılmış hareket: her ipucunun durağan bir biçimi kalır */
+@media (prefers-reduced-motion:reduce){
+  .next-btn,.big-round.go{box-shadow:0 6px 0 var(--line),0 0 0 6px var(--sun)}
+  .basket-drop.awaiting{outline-style:solid}
+  .hint-glow{box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun)!important}
+  .hand{transition:none}
+}
+
 /* ---------- animasyonlar ---------- */
+@keyframes breathe{50%{transform:scale(1.07)}}
+@keyframes glow{50%{box-shadow:0 5px 0 var(--line),0 0 0 13px var(--sun)}}
+@keyframes rustle{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@keyframes handtap{50%{scale:.78}}
+@keyframes bob{50%{transform:translateY(-4px)}}
 @keyframes boing{0%{transform:scale(1)}30%{transform:scale(1.25,.85)}55%{transform:scale(.9,1.12)}75%{transform:scale(1.05,.96)}100%{transform:scale(1)}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px) rotate(-3deg)}40%{transform:translateX(9px) rotate(3deg)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
 @keyframes pop-in{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
@@ -400,6 +651,7 @@ h1,h2,h3{font-family:var(--font-display);line-height:1.05;margin:0;text-wrap:bal
 <div id="modal-root" hidden></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="caption" aria-hidden="true"></div>
+<div id="sr-live" class="sr-only" aria-live="polite"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
 <script>
@@ -489,11 +741,16 @@ const SPECIALS = [
   W('peacock','tavus kuşu','🦚'), W('flamingo','flamingo','🦩'), W('crown','taç','👑'), W('castle','şato','🏰'), W('gem','mücevher','💎'),
   W('alien','uzaylı','👽'), W('planet','gezegen','🪐'), W('volcano','yanardağ','🌋'), W('ghost','hayalet','👻')
 ];
+const STORY_STICKERS = [
+  W('picnic basket','piknik sepeti','🧺'), W('sunflower','ayçiçeği','🌻'), W('ladybug','uğur böceği','🐞',{uk:'ladybird'})
+];
 const WORD = {};
 CATS.forEach(c => c.words.forEach(w => { w.cat = c; w.key = c.id + ':' + w.en; WORD[w.key] = w; }));
 SPECIALS.forEach(w => { w.key = 'special:' + w.en; WORD[w.key] = w; });
+STORY_STICKERS.forEach(w => { w.key = 'story:' + w.en; WORD[w.key] = w; });
 const CAT = {}; CATS.forEach(c => CAT[c.id] = c);
 const TOTAL = CATS.reduce((n, c) => n + c.words.length, 0);
+const STICKER_TOTAL = TOTAL + SPECIALS.length + STORY_STICKERS.length;
 
 const UNLOCK = 4, CHEST_EVERY = 15, FIND_ROUNDS = 8, BALLOON_GOAL = 6, MEMORY_PAIRS = 6;
 const MODES = {
@@ -509,14 +766,32 @@ const DIGIT_COLORS = ['var(--c-red)','var(--c-orange)','var(--c-yellow)','var(--
 
 /* ================= kayıt ================= */
 const STORE_KEY = 'bubu-english-v1';
-const fresh = () => ({ stars:0, chest:0, seen:{}, best:{}, specials:[], settings:{ slow:false, accent:'us', showTr:true, sfx:true } });
+const fresh = () => ({ stars:0, chest:0, seen:{}, best:{}, specials:[],
+  story:{}, market:{ visits:0, bought:{} },
+  settings:{ slow:false, accent:'us', showTr:true, sfx:true, trVoice:true } });
 let S = load();
 function load(){
   const d = fresh();
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) { const o = JSON.parse(raw); return Object.assign(d, o, { settings: Object.assign(d.settings, o.settings || {}) }); }
-  } catch (e) {}
+    const o = raw ? JSON.parse(raw) : null;
+    if (o && typeof o === 'object' && !Array.isArray(o)){
+      const obj = v => (v && typeof v === 'object' && !Array.isArray(v)) ? v : null;
+      const num = v => { const n = typeof v === 'string' ? Number(v) : v; return (typeof n === 'number' && isFinite(n)) ? n : 0; };
+      const market = Object.assign(d.market, obj(o.market) || {});
+      if (!obj(market.bought)) market.bought = {};
+      market.visits = num(market.visits);
+      // Eski kayıtlar korunur; yalnızca eksik/bozuk alanlar varsayılanla doldurulur.
+      return Object.assign(d, o, {
+        stars: num(o.stars), chest: num(o.chest),
+        seen: obj(o.seen) || {}, best: obj(o.best) || {}, specials: Array.isArray(o.specials) ? o.specials : [],
+        story: obj(o.story) || {}, market,
+        settings: Object.assign(d.settings, obj(o.settings) || {})
+      });
+    }
+  } catch (e) {
+    try { const raw = localStorage.getItem(STORE_KEY); if (raw) localStorage.setItem(STORE_KEY + '-bozuk', raw); } catch (_) {}
+  }
   return d;
 }
 function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
@@ -528,6 +803,17 @@ function setBest(c, m, r){ const k = c.id + ':' + m; if ((S.best[k] || 0) < r) S
 const uk = () => S.settings.accent === 'uk';
 const say = w => (uk() && w.uk) ? w.uk : w.en;
 const catEn = c => (uk() && c.enUK) ? c.enUK : c.en;
+function picnicRec(){
+  let r = S.story.picnic;
+  if (!r || typeof r !== 'object' || Array.isArray(r)) r = S.story.picnic = {};
+  if (!Array.isArray(r.stickers)) r.stickers = [];
+  r.stickers = r.stickers.filter((k, i, a) => typeof k === 'string' && WORD[k] && a.indexOf(k) === i);
+  if (typeof r.plays !== 'number') r.plays = 0;
+  return r;
+}
+const storyStickers = () => picnicRec().stickers.filter((k, i, a) => WORD[k] && a.indexOf(k) === i);
+const hasSticker = k => k.indexOf('special:') === 0 ? S.specials.indexOf(k) > -1 : k.indexOf('story:') === 0 ? storyStickers().indexOf(k) > -1 : !!S.seen[k];
+const stickerCount = () => totalSeen() + S.specials.length + storyStickers().length;
 
 /* ================= çizimler ================= */
 const STAR_PTS = '50,6 61.2,36.6 93.7,37.8 68.1,57.9 77,89.2 50,71 23,89.2 31.9,57.9 6.3,37.8 38.8,36.6';
@@ -538,6 +824,7 @@ const ICON = {
   play:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.8v14.4L19 12z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
   stop:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5" fill="currentColor"/></svg>',
   again:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5M4.5 4v4.5H9" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  home:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.4 12 4.2l8.5 7.2M6 9.8V20h4.4v-5.4h3.2V20H18V9.8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   sticker:'<svg viewBox="0 0 24 24" aria-hidden="true"><path class="stk" d="M5 3.5h10.5l5 5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V5A1.5 1.5 0 0 1 5 3.5z"/><path class="stk-fold" d="M15.5 3.5V7a1.5 1.5 0 0 0 1.5 1.5h3.5z"/></svg>',
   gear:'<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="10.2" y="1.6" width="3.6" height="20.8" rx="1.3"/><rect x="10.2" y="1.6" width="3.6" height="20.8" rx="1.3" transform="rotate(45 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="20.8" rx="1.3" transform="rotate(90 12 12)"/><rect x="10.2" y="1.6" width="3.6" height="20.8" rx="1.3" transform="rotate(135 12 12)"/><circle cx="12" cy="12" r="7.2"/></g><circle class="gear-hole" cx="12" cy="12" r="2.9"/></svg>'
@@ -601,13 +888,36 @@ let voices = [];
 let speakId = 0;
 function loadVoices(){ try { voices = synth ? (synth.getVoices() || []) : []; } catch (e) { voices = []; } }
 if (synth){ loadVoices(); try { synth.onvoiceschanged = loadVoices; } catch (e) {} }
+const vlang = v => (v.lang || '').replace('_', '-').toLowerCase();
+// iOS'taki eğlence sesleri (Bubbles, Zarvox...) çocuk yönergeleri için uygun değil.
+const NOVELTY = /^(Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox)\b/;
+// Yalnızca CİHAZ ÜSTÜNDEKİ Türkçe sesler kullanılır: bulut sesleri (localService:false) metni dışarı gönderir.
+function trVoice(){
+  if (!voices.length) loadVoices();
+  const tr = voices.filter(v => vlang(v).startsWith('tr') && v.localService !== false && !NOVELTY.test(v.name));
+  for (const p of ['Yelda', 'Tolga', 'Emel', 'Filiz', 'Google']){ const v = tr.find(x => x.name.indexOf(p) > -1); if (v) return v; }
+  return tr[0] || null;
+}
+let trBroken = false;
+// 'ok' | 'unknown' (ses listesi boş, cihaz seçer) | 'none' | 'off' | 'nosynth'
+function trState(){
+  if (!synth) return 'nosynth';
+  if (!S.settings.trVoice) return 'off';
+  if (!voices.length) loadVoices();
+  if (trBroken) return 'none';
+  if (!voices.length) return 'unknown';
+  return trVoice() ? 'ok' : 'none';
+}
+const canSpeakTr = () => { const s = trState(); return s === 'ok' || s === 'unknown'; };
 function pickVoice(){
   if (!voices.length) loadVoices();
   const want = uk() ? 'en-gb' : 'en-us';
-  const norm = v => (v.lang || '').replace('_', '-').toLowerCase();
-  const en = voices.filter(v => norm(v).startsWith('en'));
-  const exact = en.filter(v => norm(v) === want);
-  const pool = exact.length ? exact : en;
+  const en = voices.filter(v => vlang(v).startsWith('en') && !NOVELTY.test(v.name));
+  // Önce cihaz üstündeki sesler; yalnızca hiç yoksa uzak sese düşülür.
+  const local = en.filter(v => v.localService !== false);
+  const base = local.length ? local : en;
+  const exact = base.filter(v => vlang(v) === want);
+  const pool = exact.length ? exact : base;
   const prefer = ['Samantha','Google US English','Google UK English Female','Microsoft Aria','Microsoft Jenny','Microsoft Libby','Microsoft Sonia','Karen','Serena','Moira','Daniel','Microsoft Zira'];
   for (const p of prefer){ const v = pool.find(x => x.name.indexOf(p) > -1); if (v) return v; }
   return pool.find(v => v.localService) || pool[0] || null;
@@ -633,6 +943,64 @@ function speak(text){
     } catch (e) { fin(); }
   });
 }
+function utter(text, lang){
+  const tr = lang === 'tr';
+  const u = new SpeechSynthesisUtterance(text);
+  const v = tr ? trVoice() : pickVoice();
+  if (v){ u.voice = v; u.lang = v.lang; } else u.lang = tr ? 'tr-TR' : (uk() ? 'en-GB' : 'en-US');
+  u.rate = tr ? (S.settings.slow ? 0.8 : 0.95) : (S.settings.slow ? 0.6 : 0.85);
+  u.pitch = tr ? 1.05 : 1.12;
+  if (tr) u.addEventListener('error', e => { if (/unavailable|synthesis-failed|language/.test((e && e.error) || '')) trBroken = true; });
+  u.addEventListener('end', segBoundary); u.addEventListener('error', segBoundary);
+  return u;
+}
+// Bir söz parçası bittiğinde bekleyenlere haber verir (ipucu sözü kelimenin ortasında kesmesin diye).
+let segWaiters = [];
+function segBoundary(){ const w = segWaiters; segWaiters = []; w.forEach(f => f()); }
+const lineText = segs => segs.filter(s => s && s[1] && s[0] !== 'pause').map(s => s[1]).join(' ');
+// İki dilli satır: [['tr','Elmayı sepete koy.'], ['en','Apple!'], ['pause', 1500], ['en','Apple!']].
+// Parçalar arada iptal edilmeden sıraya alınır (Android'de Türkçe motor geç açılsa da kesilmez).
+// Türkçe ses yoksa Türkçe parçalar okunmaz (İngilizce sesle bozuk okunmasın), yazısı balonda/altyazıda görünür.
+// Söz bitince true, başka bir konuşma araya girerse false döner.
+function speakLine(segs){
+  const id = ++speakId;
+  const text = lineText(segs);
+  caption(text, segs.some(s => s && s[0] === 'tr') ? 'tr' : 'en');
+  announce(text);
+  const spoken = segs.filter(s => s && s[1] && (s[0] !== 'tr' || canSpeakTr()));
+  const groups = [[]], pauses = [];
+  spoken.forEach(s => { if (s[0] === 'pause'){ groups.push([]); pauses.push(s[1]); } else groups[groups.length - 1].push(s); });
+  return (async () => {
+    if (!synth || document.hidden){ await wait(synth ? 50 : 500); return id === speakId; }
+    try {
+      const busy = synth.speaking || synth.pending;
+      synth.cancel();
+      if (synth.paused) synth.resume();
+      if (busy) await wait(80);
+    } catch (e) {}
+    for (let g = 0; g < groups.length; g++){
+      if (id !== speakId) return false;
+      if (g > 0){ await wait(pauses[g - 1]); if (id !== speakId) return false; }
+      if (groups[g].length && !(await queueGroup(groups[g], id))) return false;
+    }
+    return id === speakId;
+  })();
+}
+function queueGroup(parts, id){
+  return new Promise(res => {
+    let done = false;
+    const fin = () => { if (!done){ done = true; res(id === speakId); } };
+    try {
+      parts.forEach(([lang, text], k) => {
+        const u = utter(text, lang);
+        if (k === parts.length - 1){ u.addEventListener('end', fin); u.addEventListener('error', fin); }
+        synth.speak(u);
+      });
+      const chars = parts.reduce((n, p) => n + p[1].length, 0);
+      setTimeout(fin, 3000 + chars * (S.settings.slow ? 160 : 110) + parts.length * 500);
+    } catch (e) { fin(); }
+  });
+}
 async function speakSeq(list, gap){
   for (const t of list){
     const id = await speak(t);
@@ -643,11 +1011,12 @@ async function speakSeq(list, gap){
 }
 function stopSpeech(){ speakId++; try { synth && synth.cancel(); } catch (e) {} }
 let speechPrimed = false;
-document.addEventListener('pointerdown', () => {
+// iOS: ilk konuşma bir dokunuşun içinde başlamalı; ilk dokunuşta sessiz bir söz söylenir.
+['pointerdown', 'pointerup', 'click'].forEach(ev => document.addEventListener(ev, () => {
   if (speechPrimed || !synth) return;
   speechPrimed = true;
   try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } catch (e) {}
-}, { capture: true });
+}, { capture: true }));
 
 /* ================= ses: efektler ================= */
 let AC = null;
@@ -685,6 +1054,7 @@ const sfx = {
   flip(){ tone(520, 0, .09, { type:'triangle', vol:.12, to:880 }); },
   good(){ tone(784, 0, .13, { vol:.16 }); tone(1175, .1, .24, { vol:.16 }); },
   bad(){ tone(330, 0, .3, { type:'triangle', vol:.13, to:170 }); },
+  hmm(){ tone(440, 0, .1, { type:'triangle', vol:.07 }); tone(554, .1, .14, { type:'triangle', vol:.07 }); },
   pop(){ noise(0, .12, .3); tone(900, 0, .1, { type:'square', vol:.05, to:200 }); },
   star(){ tone(1568, 0, .09, { vol:.09 }); tone(2093, .07, .15, { vol:.09 }); },
   unlock(){ [523, 659, 784, 1046].forEach((f, i) => tone(f, i * .08, .18, { type:'triangle', vol:.14 })); },
@@ -704,9 +1074,12 @@ function toast(msg, big){
   toastT = setTimeout(() => toastEl.classList.remove('show'), big ? 1400 : 2200);
 }
 const capEl = $('#caption');
+const srLive = $('#sr-live');
+// Ekran okuyucular için: odak modunda söylenen cümle sessiz bir canlı bölgeye yazılır.
+function announce(text){ if (srLive && document.body.classList.contains('focus-mode')) srLive.textContent = text; }
 let capT = 0;
-function caption(text){
-  capEl.innerHTML = ICON.speaker + '<span lang="en"></span>';
+function caption(text, lang){
+  capEl.innerHTML = ICON.speaker + `<span lang="${lang === 'tr' ? 'tr' : 'en'}"></span>`;
   capEl.querySelector('span').textContent = text;
   capEl.classList.add('show');
   clearTimeout(capT);
@@ -753,7 +1126,7 @@ function confettiBig(){ burst(innerWidth * .2, innerHeight * .4, 60, 1.3); burst
 /* ================= yıldızlar ================= */
 function updateStats(bump){
   $('#stat-stars').innerHTML = star() + `<b>${S.stars}</b>`;
-  $('#stat-stickers').innerHTML = ICON.sticker + `<b>${totalSeen() + S.specials.length}</b>`;
+  $('#stat-stickers').innerHTML = ICON.sticker + `<b>${stickerCount()}</b>`;
   const cp = $('#chest-pill');
   cp.style.setProperty('--p', Math.min(100, Math.round(S.chest / CHEST_EVERY * 100)));
   cp.classList.toggle('ready', S.chest >= CHEST_EVERY);
@@ -798,7 +1171,11 @@ function closeModal(){
   const f = afterClose; afterClose = null;
   if (f) f();
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modalRoot.hidden) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!modalRoot.hidden) closeModal();
+  else if (inAct()) leaveTo('home');
+});
 
 function endModal(o){
   openModal(`${owlSVG('cheer')}
@@ -836,17 +1213,19 @@ let resetArmed = false;
 function renderSettings(){
   const st = S.settings;
   const seg = (k, opts) => `<div class="seg" role="group">${opts.map(([v, l]) => `<button data-act="set" data-k="${k}" data-v="${v}" aria-pressed="${String(st[k]) === v}">${l}</button>`).join('')}</div>`;
-  const v = pickVoice();
+  const v = pickVoice(), tv = trVoice();
   openModal(`<h2>Ebeveyn köşesi<span>Ayarlar</span></h2>
     <div class="set-list">
       <div class="set-row"><span>Konuşma hızı</span>${seg('slow', [['false','Normal'], ['true','Yavaş']])}</div>
       <div class="set-row"><span>Aksan</span>${seg('accent', [['us','Amerikan'], ['uk','İngiliz']])}</div>
       <div class="set-row"><span>Türkçe anlamı</span>${seg('showTr', [['true','Göster'], ['false','Gizle']])}</div>
       <div class="set-row"><span>Oyun sesleri</span>${seg('sfx', [['true','Açık'], ['false','Kapalı']])}</div>
+      <div class="set-row"><span>Türkçe sesli yönlendirme</span>${seg('trVoice', [['true','Açık'], ['false','Kapalı']])}</div>
     </div>
-    <div class="voice-box"><p>Seslendiren: <b>${v ? v.name + ' (' + v.lang + ')' : (synth ? 'cihazın varsayılan sesi' : 'bu tarayıcı sesli okumayı desteklemiyor')}</b></p><button class="btn small" data-act="testvoice">${ICON.speaker} Sesi dene</button></div>
-    <p class="note">Kelimeleri cihazın kendi İngilizce sesi okur. Ses gelmezse telefonun sessiz modunu kapatıp sesi açın. Ekranın altındaki yazı, o an söyleneni gösterir.</p>
-    <div class="tally"><span><b>${S.stars}</b> yıldız</span><span><b>${totalSeen()}</b>/${TOTAL} kelime</span><span><b>${S.specials.length}</b>/${SPECIALS.length} hazine</span></div>
+    <div class="voice-box"><p>İngilizce ses: <b>${v ? v.name + ' (' + v.lang + (v.localService === false ? ', çevrim içi' : '') + ')' : (synth ? 'cihazın varsayılan sesi' : 'bu tarayıcı sesli okumayı desteklemiyor')}</b></p><button class="btn small" data-act="testvoice">${ICON.speaker} İngilizce dene</button></div>
+    <div class="voice-box"><p>Türkçe ses: <b>${tv ? tv.name + ' (' + tv.lang + ')' : ({ off: 'kapalı', nosynth: '—', unknown: 'cihaz seçecek' }[trState()] || 'cihazda bulunamadı; yönergeler resim ve el işaretiyle gösterilir')}</b></p><button class="btn small" data-act="testtr">${ICON.speaker} Türkçe dene</button></div>
+    <p class="note">Sesleri cihazın kendisi üretir; Türkçe yönlendirme için yalnızca cihaz üstündeki sesler kullanılır. Ses gelmezse sessiz modu kapatıp sesi açın. Türkçe ses yoksa: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › Türkçe; Android’de Ayarlar › Genel yönetim (veya Sistem) › Dil › Metin okuma çıkışı › Google › Dil verilerini yükle › Türkçe. Menü adları cihaza göre değişebilir; Ayarlar’da “Metin okuma” diye arayın.</p>
+    <div class="tally"><span><b>${S.stars}</b> yıldız</span><span><b>${totalSeen()}</b>/${TOTAL} kelime</span><span><b>${S.specials.length}</b>/${SPECIALS.length} hazine</span><span><b>${storyStickers().length}</b>/${STORY_STICKERS.length} hikâye çıkartması</span></div>
     <div class="modal-actions"><button class="btn small danger ${resetArmed ? 'armed' : ''}" data-act="reset">${resetArmed ? 'Emin misiniz? Evet, sıfırla' : 'İlerlemeyi sıfırla'}</button><button class="btn primary" data-act="close">Kapat</button></div>`, 'settings-modal');
 }
 function openSettings(){
@@ -883,6 +1262,9 @@ function go(name, arg){
   stopSpeech();
   closeModal();
   current = { name, arg };
+  $$('.hand, .fly-item, .drag-ghost').forEach(n => n.remove());
+  document.body.classList.toggle('focus-mode', name === 'story' || name === 'market');
+  if ((name === 'story' || name === 'market') && !actHistoryState()){ try { history.pushState({ bubuAct: 1 }, ''); } catch (e) {} }
   VIEWS[name](arg);
   window.scrollTo(0, 0);
 }
@@ -901,7 +1283,8 @@ function greet(){
     `Hi friend! Şimdiye kadar ${n} kelime topladın. Bugün kaç tane daha bulacağız?`,
     `Her ${CHEST_EVERY} yıldızda bir hazine sandığı açılıyor. Hadi yıldız toplayalım!`,
     'Resimlere dokun, ben de sana İngilizcesini söyleyeyim!',
-    'Bir oyun seç: Bul Bakalım, Hafıza ya da Balon Patlat!'
+    'Bir oyun seç: Bul Bakalım, Hafıza ya da Balon Patlat!',
+    'Bubu’nun Pikniği’ne ya da Minik Market’e gitmeye ne dersin?'
   ]);
 }
 function catTile(c){
@@ -934,11 +1317,25 @@ function viewHome(){
         </button>
       </div>
     </section>
+    <div class="section-head"><h2>Hikâye ve oyun</h2><span class="en" lang="en">Story &amp; play</span></div>
+    <div class="features">
+      <button class="feature" data-act="story" style="--cat:var(--c-green)" aria-label="Bubu’nun Pikniği hikâyesini başlat">
+        ${storyStickers().length ? `<span class="f-badge emo" aria-hidden="true">${WORD[storyStickers()[storyStickers().length - 1]].e}</span>` : ''}
+        <span class="f-art" aria-hidden="true"><span class="emo f-main">🧺</span><span class="emo f-a">🍎</span><span class="emo f-b">🐰</span></span>
+        <span class="f-text"><span class="f-tag">Hikâye</span><b>Bubu’nun Pikniği</b><small>${storyStickers().length ? `${storyStickers().length}/${STORY_STICKERS.length} çıkartma seçildi` : 'Elma, kırmızı, tavşan'}</small></span>
+        <span class="f-play" aria-hidden="true">${ICON.play}</span>
+      </button>
+      <button class="feature" data-act="market" style="--cat:var(--c-orange)" aria-label="Minik Market oyununu başlat">
+        <span class="f-art" aria-hidden="true"><span class="emo f-main">🛒</span><span class="emo f-a">🍌</span><span class="emo f-b">🥕</span></span>
+        <span class="f-text"><span class="f-tag">Oyun</span><b>Minik Market</b><small>${S.market.visits ? `${S.market.visits} kez alışveriş yapıldı` : 'Meyve ve sebze al'}</small></span>
+        <span class="f-play" aria-hidden="true">${ICON.play}</span>
+      </button>
+    </div>
     <div class="section-head"><h2>Dünyalar</h2><span class="en" lang="en">Pick a world</span><span class="learned">${totalSeen()} / ${TOTAL} kelime</span></div>
     <div class="cats">${CATS.map(catTile).join('')}</div>
     <button class="album-banner" data-act="album">
       <span class="fan">${recent.map((k, i) => `<span style="--r:${(i - 1) * 9}deg">${k ? pic(WORD[k], true) : '?'}</span>`).join('')}</span>
-      <span class="ab-text"><b>Çıkartma Albümüm</b><small>${totalSeen() + S.specials.length} / ${TOTAL + SPECIALS.length} çıkartma · Hazineye ${Math.max(0, CHEST_EVERY - S.chest)} yıldız kaldı</small></span>
+      <span class="ab-text"><b>Çıkartma Albümüm</b><small>${stickerCount()} / ${STICKER_TOTAL} çıkartma · Hazineye ${Math.max(0, CHEST_EVERY - S.chest)} yıldız kaldı</small></span>
     </button>`;
 }
 
@@ -1257,7 +1654,7 @@ function viewBalloon(id){
 
 /* ---------- Albüm ---------- */
 function sticker(w){
-  const have = w.key.indexOf('special:') === 0 ? S.specials.indexOf(w.key) > -1 : isSeen(w);
+  const have = hasSticker(w.key);
   return `<button class="sticker${have ? '' : ' locked'}" data-act="${have ? 'hear' : 'lockedsticker'}" data-key="${w.key}" aria-label="${have ? say(w) : 'Henüz bulunmadı'}">
     <span class="pic">${pic(w, true)}</span><span class="st-label"${have ? ' lang="en"' : ''}>${have ? say(w) : '?'}</span></button>`;
 }
@@ -1267,22 +1664,741 @@ function viewAlbum(){
       <button class="back" data-act="home" aria-label="Ana sayfa">${ICON.back}</button>
       <span class="ph-icon" aria-hidden="true">${ICON.sticker}</span>
       <div class="ph-title"><h1>Çıkartma Albümüm</h1><span lang="en">My sticker book</span></div>
-      <span class="ph-count">${totalSeen() + S.specials.length}/${TOTAL + SPECIALS.length}</span>
+      <span class="ph-count">${stickerCount()}/${STICKER_TOTAL}</span>
     </div>
+    <section class="album-sec treasure"><h3>Hikâye çıkartmaları <small lang="en">Story stickers</small></h3>
+      <div class="stickers">${storyStickers().map(k => sticker(WORD[k])).join('')}${storyStickers().length ? '' : `<button class="sticker" data-act="story" aria-label="Bubu’nun Pikniği hikâyesini başlat"><span class="pic"><span class="emo">🧺</span></span><span class="st-label">Hikâyeye git</span></button>`}</div></section>
     <section class="album-sec treasure"><h3>Hazine çıkartmaları <small lang="en">Treasures</small><em>${S.specials.length}/${SPECIALS.length}</em></h3>
       <div class="stickers">${SPECIALS.map(sticker).join('')}</div></section>
+
     ${CATS.map(c => `<section class="album-sec"><h3><span class="emo" aria-hidden="true">${c.icon}</span>${c.tr} <small lang="en">${catEn(c)}</small><em>${seenIn(c)}/${c.words.length}</em></h3>
       <div class="stickers">${c.words.map(sticker).join('')}</div></section>`).join('')}`;
   $('.ph-icon').style.padding = '10px';
 }
 
-const VIEWS = { home: viewHome, cat: viewCat, find: viewFind, memory: viewMemory, balloon: viewBalloon, album: viewAlbum };
+/* ================= sürükle-bırak veya dokun-seç / dokun-bırak ================= */
+// Aynı ekranda iki yol: (1) nesneyi sürükleyip sepete bırak, (2) nesneye dokun (seçilir), sonra sepete dokun.
+// Klavye / ekran okuyucu: nesneler ve sepet birer düğme; Enter/Boşluk ile dokunma yolu çalışır.
+function makePlacer(root, o){
+  let selected = null, drag = null, suppress = 0, selT = 0, dropDownAt = 0;
+  const target = o.target;
+  const locked = () => !!(o.locked && o.locked());
+  const LIFT = 28;                                   // hayalet parmağın 28 px üstünde: el nesneyi kapatmasın
+  function setSel(el){
+    clearTimeout(selT);
+    if (selected){ selected.classList.remove('selected'); selected.setAttribute('aria-pressed', 'false'); }
+    selected = el || null;
+    if (selected){
+      selected.classList.add('selected'); selected.setAttribute('aria-pressed', 'true');
+      // Seçip bekleyen çocuğa bir kez "şimdi sepete dokun" gösterilir.
+      if (o.onSelectIdle) selT = setTimeout(() => { if (selected === el && !locked()) o.onSelectIdle(el); }, 4000);
+    }
+    target.classList.toggle('awaiting', !!selected);
+    target.setAttribute('aria-label', selected ? `Sepete koy: ${selected.dataset.name || ''}` : 'Sepet');
+  }
+  function near(x, y){
+    const r = target.getBoundingClientRect(), pad = 30;
+    return x > r.left - pad && x < r.right + pad && y > r.top - pad && y < r.bottom + pad;
+  }
+  function sendBack(d){
+    const g = d.ghost, el = d.el;
+    if (!g){ el.classList.remove('dragging'); return; }
+    const r = el.getBoundingClientRect();
+    g.style.transition = reduced ? 'none' : 'transform .3s cubic-bezier(.3,1.3,.5,1)';
+    g.style.transform = `translate(${r.left}px,${r.top}px)`;
+    setTimeout(() => { g.remove(); el.classList.remove('dragging'); }, reduced ? 0 : 310);
+  }
+  // Ekran kilitlenir, boyut değişir ya da tarayıcı parmağı elinden alırsa: sessizce geri, seçili kalır.
+  function cancelDrag(){
+    if (!drag) return;
+    const d = drag; drag = null; target.classList.remove('hover');
+    if (d.moved){ suppress = Date.now(); sendBack(d); if (!locked()) setSel(d.el); }
+  }
+  function down(e){
+    if (e.target.closest('[data-drop]') === target) dropDownAt = performance.now();
+    if (e.button > 0 || drag || !e.isPrimary) return;
+    if (e.pointerType === 'touch' && (e.width >= 60 || e.height >= 60)) return;   // avuç / dayanan el
+    const el = e.target.closest('[data-item]');
+    if (!el || !root.contains(el) || el.disabled || locked()) return;
+    drag = { el, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, ghost: null };
+  }
+  function move(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved){
+      if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < (e.pointerType === 'mouse' ? 5 : 9)) return;
+      if (locked()){ drag = null; return; }
+      drag.moved = true;
+      const r = drag.el.getBoundingClientRect(), g = drag.el.cloneNode(true);
+      g.removeAttribute('data-item'); g.removeAttribute('id'); g.setAttribute('aria-hidden', 'true');
+      g.classList.remove('selected', 'hint-glow', 'soft'); g.classList.add('drag-ghost');
+      g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
+      drag.gx = r.width / 2; drag.gy = r.height / 2 + LIFT;
+      document.body.appendChild(g); drag.ghost = g;
+      drag.el.classList.add('dragging');
+      setSel(null);
+      try { drag.el.setPointerCapture(e.pointerId); } catch (_) {}
+      drag.el.addEventListener('lostpointercapture', cancelDrag, { once: true });
+      if (o.onDragStart) o.onDragStart(drag.el);
+    }
+    if (e.cancelable) e.preventDefault();
+    drag.ghost.style.transform = `translate(${e.clientX - drag.gx}px,${e.clientY - drag.gy}px) scale(1.1)`;
+    target.classList.toggle('hover', near(e.clientX, e.clientY - LIFT));
+  }
+  function up(e){
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    d.el.removeEventListener('lostpointercapture', cancelDrag);
+    if (!d.moved) return;                 // kısa dokunuş: click olayı seçimi yapar
+    suppress = Date.now();
+    target.classList.remove('hover');
+    if (!locked() && (near(e.clientX, e.clientY) || near(e.clientX, e.clientY - LIFT))){
+      const from = d.ghost.getBoundingClientRect();
+      // onPlace false dönerse (yanlış nesne) nesne yerine geri süzülür; doğruysa sepete girer.
+      if (o.onPlace(d.el, from) === false) sendBack(d);
+      else { d.ghost.remove(); d.el.classList.remove('dragging'); }
+    } else {
+      sendBack(d);                        // sepetin dışına bırakıldı: sessizce geri döner, seçili kalır
+      if (!locked()) setSel(d.el);
+    }
+  }
+  function cancel(e){ if (drag && e.pointerId === drag.id) cancelDrag(); }
+  function touchBlock(e){ if (drag && drag.moved && e.cancelable) e.preventDefault(); }
+  function click(e){
+    if (Date.now() - suppress < 450){ e.stopPropagation(); return; }
+    const el = e.target.closest('[data-item]');
+    if (el && root.contains(el)){
+      e.stopPropagation();
+      if (locked() || el.disabled) return;
+      const again = selected === el;
+      if (!again) setSel(el);
+      if (o.onSelect) o.onSelect(el, again);
+      return;
+    }
+    const t = e.target.closest('[data-drop]');
+    if (t === target){
+      e.stopPropagation();
+      // Sepete uzun süre dayanan el (1,5 sn+) dokunuş sayılmaz. Klavye (detail 0) her zaman geçer.
+      if (e.detail && dropDownAt && performance.now() - dropDownAt > 1500) return;
+      if (locked()) return;
+      if (selected){ const el2 = selected, from = el2.getBoundingClientRect(); setSel(null); o.onPlace(el2, from); }
+      else if (o.onEmptyTarget) o.onEmptyTarget();
+    }
+  }
+  root.addEventListener('pointerdown', down);
+  root.addEventListener('touchmove', touchBlock, { passive: false });
+  window.addEventListener('pointermove', move, { passive: false });
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', cancel);
+  window.addEventListener('resize', cancelDrag);
+  root.addEventListener('click', click);
+  return {
+    clear(){ setSel(null); },
+    preselect(el){ if (el) setSel(el); },
+    get selected(){ return selected; },
+    cancelDrag,
+    destroy(){
+      clearTimeout(selT);
+      if (drag && drag.ghost) drag.ghost.remove();
+      drag = null;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', cancel);
+      window.removeEventListener('resize', cancelDrag);
+      root.removeEventListener('pointerdown', down);
+      root.removeEventListener('touchmove', touchBlock);
+      root.removeEventListener('click', click);
+      $$('.drag-ghost').forEach(g => g.remove());
+    }
+  };
+}
+// Bir nesnenin kopyasını bir noktadan hedefe uçurur (sepete girme animasyonu). Animasyonu döndürür.
+function flyInto(fromRect, toEl, html, done){
+  const to = toEl.getBoundingClientRect();
+  if (reduced || !document.body.animate){ if (done) done(); return null; }
+  const f = document.createElement('div');
+  f.className = 'fly-item'; f.innerHTML = html; f.setAttribute('aria-hidden', 'true');
+  const size = Math.min(fromRect.width, 96);
+  f.style.width = size + 'px'; f.style.height = size + 'px'; f.style.fontSize = Math.round(size * .62) + 'px';
+  document.body.appendChild(f);
+  const x0 = fromRect.left + fromRect.width / 2 - size / 2, y0 = fromRect.top + fromRect.height / 2 - size / 2;
+  const x1 = to.left + to.width / 2 - size / 2, y1 = to.top + to.height * .35 - size / 2;
+  const a = f.animate([
+    { transform: `translate(${x0}px,${y0}px) scale(1)` },
+    { transform: `translate(${(x0 + x1) / 2}px,${Math.min(y0, y1) - 70}px) scale(1.15)`, offset: .5 },
+    { transform: `translate(${x1}px,${y1}px) scale(.55)`, opacity: .9 }
+  ], { duration: 560, easing: 'cubic-bezier(.4,0,.4,1)' });
+  a.onfinish = () => { f.remove(); if (done) done(); };
+  a.oncancel = () => f.remove();
+  return a;
+}
+
+/* ================= hikâye ve market için ortak parçalar ================= */
+const A = s => s.charAt(0).toUpperCase() + s.slice(1) + '!';
+function basketSVG(){
+  const ln = 'stroke:var(--line)';
+  return `<svg class="basket-svg" viewBox="0 0 160 112" aria-hidden="true">
+<path d="M34 48Q80 -14 126 48" fill="none" style="${ln}" stroke-width="13" stroke-linecap="round"/>
+<path d="M34 48Q80 -14 126 48" fill="none" style="stroke:#B87436" stroke-width="7" stroke-linecap="round"/>
+<path d="M12 50H148L134 104Q133 108 128 108H32Q27 108 26 104Z" style="fill:#E0A863;${ln}" stroke-width="4" stroke-linejoin="round"/>
+<path d="M18 68H142M22 84H138M26 99H134M48 54V106M80 54V106M112 54V106" fill="none" style="stroke:#B87436" stroke-width="3"/>
+<rect x="6" y="42" width="148" height="15" rx="7.5" style="fill:#C98645;${ln}" stroke-width="4"/>
+</svg>`;
+}
+function bushSVG(){
+  const shapes = '<circle cx="30" cy="58" r="27"/><circle cx="62" cy="42" r="33"/><circle cx="92" cy="58" r="25"/><rect x="8" y="58" width="104" height="30" rx="12"/>';
+  return `<svg viewBox="0 0 120 90" aria-hidden="true"><g style="fill:var(--line);stroke:var(--line)" stroke-width="7">${shapes}</g><g style="fill:#4FAE4A">${shapes}</g>
+<circle cx="52" cy="30" r="9" style="fill:#7ACB62"/><circle cx="26" cy="50" r="7" style="fill:#7ACB62"/><circle cx="90" cy="50" r="6" style="fill:#7ACB62"/></svg>`;
+}
+const ORB = '<span class="scene-sun" aria-hidden="true"></span><span class="cloud c-a" aria-hidden="true"></span>';
+const tellHTML = () => `<div class="tell"><button class="owl-say" data-act="replay" aria-label="Bubu’yu tekrar dinle">${owlSVG()}</button>
+  <div class="prompt-bubble tell-bubble"><p id="tell-text" aria-hidden="true"></p><button class="want-pic" id="want-pic" data-act="replay" aria-label="Tekrar dinle" hidden></button></div></div>`;
+const actBar = middle => `<div class="act-bar">
+  <button class="act-btn" data-act="exit" aria-label="Ana sayfaya dön">${ICON.home}</button>
+  <div class="act-mid" aria-hidden="true">${middle}</div>
+  <button class="act-btn replay${synth ? '' : ' muted'}" data-act="replay" aria-label="Tekrar dinle">${ICON.speaker}</button>
+</div>`;
+const endActions = withAlbum => `<div class="end-actions">
+  <button class="big-act" data-act="exit"><span class="big-round">${ICON.home}</span><span>Ana sayfa</span></button>
+  <button class="big-act" data-act="again"><span class="big-round go">${ICON.again}</span><span>Tekrar</span></button>
+  ${withAlbum ? `<button class="big-act" data-act="album"><span class="big-round">${ICON.sticker}</span><span>Albüm</span></button>` : ''}
+</div>`;
+// Erişilebilir ad İngilizce okunsun diye görünmez bir lang="en" yazıyla verilir.
+const itemBtn = (w, cls) => `<button class="item ${cls || ''}" data-item data-key="${w.key}" data-name="${say(w)}" aria-pressed="false">${pic(w)}<span class="sr-only" lang="en">${say(w)}</span></button>`;
+const basketBtn = () => `<button class="basket-drop" data-drop id="basket" aria-label="Sepet">${basketSVG()}<span class="basket-in" id="basket-in"></span></button>`;
+const goRow = (label, hidden) => `<div class="go-row"><button class="next-btn" data-act="next" aria-label="${label}"${hidden ? ' hidden' : ''}>${ICON.play}</button></div>`;
+const emptyRow = '<div class="go-row" aria-hidden="true"></div>';     // ▶'nin yeri boş kalır: sonraki sahnede oraya cevap gelmez
+function glow(el){ if (el) el.classList.add('hint-glow'); }
+function cheerBubu(){ const o = $('.tell .owl'); if (o) retrigger(o, 'cheer'); }
+// Sırayla zıplama; azaltılmış harekette 1,5 sn durağan halka.
+function hopSeq(el){
+  if (!el) return;
+  if (!reduced){ retrigger(el, 'hop-seq'); return; }
+  el.classList.add('ring-all');
+  setTimeout(() => el.classList.remove('ring-all'), 1500);
+}
+// Gösterici el: bir nesneye gider, dokunur. Azaltılmış harekette kayma olmadan iki durağan kare gibi görünür.
+function makeHand(at){
+  const h = document.createElement('div');
+  h.className = 'hand nomove'; h.textContent = '👆'; h.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(h);
+  if (at) handAt(h, at); else h.style.transform = `translate(${innerWidth / 2 - 24}px,${innerHeight + 30}px)`;
+  void h.offsetWidth; h.classList.remove('nomove');
+  return h;
+}
+function handAt(h, el){
+  if (!h || !el || !el.isConnected) return;
+  const r = el.getBoundingClientRect();
+  h.style.transform = `translate(${r.left + r.width / 2 - 18}px,${r.top + r.height / 2 - 4}px)`;
+}
+const handTap = h => { if (h) retrigger(h, 'tap'); };
+function demoMove(fromEl, toEl){
+  if (!fromEl || !toEl) return;
+  const h = makeHand(fromEl);
+  setTimeout(() => handTap(h), 350);
+  setTimeout(() => handAt(h, toEl), 700);
+  setTimeout(() => handTap(h), 1500);
+  setTimeout(() => h.classList.add('fade'), 2000);
+  setTimeout(() => h.remove(), 2400);
+}
+function pointHand(el){
+  if (!el) return;
+  const h = makeHand(el);
+  setTimeout(() => handTap(h), 200);
+  setTimeout(() => h.classList.add('fade'), 2400);
+  setTimeout(() => h.remove(), 2800);
+}
+let curTask = null;
+// Bir etkinliğin ortak durumu: zamanlayıcılar, tekrar dinlenecek cümle, bekleme ipuçları, sahne koruması.
+function makeTask(){
+  const t = { alive: true, timers: [], anims: [], line: null, speaking: false, talkId: 0, step: 0, demo: null, pic: false,
+    idle: [], idleStage: 0, idleT: 0, readyAt: 0, placer: null, lastReplay: 0 };
+  curTask = t;
+  t.later = (fn, ms) => { const id = setTimeout(() => { if (t.alive) fn(); }, ms); t.timers.push(id); return id; };
+  t.guard = ms => { t.readyAt = performance.now() + ms; };          // sahne değişince çift dokunuş taşmasın
+  t.ready = () => performance.now() >= t.readyAt;
+  // Resimli mod: cihazda Türkçe ses yoksa (ya da kapalıysa) yönergeler el gösterimi ve resimle verilir.
+  t.checkPic = () => { t.pic = trState() !== 'ok'; return t.pic; };
+  // Balon her sahnede sabit, kısa içerik gösterir (İngilizce kelime); ipuçları balonu değiştirmez.
+  t.bubble = html => { const el = $('#tell-text'); if (el) el.innerHTML = html; };
+  t.fly = (from, toEl, w, into) => {
+    const bi = into || $('#basket-in');
+    const a = flyInto(from, toEl, pic(w), () => { if (t.alive && bi && bi.isConnected) bi.insertAdjacentHTML('beforeend', `<span>${pic(w, true)}</span>`); });
+    if (a) t.anims.push(a);
+  };
+  t.talk = (segs, replay) => {
+    t.line = replay || segs;
+    const my = ++t.talkId; t.speaking = true; clearTimeout(t.idleT);
+    const tell = $('.tell'); if (tell) tell.classList.add('talking');
+    return speakLine(segs).then(ok => {
+      if (my === t.talkId){
+        t.speaking = false;
+        const tl = $('.tell'); if (tl) tl.classList.remove('talking');
+        if (t.alive) t.armIdle();
+      }
+      return ok;
+    });
+  };
+  // Yanlış cevapta ipucu, çalan sözü kelimenin ortasında kesmez: parça sonunu (en çok 1,2 sn) bekler.
+  t.talkSoon = (segs, replay) => {
+    if (!t.speaking) return t.talk(segs, replay);
+    const my = t.talkId, step = t.step;
+    return Promise.race([new Promise(r => segWaiters.push(r)), wait(1200)])
+      .then(() => (t.alive && step === t.step && my === t.talkId) ? t.talk(segs, replay) : false);
+  };
+  // Bekleme merdiveni: söz bittikten 8 sn sonra 1. ipucu, 12 sn sonra 2. ipucu, sonra susar. Dokunuş sayacı sıfırlar.
+  t.setIdle = fns => { t.idle = fns || []; t.idleStage = 0; t.armIdle(); };
+  t.armIdle = () => {
+    clearTimeout(t.idleT);
+    if (!t.alive || t.speaking || t.idleStage >= t.idle.length) return;
+    t.idleT = setTimeout(() => {
+      if (!t.alive) return;
+      if (document.hidden || t.speaking || !modalRoot.hidden){ t.armIdle(); return; }
+      const fn = t.idle[t.idleStage++];
+      fn();
+      t.armIdle();
+    }, t.idleStage === 0 ? 8000 : 12000);
+  };
+  t.poke = () => { if (!t.speaking) t.armIdle(); };
+  t.clearStep = () => {
+    t.timers.forEach(clearTimeout); t.timers = [];
+    t.anims.forEach(a => { try { a.cancel(); } catch (e) {} }); t.anims = [];
+    clearTimeout(t.idleT); t.idle = []; t.talkId++; t.speaking = false; t.step++; t.demo = null;
+    if (t.placer){ t.placer.destroy(); t.placer = null; }
+    $$('.hand, .fly-item').forEach(h => h.remove());
+  };
+  t.end = () => {
+    t.alive = false; t.clearStep();
+    if (curTask === t) curTask = null;
+    app.removeEventListener('pointerdown', t.poke);
+    app.removeEventListener('keydown', t.poke);
+  };
+  app.addEventListener('pointerdown', t.poke);
+  app.addEventListener('keydown', t.poke);
+  viewActs.replay = () => {
+    const now = performance.now();
+    if (!t.line || now - t.lastReplay < 700) return;      // çekiç gibi basılan tekrar düğmesi sesi kilitlemesin
+    t.lastReplay = now; sfx.tap(); t.talk(t.line, t.line);
+    if (t.pic && t.demo) t.demo();                         // resimli modda gösterim de yinelenir
+  };
+  return t;
+}
+
+/* ---------- Bubu'nun Pikniği (hikâye) ---------- */
+const PICNIC_STEPS = ['intro', 'teach-apple', 'task-apple', 'teach-red', 'task-red', 'teach-rabbit', 'task-rabbit', 'finale', 'sticker'];
+function viewStory(){
+  const APPLE = WORD['fruits:apple'], RED = WORD['colors:red'], RABBIT = WORD['animals:rabbit'];
+  const rec = picnicRec();
+  const firstPlay = rec.plays === 0;
+  const T = makeTask();
+  cleanup = T.end;
+  let i = 0, advancing = false, chosen = null, demoDone = !firstPlay;
+  const word = w => `<b lang="en">${A(say(w)).slice(0, -1)}</b>`;
+  const stepOf = id => /apple/.test(id) ? 0 : /red/.test(id) ? 1 : /rabbit/.test(id) ? 2 : (id === 'finale' || id === 'sticker') ? 3 : -1;
+  function bar(){
+    const cur = stepOf(PICNIC_STEPS[i]);
+    const icons = [pic(APPLE, true), `<span class="blob" style="--blob:${RED.color}"></span>`, pic(RABBIT, true), star()];
+    return actBar(`<div class="steps">${icons.map((h, k) => `<span class="step${k < cur ? ' done' : ''}${k === cur ? ' now' : ''}">${h}</span>`).join('')}</div>`);
+  }
+  function render(){
+    T.clearStep(); advancing = false;
+    const id = PICNIC_STEPS[i];
+    app.innerHTML = `<div class="act" id="act">${bar()}<div class="act-body" id="sb" tabindex="-1"></div></div>`;
+    T.guard(id === 'sticker' ? 700 : 500);
+    T.checkPic();
+    STEP[id]($('#sb'));
+    try { $('#sb').focus({ preventScroll: true }); } catch (e) {}
+  }
+  function next(){
+    if (!T.alive || i >= PICNIC_STEPS.length - 1) return;
+    if (document.hidden){ T.later(next, 600); return; }      // arka plandayken hikâye kendi kendine ilerlemesin
+    i++; render();
+  }
+  function advance(ms){ if (advancing) return; advancing = true; T.later(next, ms); }
+  viewActs.next = () => { if (!T.ready()) return; sfx.tap(); next(); };
+  function setWant(html, lvl){ const wp = $('#want-pic'); if (!wp) return; wp.innerHTML = html; wp.className = 'want-pic lvl' + lvl; wp.hidden = false; retrigger(wp, 'reveal-pic'); }
+  function teach(b, w, intro, extra){
+    b.innerHTML = tellHTML() + `<div class="act-main"><div class="teach">${extra || ''}<button class="teach-pic" data-act="teachhear" aria-label="${say(w)}: tekrar dinle">${pic(w)}</button>
+      <span class="teach-word" lang="en">${say(w)}</span>${S.settings.showTr ? `<span class="teach-tr">${w.tr}</span>` : ''}</div></div>` + goRow('Devam', true);
+    T.bubble(word(w));
+    const segs = [['tr', intro], ['en', A(say(w))], ['tr', 'Sen de söyle!'], ['pause', 1500], ['en', A(say(w))]];
+    const showNext = () => { const n = $('.next-btn', b); if (n) n.hidden = false; };   // ▶ kelime duyulduktan sonra çıkar
+    T.talk(segs).then(showNext);
+    T.later(showNext, 7000);
+    viewActs.teachhear = el => { retrigger(el, 'bounce'); sfx.tap(); if (!T.speaking) speakLine([['en', A(say(w))]]); };
+    T.setIdle([() => { T.talk([['tr', 'Devam etmek için yeşil düğmeye dokun.']], segs); const n = $('.next-btn', b); if (n) retrigger(n, 'hop'); }]);
+  }
+  const STEP = {
+    intro(b){
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="stage scene-intro">${ORB}<span class="scene-tree emo" aria-hidden="true">🌳</span><span class="scene-basket">${basketSVG()}</span><span class="scene-flower emo" aria-hidden="true">🌼</span></div></div>` + goRow('Başla');
+      T.bubble('<span lang="tr">Bubu’nun Pikniği</span>');
+      const go = [['tr', 'Yeşil düğmeye dokun.']];
+      T.talk((firstPlay ? [['tr', 'Bugün Bubu pikniğe gidiyor!'], ['tr', 'Hadi, ona yardım edelim.']] : [['tr', 'Yine pikniğe gidiyoruz!']]).concat(go));
+      T.setIdle([() => { T.talk(go); const n = $('.next-btn'); if (n) retrigger(n, 'hop'); }]);
+    },
+    'teach-apple'(b){ teach(b, APPLE, 'Bak, bu bir elma. İngilizcesi:'); },
+    'teach-red'(b){ teach(b, RED, 'Bak, bu renk kırmızı. Elma kırmızı, balon kırmızı. İngilizcesi:', '<span class="teach-extra" aria-hidden="true"><span class="emo">🍎</span><span class="emo">🎈</span></span>'); },
+    'teach-rabbit'(b){ teach(b, RABBIT, 'Bak, bu bir tavşan. İngilizcesi:'); },
+    'task-apple'(b){
+      const BREAD = WORD['food:bread'];
+      const demoing0 = !demoDone || T.pic;
+      const opts = shuffle([APPLE, WORD['fruits:banana'], WORD['vegetables:carrot']]);
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="field" id="field">${opts.map(w => itemBtn(w)).join('')}</div></div>
+        <div class="basket-row">${demoing0 ? `<span class="item demo-item" id="demo-bread" aria-hidden="true">${pic(BREAD)}</span>` : ''}${basketBtn()}</div>`;
+      T.bubble(word(APPLE));
+      if (T.pic) setWant(pic(APPLE, true), 2);
+      let miss = 0, done = false, demoing = demoing0;
+      const prompt = [['tr', 'Elmayı sepete koy.'], ['en', A(say(APPLE))]];
+      const appleEl = () => $(`#field [data-key="${CSS.escape(APPLE.key)}"]`);
+      T.demo = () => demoMove($('#field'), $('#basket'));
+      T.placer = makePlacer(b, {
+        target: $('#basket'),
+        locked: () => done || demoing || !T.ready(),
+        onSelect: el => { sfx.tap(); if (!T.speaking) speakLine([['en', A(say(WORD[el.dataset.key]))]]); },
+        onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], prompt); },
+        onEmptyTarget: () => { hopSeq($('#field')); T.talk([['tr', 'Önce birine dokun, sonra sepete.'], ['en', A(say(APPLE))]], prompt); },
+        onPlace: (el, from) => {
+          const w = WORD[el.dataset.key];
+          if (w === APPLE){
+            done = true; el.classList.add('gone');
+            T.fly(from, $('#basket'), w);
+            sfx.good(); confettiAt($('#basket'), 30); cheerBubu();
+            T.talk([['en', A(say(APPLE))], ['tr', 'Harika! Elma sepette.']]).then(() => advance(600));
+            return true;
+          }
+          miss++; sfx.hmm(); retrigger(el, 'soft');
+          if (miss === 1 && !T.pic) T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Elma kırmızı ve yuvarlak.'], ['en', A(say(APPLE))]], prompt);
+          else if (miss <= 2){ glow(appleEl()); T.talkSoon([['tr', 'Bak, elma burada!'], ['en', A(say(APPLE))]], prompt); }
+          else { const a = appleEl(); glow(a); T.placer.preselect(a); pointHand($('#basket')); T.talkSoon([['tr', 'Elmayı seçtim. Şimdi sepete dokun.']], prompt); }
+          return false;
+        }
+      });
+      T.setIdle([() => { T.talk(prompt); demoMove($('#field'), $('#basket')); }, () => glow(appleEl())]);
+      if (!demoing){ T.talk([['tr', 'Bubu acıktı.']].concat(prompt), prompt); return; }
+      // "Önce ben yapayım": el ekmeğe dokunur, sonra sepete; ekmek sepete girer. İlk oyunda ve resimli modda.
+      (async () => {
+        const tok = T.step, bread = $('#demo-bread'), basket = $('#basket');
+        const live = () => T.alive && tok === T.step;
+        const h = makeHand();
+        T.later(() => handAt(h, bread), 60);
+        T.later(() => { handTap(h); bread.classList.add('selected'); basket.classList.add('awaiting'); }, 900);
+        await Promise.all([T.talk([['tr', 'Bak, önce ben yapayım: ekmeğe dokunuyorum.'], ['en', 'Bread!']], prompt), wait(1700)]);
+        if (!live()) return;
+        handAt(h, basket);
+        T.later(() => {
+          handTap(h); bread.classList.remove('selected'); basket.classList.remove('awaiting');
+          T.fly(bread.getBoundingClientRect(), basket, BREAD);
+          bread.classList.add('gone');
+          demoing = false; demoDone = true;                    // ekmek sepete girer girmez çocuk deneyebilir
+        }, 850);
+        await Promise.all([T.talk([['tr', 'Sonra sepete dokunuyorum. Hop, sepette!']], prompt), wait(1900)]);
+        h.classList.add('fade'); T.later(() => h.remove(), 400);
+        if (!live() || done) return;
+        T.talk([['tr', 'Şimdi sıra sende.']].concat(prompt), prompt);
+      })();
+    },
+    'task-red'(b){
+      const opts = shuffle([RED, WORD['colors:blue'], WORD['colors:yellow']]);
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="blankets" id="blankets">${opts.map(w => `<button class="blanket" data-act="blanket" data-key="${w.key}" style="--b:${w.color}"><span class="sr-only" lang="en">${say(w)}</span></button>`).join('')}</div></div>` + emptyRow;
+      T.bubble(word(RED));
+      let miss = 0, done = false;
+      const tried = {};
+      const prompt = [['tr', 'Kırmızı örtüye dokun.'], ['en', A(say(RED))]];
+      const redEl = () => $(`#blankets [data-key="${CSS.escape(RED.key)}"]`);
+      T.demo = () => hopSeq($('#blankets'));
+      if (T.pic){ setWant(`<span class="blob" style="--blob:${RED.color}"></span>`, 2); T.demo(); }
+      T.talk([['tr', 'Şimdi örtüyü serelim.']].concat(prompt), prompt);
+      viewActs.blanket = el => {
+        if (done || !T.ready()) return;
+        const w = WORD[el.dataset.key];
+        if (w === RED){
+          done = true; el.classList.add('chosen');
+          sfx.good(); confettiAt(el, 30); cheerBubu();
+          T.talk([['en', A(say(RED))], ['tr', 'Süper! Kırmızı örtüyü serdik.']]).then(() => advance(600));
+          return;
+        }
+        sfx.hmm(); retrigger(el, 'soft');
+        if (tried[w.key]){ if (!T.speaking) speakLine([['en', A(say(w))]]); return; }   // aynı yanlışa tekrar: sadece adı
+        tried[w.key] = 1; miss++;
+        if (miss === 1 && !T.pic){
+          setWant(pic(APPLE, true), 2);
+          T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Kırmızı, elma gibi!'], ['en', A(say(RED))]], prompt);
+        } else { glow(redEl()); T.talkSoon([['tr', 'Kırmızı örtü burada!'], ['en', A(say(RED))]], prompt); }
+      };
+      T.setIdle([() => { T.talk(prompt); hopSeq($('#blankets')); }, () => glow(redEl())]);
+    },
+    'task-rabbit'(b){
+      const hide = shuffle([RABBIT, WORD['animals:bird'], WORD['animals:frog']]);
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="stage scene-bushes"><div class="bushes" id="bushes">${hide.map((w, k) => `<button class="bush" data-act="bush" data-key="${w.key}" aria-label="Çalı ${k + 1}"><span class="behind">${pic(w)}</span><span class="leaves">${bushSVG()}</span></button>`).join('')}</div></div></div>` + emptyRow;
+      T.bubble(word(RABBIT));
+      let found = 0, done = false;
+      const prompt = [['tr', 'Tavşanı bul!'], ['en', A(say(RABBIT))]];
+      const rabbitEl = () => $(`#bushes [data-key="${CSS.escape(RABBIT.key)}"]`);
+      T.demo = () => {
+        hopSeq($('#bushes'));
+        if (T.pic){ const other = $$('#bushes .bush:not(.open)').find(x => x.dataset.key !== RABBIT.key); if (other) T.later(() => pointHand(other), 700); }
+      };
+      if (T.pic) setWant(pic(RABBIT, true), 1);
+      T.talk([['tr', 'Tavşan saklandı! Çalılara dokun, bul bakalım.'], ['en', A(say(RABBIT))]], prompt);
+      T.demo();                                                  // çalılar sırayla sallanır: dokunulabilir
+      viewActs.bush = el => {
+        if (done || !T.ready()) return;
+        const w = WORD[el.dataset.key];
+        if (el.classList.contains('open')){ if (!T.speaking) speakLine([['en', A(say(w))]]); return; }
+        el.classList.add('open'); el.classList.remove('peek', 'hint-glow'); el.setAttribute('aria-label', say(w));
+        if (w === RABBIT){
+          done = true;
+          sfx.good(); confettiAt(el, 36); cheerBubu();
+          T.talk([['en', A(say(RABBIT))], ['tr', 'Buldun! Tavşan pikniğe geliyor.']]).then(() => advance(700));
+          return;
+        }
+        // Yanlış çalı bir keşif sayılır: hayvan görünür kalır, ipucu verilir.
+        sfx.pop(); found++;
+        const r = rabbitEl(); if (r) r.classList.add('peek');
+        if (found === 1) T.talkSoon([['tr', `Burada ${w.tr} var!`], ['en', A(say(w))], ['tr', 'Tavşanın uzun kulakları var. Kulaklara bak!']], prompt);
+        else { glow(r); T.talkSoon([['tr', `Burada ${w.tr} var!`], ['en', A(say(w))], ['tr', 'Tavşan son çalıda!']], prompt); }
+      };
+      T.setIdle([() => { T.talk(prompt); T.demo(); }, () => { const r = rabbitEl(); if (r) r.classList.add('peek'); }]);
+    },
+    finale(b){
+      rec.plays += 1; save();
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="stage scene-finale">${ORB}<span class="fin-blanket r1" style="--b:${RED.color}" aria-hidden="true"></span>
+          <span class="fin-basket r0">${basketSVG()}<span class="basket-in">${pic(APPLE, true)}</span></span>
+          <span class="fin-rabbit r2">${pic(RABBIT)}</span></div></div>` + emptyRow;
+      T.bubble(`<b lang="en">${A(say(APPLE))} ${A(say(RED))} ${A(say(RABBIT))}</b>`);
+      sfx.win(); confettiBig(); cheerBubu();
+      T.talk([['en', A(say(APPLE))], ['en', A(say(RED))], ['en', A(say(RABBIT))], ['en', `A ${say(RED)} ${say(APPLE)}!`], ['tr', 'Yaşasın! Piknik hazır!']]).then(() => advance(700));
+      T.later(() => advance(0), 16000);
+    },
+    sticker(b){
+      chosen = null;
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="picks" id="picks">${STORY_STICKERS.map((w, k) => `<button class="pick${rec.stickers.indexOf(w.key) > -1 ? ' owned' : ''}" data-act="pick" data-key="${w.key}" style="--r:${[-4, 2, -2][k]}deg"><span class="pic">${pic(w)}</span><b lang="en">${say(w)}</b></button>`).join('')}</div></div><div class="go-row end-row" id="after-pick"></div>`;
+      T.bubble('<span lang="tr">Bir çıkartma seç</span>');
+      const names = STORY_STICKERS.map(w => ['en', A(say(w))]);
+      const full = [['tr', 'Sana bir çıkartma var! Hangisini istersin?']].concat(names, [['tr', 'Birine dokun.']]);
+      T.demo = () => hopSeq($('#picks'));
+      (async () => {
+        const tok = T.step, live = () => T.alive && tok === T.step && !chosen;
+        if (T.pic) T.demo();
+        if (!(await T.talk([full[0]], full)) || !live()) return;
+        const els = $$('#picks .pick');
+        for (let k = 0; k < els.length; k++){
+          if (!live()) return;
+          els[k].classList.add('spot');
+          const r = await Promise.all([T.talk([names[k]], full), wait(700)]);
+          els[k].classList.remove('spot');
+          if (!r[0]) return;
+        }
+        if (live()) T.talk([['tr', 'Birine dokun.']], full);
+      })();
+      viewActs.pick = el => {
+        if (chosen || !T.ready()) return;
+        const w = WORD[el.dataset.key]; chosen = w;
+        const had = rec.stickers.indexOf(w.key) > -1;
+        if (!had){ rec.stickers.push(w.key); save(); updateStats(); }
+        $$('#picks .pick').forEach(p => { p.classList.remove('spot'); if (p !== el) p.disabled = true; });
+        el.classList.add('chosen'); sfx.good(); confettiAt(el, 50);
+        $('#after-pick').innerHTML = endActions(true);
+        T.setIdle([]);
+        T.talk([['en', A(say(w))], ['tr', had ? 'Yine bunu seçtin! Çok güzel.' : 'Bu çıkartma artık senin!'], ['tr', 'Teşekkürler! Bubu çok mutlu. Bir daha oynayalım mı?']]);
+      };
+      T.setIdle([() => { T.talk([['tr', 'Bir çıkartmaya dokun.']], full); hopSeq($('#picks')); }]);
+    }
+  };
+  render();
+}
+
+/* ---------- Minik Market ---------- */
+const MARKET_ROUNDS = 4;
+// Telefonda karışabilecek resimler aynı tezgâha konmaz (elma/domates/kiraz/biber, portakal/şeftali, armut/limon).
+const MARKET_POOL = ['fruits:apple', 'fruits:banana', 'fruits:strawberry', 'fruits:orange', 'fruits:grapes', 'fruits:watermelon', 'fruits:pineapple', 'fruits:pear', 'fruits:lemon', 'fruits:kiwi', 'fruits:cherries', 'fruits:peach',
+  'vegetables:carrot', 'vegetables:tomato', 'vegetables:corn', 'vegetables:potato', 'vegetables:broccoli', 'vegetables:mushroom', 'vegetables:cucumber', 'vegetables:eggplant', 'vegetables:onion', 'vegetables:pepper'];
+const MARKET_GROUPS = [['fruits:apple', 'vegetables:tomato', 'fruits:cherries', 'vegetables:pepper'], ['fruits:orange', 'fruits:peach'], ['fruits:pear', 'fruits:lemon']];
+function marketShelf(){
+  const known = MARKET_POOL.filter(k => S.seen[k]);
+  const story = picnicRec().plays > 0 ? ['fruits:apple', 'fruits:banana', 'vegetables:carrot'] : [];
+  const order = shuffle(known).slice(0, 3).concat(shuffle(story), shuffle(MARKET_POOL));
+  const groupOf = k => MARKET_GROUPS.findIndex(g => g.indexOf(k) > -1);
+  const pick = [];
+  for (const k of order){
+    if (pick.length >= 6) break;
+    if (pick.indexOf(k) > -1 || !WORD[k]) continue;
+    const g = groupOf(k);
+    if (g > -1 && pick.some(p => groupOf(p) === g)) continue;
+    pick.push(k);
+  }
+  return shuffle(pick).map(k => WORD[k]);
+}
+function viewMarket(){
+  const shelf = marketShelf();
+  const orders = shuffle(shelf).slice(0, MARKET_ROUNDS);
+  const T = makeTask();
+  cleanup = T.end;
+  T.checkPic();
+  const warm = !(S.market.visits > 0) || T.pic;             // ilk ziyarette ve resimli modda ısınma gösterimi
+  let round = 0, miss = 0, busy = true;
+  const bought = [];
+  const setBusy = v => { busy = v; const m = $('#mk'); if (m) m.dataset.turn = v ? 'bubu' : 'child'; };
+  if (!S.market.bought || typeof S.market.bought !== 'object') S.market.bought = {};
+  app.innerHTML = `<div class="act" id="act">${actBar('<div class="slots" id="slots"></div>')}<div class="act-body" id="mk" tabindex="-1">
+    ${tellHTML()}
+    <div class="act-main"><div class="market"><div class="awning" aria-hidden="true"></div>
+      <div class="shelf" id="shelf">${shelf.map(w => `<span class="cell">${itemBtn(w, 'waiting')}</span>`).join('')}</div></div></div>
+    <div class="basket-row">${basketBtn()}</div></div></div>`;
+  try { $('#mk').focus({ preventScroll: true }); } catch (e) {}
+  T.bubble('<span lang="tr">Minik Market</span>');
+  const want = () => orders[round];
+  const itemEl = w => $(`#shelf [data-key="${CSS.escape(w.key)}"]`);
+  const please = w => ['en', `${A(say(w)).slice(0, -1)}, please!`];
+  const replayLine = w => [['tr', 'Bubu şunu istiyor:'], please(w)];
+  function setWant(level){
+    const wp = $('#want-pic'), w = want(); if (!wp || !w) return;
+    if (T.pic) level = Math.max(level, 2);                   // resimli modda istenen şey baştan resimle gösterilir
+    wp.className = 'want-pic lvl' + level; wp.hidden = false;
+    wp.innerHTML = level === 0 ? ICON.speaker : pic(w, true);   // 0: dinle, 1: gölge, 2: resim
+    if (level) retrigger(wp, 'reveal-pic');
+  }
+  function slots(){
+    const el = $('#slots'); if (!el) return;
+    el.innerHTML = orders.map((w, k) => `<span class="slot${k < bought.length ? ' full' : ''}${k === bought.length ? ' now' : ''}">${k < bought.length ? pic(bought[k], true) : ''}</span>`).join('');
+  }
+  function ask(firstReq){
+    const w = want(); miss = 0;
+    T.checkPic();
+    $('#shelf').dataset.want = w.key;
+    $$('#shelf .hint-glow').forEach(x => x.classList.remove('hint-glow'));
+    T.bubble(`<b lang="en">${A(say(w)).slice(0, -1)}</b>, please!`);
+    slots();
+    T.demo = () => demoMove($('#shelf'), $('#basket'));
+    T.setIdle([
+      () => { T.talk(replayLine(w)); demoMove($('#shelf'), $('#basket')); },
+      () => setWant(1)
+    ]);
+    if (warm && firstReq){ setWant(2); warmup(w); return; }
+    setWant(0); setBusy(false);
+    T.talk(firstReq ? [['tr', 'Dinle, Bubu ne istiyor?'], please(w)] : [['tr', 'Bir de şunu istiyor:'], please(w)], replayLine(w));
+  }
+  // Isınma: el önce istenen şeye, sonra sepete dokunur (taşımadan).
+  async function warmup(w){
+    setBusy(true);
+    const tok = T.step, live = () => T.alive && tok === T.step, el = itemEl(w), h = makeHand();
+    T.later(() => handAt(h, el), 60);
+    T.later(() => { handTap(h); el.classList.add('selected'); }, 900);
+    await Promise.all([T.talk([['tr', 'Dinle, Bubu ne istiyor?'], please(w)], replayLine(w)), wait(1700)]);
+    if (!live()) return;
+    handAt(h, $('#basket'));
+    T.later(() => handTap(h), 850);
+    await Promise.all([T.talk([['tr', 'Önce ona dokun, sonra sepete.']], replayLine(w)), wait(1800)]);
+    if (!live()) return;
+    el.classList.remove('selected'); h.classList.add('fade'); T.later(() => h.remove(), 400);
+    setBusy(false);
+    T.talk([['tr', 'Şimdi sen yap!'], please(w)], replayLine(w));
+  }
+  // Her ziyarette ürünler tezgâha tek tek gelir ve adları söylenir: önce öğret, sonra iste.
+  async function parade(){
+    const tok = T.step, live = () => T.alive && tok === T.step;
+    await Promise.all([T.talk([['tr', 'Minik Market’e hoş geldin!']]), wait(900)]);
+    const els = $$('#shelf .item');
+    for (let k = 0; k < els.length; k++){
+      if (!live()) return;
+      els[k].classList.remove('waiting'); retrigger(els[k], 'arrive');
+      await Promise.all([T.talk([['en', A(say(shelf[k]))]]), wait(800)]);
+    }
+    if (!live()) return;
+    await Promise.all([T.talk([['tr', 'Bubu ne isterse, sepete koy.']]), wait(600)]);
+    if (live()) ask(true);
+  }
+  function finish(){
+    S.market.visits = (S.market.visits || 0) + 1; save();
+    T.clearStep(); slots();
+    $('#mk').innerHTML = tellHTML() + `<div class="act-main"><div class="full-basket"><div class="fb-items" id="fb-items">${bought.map(w => `<button class="r-item" data-act="rhear" data-key="${w.key}"><span class="pic">${pic(w)}</span><b lang="en">${say(w)}</b>${S.settings.showTr ? `<small>${w.tr}</small>` : ''}</button>`).join('')}</div><div class="fb-basket">${basketSVG()}</div></div></div><div class="go-row end-row">${endActions(false)}</div>`;
+    T.bubble('<b lang="en">Thank you!</b>');
+    sfx.win(); confettiBig(); cheerBubu();
+    (async () => {
+      const tok = T.step, live = () => T.alive && tok === T.step;
+      await Promise.all([T.talk([['tr', 'Sepet doldu!']]), wait(700)]);
+      const els = $$('#fb-items .r-item');
+      for (let k = 0; k < els.length; k++){
+        if (!live()) return;
+        retrigger(els[k], 'bounce');
+        await Promise.all([T.talk([['en', A(say(bought[k]))]]), wait(650)]);
+      }
+      if (!live()) return;
+      await T.talk([['en', 'Thank you! Bye-bye!']]);
+      if (live()) T.talk([['tr', 'Bir daha oynayalım mı?']]);
+    })();
+  }
+  viewActs.rhear = el => { const w = WORD[el.dataset.key]; sfx.tap(); retrigger(el, 'bounce'); speakLine([['en', A(say(w))]]); };
+  T.placer = makePlacer($('#mk'), {
+    target: $('#basket'),
+    locked: () => busy || !T.ready(),
+    onSelect: el => {
+      sfx.tap(); if (!T.speaking) speakLine([['en', A(say(WORD[el.dataset.key]))]]);
+      const bk = $('#basket'); if (bk && bk.getBoundingClientRect().bottom > innerHeight) bk.scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+    },
+    onSelectIdle: el => { retrigger($('#basket'), 'hop'); if (T.pic) demoMove(el, $('#basket')); else T.talk([['tr', 'Şimdi sepete dokun.']], replayLine(want())); },
+    onEmptyTarget: () => { hopSeq($('#shelf')); T.talk([['tr', 'Önce birine dokun, sonra sepete.'], please(want())], replayLine(want())); },
+    onPlace: (el, from) => {
+      const w = WORD[el.dataset.key], target = want();
+      if (w === target){
+        setBusy(true); bought.push(w);
+        S.market.bought[w.key] = (S.market.bought[w.key] || 0) + 1; save();
+        el.classList.add('gone'); el.disabled = true; el.removeAttribute('data-item');
+        if (el.parentNode) el.parentNode.classList.add('empty');          // boş raf yeri kalır, diğerleri kaymaz
+        T.fly(from, $('#basket'), w);
+        sfx.good(); confettiAt($('#basket'), 24); cheerBubu();
+        round++; slots();
+        const last = round >= orders.length;
+        T.talk([['en', `${A(say(w)).slice(0, -1)}! Thank you!`]]).then(() => T.later(last ? finish : () => ask(false), 400));
+        return true;
+      }
+      miss++; sfx.hmm(); retrigger(el, 'soft');
+      if (miss === 1 && !T.pic){ setWant(1); T.talkSoon([['tr', `Bu ${w.tr}:`], ['en', say(w) + '.'], ['tr', 'Bubu başka bir şey istiyor. Dinle:'], please(target)], replayLine(target)); }
+      else if (miss <= 2){ setWant(2); glow(itemEl(target)); T.talkSoon([['tr', `Bubu ${target.tr} istiyor. Bak, burada!`], ['en', A(say(target))]], replayLine(target)); }
+      else { setWant(2); const t = itemEl(target); glow(t); T.placer.preselect(t); pointHand($('#basket')); T.talkSoon([['tr', 'Şimdi sepete dokun.']], replayLine(target)); }
+      return false;
+    }
+  });
+  slots();
+  parade();
+}
+
+/* ---------- etkinlikten çıkış: ana sayfa düğmesi, Escape ve telefonun "geri" hareketi ---------- */
+const ACT_VIEWS = ['story', 'market'];
+const inAct = () => ACT_VIEWS.indexOf(current.name) > -1;
+let pendingRoute = null;
+function actHistoryState(){ try { return !!(history.state && history.state.bubuAct); } catch (e) { return false; } }
+function leaveTo(name){
+  if (!actHistoryState()){ go(name); return; }
+  pendingRoute = name;
+  try { history.back(); } catch (e) { pendingRoute = null; go(name); return; }
+  setTimeout(() => { if (pendingRoute){ const r = pendingRoute; pendingRoute = null; go(r); } }, 450);
+}
+window.addEventListener('popstate', () => {
+  if (pendingRoute){ const r = pendingRoute; pendingRoute = null; go(r); return; }
+  if (inAct()) go('home');
+});
+document.addEventListener('visibilitychange', () => {
+  if (!inAct()) return;
+  const T = curTask;
+  if (document.hidden){                                  // kilitli ekranda Bubu konuşmasın, sürükleme yarıda kalmasın
+    stopSpeech();
+    if (T){ if (T.placer) T.placer.cancelDrag(); clearTimeout(T.idleT); }
+  } else {
+    const r = $('.act-btn.replay'); if (r) retrigger(r, 'hop');
+    if (T) T.armIdle();
+  }
+});
+
+const VIEWS = { home: viewHome, cat: viewCat, find: viewFind, memory: viewMemory, balloon: viewBalloon, album: viewAlbum, story: viewStory, market: viewMarket };
 
 /* ================= tıklama eylemleri ================= */
 const ACT = {
   home(){ go('home'); },
+  exit(){ sfx.tap(); leaveTo('home'); },
+  story(){ go('story'); },
+  market(){ go('market'); },
   cat(t){ go('cat', t.dataset.id); },
-  album(){ go('album'); },
+  album(){ if (inAct()) leaveTo('album'); else go('album'); },
   close(){ closeModal(); },
   again(){ go(current.name, current.arg); },
   game(t){
@@ -1292,7 +2408,12 @@ const ACT = {
   },
   word(t){ onWord(t); },
   hear(t){ const w = WORD[t.dataset.key]; sfx.tap(); retrigger(t, 'bounce'); speak(say(w)); confettiAt(t, 8); },
-  lockedsticker(t){ nope(t); toast(t.dataset.key.indexOf('special:') === 0 ? 'Hazine sandıklarından çıkacak!' : 'Bunu oyunlarda bulacaksın!'); },
+  lockedsticker(t){
+    nope(t);
+    const k = t.dataset.key;
+    if (k.indexOf('story:') === 0){ toast('Bubu’nun Pikniği’nin sonunda seçebilirsin!'); speakLine([['tr', 'Bunu Bubu’nun Pikniği hikâyesinin sonunda seçebilirsin.']]); return; }
+    toast(k.indexOf('special:') === 0 ? 'Hazine sandıklarından çıkacak!' : 'Bunu oyunlarda bulacaksın!');
+  },
   wod(t){ const w = wordOfDay(); sfx.tap(); speak(say(w)); confettiAt(t, 10); },
   owl(t){ const o = t.querySelector('.owl'); retrigger(o, 'cheer'); sfx.flip(); speak(pickOne(HELLOS)); const g = $('#greet'); if (g) g.textContent = greet(); },
   starsinfo(){ toast(`${S.stars} yıldız! Hazineye ${Math.max(0, CHEST_EVERY - S.chest)} yıldız kaldı.`); },
@@ -1314,8 +2435,10 @@ const ACT = {
     if (k === 'sfx' && v) sfx.tap();
     if (k === 'accent') speak(v === 'uk' ? 'Hello! This is British English.' : 'Hello! This is American English.');
     if (k === 'slow') speak("Hello! Let's learn English.");
+    if (k === 'trVoice' && v) speakLine([['tr','Türkçe yönlendirme açık.']]);
   },
-  testvoice(){ speak('Hello! I am Bubu. Cat, dog, apple!'); },
+  testvoice(){ speakLine([['en', 'Hello! I am Bubu. Cat, dog, apple!']]); },
+  testtr(){ speakLine(canSpeakTr() ? [['tr', 'Merhaba! Ben Bubu. Hadi oynayalım!'], ['en', 'Hello!']] : [['en', 'Hello!']]); if (!canSpeakTr()) toast('Türkçe ses bulunamadı'); },
   reset(){
     if (!resetArmed){
       resetArmed = true; renderSettings();
