@@ -437,6 +437,7 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
 .field{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
 .item{position:relative;width:var(--item);height:var(--item);flex:none;border-radius:24px;border:3px solid var(--line);background:var(--paper);box-shadow:0 5px 0 var(--line);font-size:calc(var(--item) * .58);line-height:1;display:grid;place-items:center;padding:0;touch-action:none;-webkit-touch-callout:none;transition:transform .15s,box-shadow .15s,opacity .2s}
 .item > *{pointer-events:none}
+.ipic{display:contents}
 .item.selected{transform:translateY(-8px) scale(1.06);box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun),0 0 0 13px var(--line);z-index:2}
 .item.selected::after{content:"✋";position:absolute;top:-18px;right:-14px;font-size:24px;line-height:1;font-family:var(--font-emoji)}
 .item.dragging{opacity:.25}
@@ -444,6 +445,7 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
 .item.soft{animation:boing .5s}
 .item.arrive{animation:pop-in .45s}
 .demo-item{width:calc(var(--item) * .8);height:calc(var(--item) * .8);font-size:calc(var(--item) * .48);align-self:center}
+.item.drag-ghost{animation:none}
 .drag-ghost{position:fixed!important;left:0;top:0;margin:0!important;z-index:95;pointer-events:none;opacity:.95;transition:none;box-shadow:0 14px 0 rgba(0,0,0,.18)}
 .basket-drop{position:relative;display:block;flex:none;width:clamp(128px,min(44vw,30vh),210px);width:clamp(128px,min(44vw,30svh),210px);padding:26px 6px 2px;background:none;border:0;border-radius:26px;transition:transform .15s}
 .basket-drop .basket-svg{width:100%;height:auto;display:block;position:relative;z-index:1}
@@ -533,7 +535,7 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
 .r-item{display:grid;justify-items:center;gap:1px;width:calc(var(--item) * .95);padding:8px 2px 6px;background:var(--paper);border:3px solid var(--line);border-radius:18px;box-shadow:0 4px 0 var(--line);min-width:0}
 .r-item .pic{font-size:calc(var(--item) * .42);line-height:1.05}
 .r-item.bounce .pic{animation:boing .55s}
-.r-item b{font-family:var(--font-display);font-size:15px;line-height:1.05}
+.r-item b{font-family:var(--font-display);font-size:15px;line-height:1.05;max-width:100%;overflow-wrap:anywhere}
 .r-item small{font-weight:700;font-size:12px;color:var(--text-soft)}
 
 /* kısa ekran (iPhone Safari'nin görünür alanı ~375×548 dahil): yer, öğelerden değil çerçeveden alınır */
@@ -553,6 +555,10 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
   .big-round{width:72px;height:72px}
 }
 @media (max-height:640px){
+  .full-basket{width:100%}
+  .fb-items{flex-wrap:nowrap;gap:6px;width:100%;max-width:360px}
+  .r-item{flex:1 1 0;width:auto;max-width:calc(var(--item) * .95)}
+  .r-item b{font-size:clamp(10px,3.2vw,15px);overflow-wrap:anywhere}
   .act-btn{width:56px;height:56px}
   .stage{min-height:min(170px,26svh)}
   .teach{padding:6px 18px 10px}
@@ -583,6 +589,13 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
   .shelf{gap:6px 8px;padding:6px 8px}
   .basket-drop{width:min(150px,22vw);padding-top:14px}
   .teach-pic{font-size:min(16vw,30vh,120px);font-size:min(16vw,30svh,120px)}
+  .end-actions{flex-wrap:nowrap;gap:8px}
+  .big-act{font-size:13px}
+  .big-round{width:60px;height:60px}
+  .big-round svg{width:30px;height:30px}
+  .basket-row{padding-inline:8px}
+  .basket-drop{flex:0 1 auto;min-width:0}
+  .tell-bubble b{font-size:1.2em}
 }
 
 /* azaltılmış hareket: her ipucunun durağan bir biçimi kalır */
@@ -591,6 +604,7 @@ body.focus-mode .topbar,body.focus-mode #caption{display:none}
   .basket-drop.awaiting{outline-style:solid}
   .hint-glow{box-shadow:0 0 0 4px var(--paper),0 0 0 10px var(--sun)!important}
   .hand{transition:none}
+  .act-btn.replay.cue{box-shadow:0 4px 0 var(--line),0 0 0 4px var(--paper),0 0 0 10px var(--sun)}
 }
 
 /* ---------- animasyonlar ---------- */
@@ -985,13 +999,18 @@ function speakLine(segs){
   const text = lineText(segs);
   caption(text, segs.some(s => s && s[0] === 'tr') ? 'tr' : 'en');
   announce(text);
-  const enOk = enState() !== 'none';
-  const spoken = segs.filter(s => s && s[1] && (s[0] === 'pause' || (s[0] === 'tr' ? canSpeakTr() : enOk)));
-  const groups = [[]], pauses = [];
-  spoken.forEach(s => { if (s[0] === 'pause'){ groups.push([]); pauses.push(s[1]); } else groups[groups.length - 1].push(s); });
   return (async () => {
     if (!synth){ await wait(500); return id === speakId; }
     if (document.hidden){ await wait(50); return false; }
+    // Ses listesi henüz gelmediyse (Chrome'un ilk anları) Türkçe cümle atlanmasın: en çok 0,8 sn beklenir.
+    if (!voices.length && S.settings.trVoice && segs.some(s => s && s[0] === 'tr')){
+      for (let k = 0; k < 8 && !voices.length; k++){ await wait(100); loadVoices(); }
+      if (id !== speakId) return false;
+    }
+    const enOk = enState() !== 'none';
+    const spoken = segs.filter(s => s && s[1] && (s[0] === 'pause' || (s[0] === 'tr' ? canSpeakTr() : enOk)));
+    const groups = [[]], pauses = [];
+    spoken.forEach(s => { if (s[0] === 'pause'){ groups.push([]); pauses.push(s[1]); } else groups[groups.length - 1].push(s); });
     try {
       const busy = synth.speaking || synth.pending;
       synth.cancel();
@@ -1756,7 +1775,8 @@ function makePlacer(root, o){
       drag.moved = true;
       const r = drag.el.getBoundingClientRect(), g = drag.el.cloneNode(true);
       g.removeAttribute('data-item'); g.removeAttribute('id'); g.setAttribute('aria-hidden', 'true');
-      g.classList.remove('selected', 'hint-glow', 'soft'); g.classList.add('drag-ghost');
+      g.classList.remove('selected', 'hint-glow', 'soft', 'arrive'); g.classList.add('drag-ghost');
+      g.style.animation = 'none';
       g.style.width = r.width + 'px'; g.style.height = r.height + 'px';
       drag.gx = r.width / 2; drag.gy = r.height / 2 + LIFT;
       document.body.appendChild(g); drag.ghost = g;
@@ -1779,7 +1799,7 @@ function makePlacer(root, o){
     if (!d.moved) return;                 // kısa dokunuş: click olayı seçimi yapar
     suppress = Date.now();
     target.classList.remove('hover');
-    if (!locked() && (near(e.clientX, e.clientY) || near(e.clientX, e.clientY - LIFT))){
+    if (!locked() && near(e.clientX, e.clientY - LIFT)){
       const from = d.ghost.getBoundingClientRect();
       // onPlace false dönerse (yanlış nesne) nesne yerine geri süzülür; doğruysa sepete girer.
       if (o.onPlace(d.el, from) === false) sendBack(d);
@@ -1891,7 +1911,7 @@ const endActions = withAlbum => `<div class="end-actions">
   ${withAlbum ? `<button class="big-act" data-act="album"><span class="big-round">${ICON.sticker}</span><span>Albüm</span></button>` : ''}
 </div>`;
 // Erişilebilir ad İngilizce okunsun diye görünmez bir lang="en" yazıyla verilir.
-const itemBtn = (w, cls) => `<button class="item ${cls || ''}" data-item data-key="${w.key}" data-name="${say(w)}" aria-pressed="false">${pic(w)}<span class="sr-only" lang="en">${say(w)}</span></button>`;
+const itemBtn = (w, cls) => `<button class="item ${cls || ''}" data-item data-key="${w.key}" data-name="${say(w)}" aria-pressed="false"><span class="ipic" aria-hidden="true">${pic(w)}</span><span class="sr-only" lang="en">${say(w)}</span></button>`;
 const basketBtn = () => `<button class="basket-drop" data-drop id="basket" aria-label="Sepet">${basketSVG()}<span class="basket-in" id="basket-in"></span></button>`;
 const goRow = (label, hidden) => `<div class="go-row"><button class="next-btn" data-act="next" aria-label="${label}"${hidden ? ' hidden' : ''}>${ICON.play}</button></div>`;
 const emptyRow = '<div class="go-row" aria-hidden="true"></div>';     // ▶'nin yeri boş kalır: sonraki sahnede oraya cevap gelmez
@@ -2223,7 +2243,7 @@ function viewStory(){
         if (done || !T.ready()) return;
         const w = WORD[el.dataset.key];
         if (el.classList.contains('open')){ if (!T.speaking) T.say([['en', A(say(w))]]); return; }
-        el.classList.add('open'); el.classList.remove('peek', 'hint-glow'); el.setAttribute('aria-label', say(w));
+        el.classList.add('open'); el.classList.remove('peek', 'hint-glow'); el.setAttribute('aria-label', say(w)); el.lang = 'en';
         if (w === RABBIT){
           done = true;
           sfx.good(); confettiAt(el, 36); cheerBubu();
@@ -2250,7 +2270,7 @@ function viewStory(){
     },
     sticker(b){
       chosen = null;
-      b.innerHTML = tellHTML() + `<div class="act-main"><div class="picks" id="picks">${STORY_STICKERS.map((w, k) => `<button class="pick${rec.stickers.indexOf(w.key) > -1 ? ' owned' : ''}" data-act="pick" data-key="${w.key}" style="--r:${[-4, 2, -2][k]}deg"><span class="pic">${pic(w)}</span><b lang="en">${say(w)}</b></button>`).join('')}</div></div><div class="go-row end-row" id="after-pick"></div>`;
+      b.innerHTML = tellHTML() + `<div class="act-main"><div class="picks" id="picks">${STORY_STICKERS.map((w, k) => `<button class="pick${rec.stickers.indexOf(w.key) > -1 ? ' owned' : ''}" data-act="pick" data-key="${w.key}" style="--r:${[-4, 2, -2][k]}deg"><span class="pic" aria-hidden="true">${pic(w)}</span><b lang="en">${say(w)}</b></button>`).join('')}</div></div><div class="go-row end-row" id="after-pick"></div>`;
       T.bubble('<span lang="tr">Bir çıkartma seç</span>');
       const names = STORY_STICKERS.map(w => ['en', A(say(w))]);
       const full = [['tr', 'Sana bir çıkartma var! Hangisini istersin?']].concat(names, [['tr', 'Bir çıkartmaya dokun.']]);
@@ -2384,6 +2404,7 @@ function viewMarket(){
       if (!live()) return;
       await T.whenActive(); if (!live()) return;
       els[k].classList.remove('waiting'); retrigger(els[k], 'arrive');
+      { const el = els[k]; const done = () => el.classList.remove('arrive'); el.addEventListener('animationend', done, { once: true }); T.later(done, 600); }
       await T.beat([['en', A(say(shelf[k]))]], 800);
     }
     if (!live()) return;
@@ -2394,7 +2415,8 @@ function viewMarket(){
   function finish(){
     S.market.visits = (S.market.visits || 0) + 1; save();
     T.clearStep(); slots();
-    $('#mk').innerHTML = tellHTML() + `<div class="act-main"><div class="full-basket"><div class="fb-items" id="fb-items">${bought.map(w => `<button class="r-item" data-act="rhear" data-key="${w.key}"><span class="pic">${pic(w)}</span><b lang="en">${say(w)}</b>${S.settings.showTr ? `<small>${w.tr}</small>` : ''}</button>`).join('')}</div><div class="fb-basket">${basketSVG()}</div></div></div><div class="go-row end-row">${endActions(false)}</div>`;
+    $('#mk').innerHTML = tellHTML() + `<div class="act-main"><div class="full-basket"><div class="fb-items" id="fb-items">${bought.map(w => `<button class="r-item" data-act="rhear" data-key="${w.key}"><span class="pic" aria-hidden="true">${pic(w)}</span><b lang="en">${say(w)}</b>${S.settings.showTr ? `<small>${w.tr}</small>` : ''}</button>`).join('')}</div><div class="fb-basket">${basketSVG()}</div></div></div><div class="go-row end-row">${endActions(false)}</div>`;
+    try { $('#mk').focus({ preventScroll: true }); } catch (e) {}
     T.bubble('<b lang="en">Thank you!</b>');
     sfx.win(); confettiBig(); cheerBubu();
     (async () => {
@@ -2474,7 +2496,8 @@ document.addEventListener('visibilitychange', () => {
     if (T){ T.paused = true; if (T.placer) T.placer.cancelDrag(); clearTimeout(T.idleT); }
     stopSpeech();
   } else {
-    const r = $('.act-btn.replay'); if (r) retrigger(r, 'hop');
+    const r = $('.act-btn.replay');
+    if (r){ if (reduced){ r.classList.add('cue'); setTimeout(() => r.classList.remove('cue'), 3000); } else retrigger(r, 'hop'); }
     if (T) T.armIdle();
   }
 });

@@ -309,7 +309,17 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
         assert.equal(await page.$eval('#want-pic', e => e.className.includes('lvl2')), true);
         await page.screenshot({ path: path.join(SHOTS, 'market-light-2-hint.png') });
       }
-      if (r === 2) await drag(page, `#shelf [data-key="${key}"]`, '#basket');
+      if (r === 2){
+        const a = await page.locator(`#shelf [data-key="${key}"]`).boundingBox(), b = await page.locator('#basket').boundingBox();
+        const x0 = a.x + a.width / 2, y0 = a.y + a.height / 2, x1 = b.x + b.width / 2, y1 = b.y + b.height / 2;
+        await page.mouse.move(x0, y0); await page.mouse.down();
+        for (let k = 1; k <= 6; k++) await page.mouse.move(x0 + (x1 - x0) * k / 12, y0 + (y1 - y0) * k / 12);
+        const g = await page.locator('.drag-ghost').boundingBox();
+        const fx = x0 + (x1 - x0) / 2, fy = y0 + (y1 - y0) / 2;
+        assert.ok(g && Math.abs(g.x + g.width / 2 - fx) < 30 && Math.abs(g.y + g.height / 2 - (fy - 28)) < 30, 'sürüklenen kopya parmağın altında olmalı: ' + JSON.stringify({ g, fx, fy }));
+        for (let k = 7; k <= 12; k++) await page.mouse.move(x0 + (x1 - x0) * k / 12, y0 + (y1 - y0) * k / 12);
+        await page.mouse.up();
+      }
       else { await tap(page, `#shelf [data-key="${key}"]`); await tap(page, '#basket'); }
       try { await page.waitForFunction(n => document.querySelectorAll('#slots .slot.full').length >= n, r + 1, { timeout: 8000 }); }
       catch (e){
@@ -392,6 +402,46 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     }
   }
 
+  }
+  if (want('screens')){
+    const overlap = (a, b) => a && b && !(a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);
+    const mp = await openPage(browser, { viewport: { width: 375, height: 548 }, save: { ...OLD_SAVE, market: { visits: 2, bought: {} } } });
+    await step('375×548 market bitişi: düğmeler sepeti örtmez, hepsi ekranda', async () => {
+      await tap(mp, '[data-act="market"]');
+      for (let r = 0; r < 4; r++){
+        await mp.waitForSelector('#mk[data-turn="child"]', { timeout: 20000 }); await mp.waitForTimeout(450);
+        const key = await mp.$eval('#shelf', e => e.dataset.want);
+        await tap(mp, `#shelf [data-key="${key}"]`); await tap(mp, '#basket');
+        await mp.waitForFunction(n => document.querySelectorAll('#slots .slot.full').length >= n, r + 1, { timeout: 8000 });
+      }
+      await waitFor(mp, '.full-basket', 15000); await mp.waitForTimeout(500);
+      await mp.screenshot({ path: path.join(SHOTS, 'end-market-375x548.png') });
+      const basket = await mp.locator('.fb-basket').boundingBox();
+      for (const btn of await mp.locator('.end-actions .big-round').all()){
+        const bb = await btn.boundingBox();
+        assert.ok(!overlap(bb, basket), 'düğme sepeti örtüyor');
+        assert.ok(bb.y + bb.height <= 548, 'düğme ekran dışında');
+      }
+      assert.deepEqual(mp.__errors, []);
+    });
+    await mp.context().close();
+    const sp = await openPage(browser, { viewport: { width: 667, height: 320 }, save: { ...OLD_SAVE, story: { picnic: { plays: 3, stickers: [] } } } });
+    await step('667×320 yatay: çıkartma seçince üç düğme de görünür, balonu örtmez', async () => {
+      await playStory(sp, { mode: 'tap', wrong: false });
+      await tap(sp, '#picks .pick >> nth=1');
+      await sp.waitForSelector('.end-actions'); await sp.waitForTimeout(400);
+      await sp.screenshot({ path: path.join(SHOTS, 'end-sticker-667x320.png') });
+      const bubble = await sp.locator('.tell-bubble').boundingBox();
+      const btns = await sp.locator('.end-actions .big-act').all();
+      assert.equal(btns.length, 3);
+      for (const b of btns){
+        const bb = await b.boundingBox();
+        assert.ok(bb.y + bb.height <= 320 && bb.x + bb.width <= 667, 'düğme ekran dışında: ' + JSON.stringify(bb));
+        assert.ok(!overlap(bb, bubble), 'düğme balonu örtüyor');
+      }
+      assert.deepEqual(sp.__errors, []);
+    });
+    await sp.context().close();
   }
   console.log('Türkçe ses olmayan / bulutta olan cihaz');
   if (want('notr'))
