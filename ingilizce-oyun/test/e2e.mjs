@@ -22,7 +22,7 @@ function fakeSpeech(opts){
   window.__ev = [];                       // takılma olursa son dokunuş hedefleri raporlanır
   ['pointerdown', 'pointerup', 'click'].forEach(t => document.addEventListener(t, e => {
     const el = e.target && e.target.closest ? (e.target.closest('[data-key],[id]') || e.target) : e.target;
-    window.__ev.push(t + ':' + (el && (el.dataset && el.dataset.key || el.id || el.className || el.tagName)));
+    window.__ev.push(t + ':' + (el && (el.dataset && el.dataset.key || el.id || el.className || el.tagName)) + '@' + Math.round(e.clientX) + ',' + Math.round(e.clientY));
     if (window.__ev.length > 30) window.__ev.shift();
   }, true));
   const voices = [{ name: 'Samantha', lang: 'en-US', localService: true, default: true, voiceURI: 'sam' }];
@@ -54,8 +54,11 @@ const OLD_SAVE = { // önceki sürümün kaydı: story/market/trVoice alanları 
   settings: { slow: false, accent: 'us', showTr: true, sfx: false }
 };
 
+const ONLY = (process.env.E2E_ONLY || '').split(',').filter(Boolean);
+const want = k => !ONLY.length || ONLY.includes(k);
 const results = [];
-async function step(name, fn){
+async function step(name, fn, section){
+  if (section && !want(section)) return;
   try { await fn(); results.push(['ok', name]); console.log('  ✓', name); }
   catch (e){ results.push(['FAIL', name, e.message]); console.log('  ✗', name, '\n    ', e.message.split('\n').filter(l => /waiting for|Expected|actual|expected|Error|assert|^[^ ]/.test(l)).slice(0, 4).join(' / ')); }
 }
@@ -168,7 +171,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.waitForSelector('.end-modal', { timeout: 8000 });
     await tap(page, '.end-modal [data-act="cat"]');
     if (await page.isVisible('.chest-btn')){ await tap(page, '.chest-btn'); await page.waitForTimeout(600); await tap(page, '#chest-ok'); }
-  });
+  }, 'games');
   await step('Hafıza hâlâ çalışır', async () => {
     await tap(page, '[data-act="game"][data-mode="memory"]');
     const deck = await page.$$eval('.mcard small', els => els.map(e => e.textContent));
@@ -182,7 +185,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.waitForSelector('.end-modal', { timeout: 8000 });
     await tap(page, '.end-modal [data-act="cat"]');
     if (await page.isVisible('.chest-btn')){ await tap(page, '.chest-btn'); await page.waitForTimeout(600); await tap(page, '#chest-ok'); }
-  });
+  }, 'games');
   await step('Balon Patlat hâlâ başlar ve hedef balonu patlatır', async () => {
     await tap(page, '[data-act="game"][data-mode="balloon"]');
     await page.waitForTimeout(3500);
@@ -199,7 +202,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.equal(popped, 1);
     await tap(page, '.page-head [data-act="cat"]');
     await tap(page, '[data-act="home"]');
-  });
+  }, 'games');
 
   console.log('Bubu’nun Pikniği (ilk oyun, dokun-seç / dokun-bırak, yanlışlarla)');
   await clearSpoken(page);
@@ -217,7 +220,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.waitForSelector('.feature');
     assert.equal(await page.isVisible('.topbar'), true);          // çıkışta üst çubuk geri gelir
     assert.equal(await page.locator('.hand, .drag-ghost, .fly-item').count(), 0);
-  });
+  }, 'story');
   await clearSpoken(page);
   const before = await store(page);
   await step('hikâye baştan sona: elma, kırmızı, tavşan + ipuçları', async () => {
@@ -230,7 +233,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.match(tr, /Kırmızı, elma gibi/, 'kırmızı için açıklayıcı ipucu');
     assert.match(tr, /Tavşanın uzun kulakları var/, 'tavşan için açıklayıcı ipucu');
     assert.ok(sp.every(s => !s.lang.startsWith('tr') || s.voice === 'Yelda'), 'Türkçe yalnızca Türkçe sesle okunmalı');
-  });
+  }, 'story');
   await step('çıkartma seçimi: rastgele değil, çocuk seçer ve kaydedilir', async () => {
     assert.equal(await page.locator('#picks .pick').count(), 3);
     await page.screenshot({ path: path.join(SHOTS, 'story-light-8-picks.png') });
@@ -244,7 +247,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.equal(st.chest, before.chest);                         // rastgele sandığı beslemez
     assert.deepEqual(st.specials, before.specials);
     assert.deepEqual(st.seen, before.seen);
-  });
+  }, 'story');
   await step('ikinci oynayış: sürükle-bırak, gösterim yok, sahip olunan çıkartmada ✓', async () => {
     await tap(page, '.end-actions [data-act="again"]');
     await waitFor(page, '.scene-intro');
@@ -258,7 +261,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.goBack();                                          // telefonun "geri" hareketi = çıkış
     await page.waitForSelector('.feature', { timeout: 5000 });
     assert.equal(await page.isVisible('.topbar'), true);
-  });
+  }, 'story');
   await step('albümde seçilen hikâye çıkartması görünür', async () => {
     await tap(page, '#stat-stickers');
     await page.waitForSelector('[data-key="story:ladybug"]');
@@ -267,19 +270,18 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.equal(await sec.locator('[data-key="story:ladybug"]').count(), 1);
     assert.equal(await sec.locator('[data-act="story"]').count(), 0);         // sahipken eksik/gölge baskısı yok
     await tap(page, '[data-act="home"]');
-  });
+  }, 'story');
 
   console.log('Minik Market');
   await clearSpoken(page);
-  await step('market: tanıtım, ısınma, ipuçları, sürükle + dokun, sepet', async () => {
+  await step('market: tanıtım, ısınma, ipuçları, sürükle + dokun, sepet', async () => { try {
     await tap(page, '[data-act="market"]');
     await page.waitForFunction(() => document.querySelectorAll('#shelf .item.waiting').length === 0, null, { timeout: 20000 });
     await page.screenshot({ path: path.join(SHOTS, 'market-light-1.png') });
     for (let r = 0; r < 4; r++){
-      await page.waitForFunction(() => { const s = document.querySelector('#shelf'); return s && s.dataset.want; }, null, { timeout: 15000 });
-      const key = await page.$eval('#shelf', e => e.dataset.want);
-      await page.waitForSelector('#mk[data-turn="child"]', { timeout: 15000 });
+      await page.waitForSelector('#mk[data-turn="child"]', { timeout: 15000 });   // önce sıra çocuğa geçsin,
       await page.waitForTimeout(550);
+      const key = await page.$eval('#shelf', e => e.dataset.want);                  // sonra yeni hedef okunur
       if (r === 1){
         const wrong = await page.$$eval('#shelf .item[data-item]', (els, k) => els.find(e => e.dataset.key !== k).dataset.key, key);
         await tap(page, `#shelf [data-key="${wrong}"]`); await tap(page, '#basket'); await page.waitForTimeout(300);
@@ -292,7 +294,8 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
       else { await tap(page, `#shelf [data-key="${key}"]`); await tap(page, '#basket'); }
       try { await page.waitForFunction(n => document.querySelectorAll('#slots .slot.full').length >= n, r + 1, { timeout: 8000 }); }
       catch (e){
-        const info = await page.evaluate(() => ({ want: document.querySelector('#shelf') && document.querySelector('#shelf').dataset.want, turn: document.querySelector('#mk') && document.querySelector('#mk').dataset.turn, full: document.querySelectorAll('#slots .slot.full').length, sel: [...document.querySelectorAll('#shelf .selected')].map(x => x.dataset.key), last: window.__spoken.slice(-3).map(x => x.text), ev: window.__ev.slice(-12) }));
+        const info = await page.evaluate(() => ({ want: document.querySelector('#shelf') && document.querySelector('#shelf').dataset.want, turn: document.querySelector('#mk') && document.querySelector('#mk').dataset.turn, full: document.querySelectorAll('#slots .slot.full').length, sel: [...document.querySelectorAll('#shelf .selected')].map(x => x.dataset.key), last: window.__spoken.slice(-3).map(x => x.text), ev: window.__ev.slice(-12),
+          items: [...document.querySelectorAll('#shelf [data-key]')].map(x => { const r = x.getBoundingClientRect(), cs = getComputedStyle(x), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return x.dataset.key.split(':')[1] + ' ' + x.className + ' ' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' vis=' + cs.visibility + ' pe=' + cs.pointerEvents + ' hit=' + (hit && (hit.closest('[data-key]') ? hit.closest('[data-key]').dataset.key : hit.className || hit.tagName)); }) }));
         throw new Error(`market turu ${r} takıldı (${r === 2 ? 'sürükle' : 'dokun'}): ` + JSON.stringify(info));
       }
     }
@@ -308,7 +311,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     assert.ok(sp.some(s => /Bubu başka bir şey istiyor/.test(s.text)), '1. yanlışta açıklayıcı ipucu');
     await tap(page, '.end-actions [data-act="exit"]');
     await page.waitForSelector('.feature');
-  });
+  } catch (e){ const ev = await page.evaluate(() => window.__ev.slice(-14)).catch(() => []); e.message += ' | olaylar: ' + ev.join(' '); throw e; } }, 'market');
   await step('hiç konsol hatası yok', async () => { assert.deepEqual(page.__errors, []); });
   await step('dışarıya yalnızca mevcut Google Fonts isteği var', async () => {
     const ext = page.__requests.filter(u => !u.startsWith('file:') && !u.startsWith('data:'));
@@ -317,6 +320,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
   await page.context().close();
 
   console.log('Telefon ekranları (açık / koyu), sığma kontrolü');
+  if (want('screens')) {
   const VIEWS = [[375, 548, 'iphone-safari', 1], [360, 560, 'android', 0], [390, 664, 'iphone-se3', 0], [390, 844, 'iphone-pro', 1], [320, 460, 'tiny', 0], [667, 320, 'landscape', 1], [740, 360, 'landscape-wide', 0]];
   for (const [w, h, label, both] of VIEWS){
     for (const dark of (both ? [false, true] : [false])){
@@ -348,7 +352,9 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     }
   }
 
+  }
   console.log('Türkçe ses olmayan / bulutta olan cihaz');
+  if (want('notr'))
   for (const tr of ['none', 'remote']){
     const p = await openPage(browser, { tr });
     await step(`Türkçe ses ${tr}: Türkçe parçalar okunmaz, hikâye yine tamamlanır`, async () => {
@@ -364,6 +370,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
   }
 
   console.log('Azaltılmış hareket ve klavye');
+  if (want('a11y')) {
   page = await openPage(browser, { reducedMotion: true, save: { ...OLD_SAVE, story: { picnic: { plays: 2, stickers: [] } } } });
   await step('azaltılmış harekette ikinci yanlışta durağan halka ipucu', async () => {
     await tap(page, '[data-act="story"]'); await page.waitForTimeout(550); await tap(page, '.next-btn');
@@ -382,6 +389,7 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
     await page.waitForSelector('.feature', { timeout: 5000 });
   });
   await page.context().close();
+  }
 
   await browser.close();
   const fails = results.filter(r => r[0] === 'FAIL');
