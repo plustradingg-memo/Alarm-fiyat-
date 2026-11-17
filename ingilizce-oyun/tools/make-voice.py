@@ -12,7 +12,7 @@ Kullanım:
   python3 tools/make-voice.py lines.json <model-klasörü> audio/
 
 Çıktı (her aksan için): audio/us.json  = { packs: [...], clips: { "metin": [paketNo, başlangıç, uzunluk] } }
-                        audio/us-<paket>.bin = art arda eklenmiş MP3 klipleri
+                        audio/us-<paket>.mp3 = art arda eklenmiş MP3 klipleri
 """
 import json, os, subprocess, sys, time
 import numpy as np
@@ -43,10 +43,10 @@ def main(lines_path, model_dir, out_dir):
                 clips[text] = [pi, len(blob), len(mp3)]
                 blob += mp3; n += 1
                 if n % 100 == 0: print(f'{acc}: {n}/{len(lines[acc])}  {time.time() - t0:.0f}s', flush=True)
-            open(os.path.join(out_dir, f'{acc}-{pack}.bin'), 'wb').write(blob)
+            open(os.path.join(out_dir, f'{acc}-{pack}.mp3'), 'wb').write(blob)
         json.dump({'voice': voice, 'packs': packs, 'clips': clips}, open(os.path.join(out_dir, acc + '.json'), 'w', encoding='utf-8'),
                   ensure_ascii=False, separators=(',', ':'))
-        print(f'{acc}: {n} klip, {sum(os.path.getsize(os.path.join(out_dir, f"{acc}-{p}.bin")) for p in packs) / 1e6:.1f} MB', flush=True)
+        print(f'{acc}: {n} klip, {sum(os.path.getsize(os.path.join(out_dir, f"{acc}-{p}.mp3")) for p in packs) / 1e6:.1f} MB', flush=True)
 
 def synth(sess, tok, styles, lang, text):
     # Tek kelimeler düz bir cümle gibi okunsun diye nokta eklenir ("cat" -> "Cat.")

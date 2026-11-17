@@ -144,7 +144,10 @@ async function playStory(page, { mode = 'tap', wrong = true, shots = '' } = {}){
 // Evcil hayvanın bir gününü oynatır. mode: 'tap' | 'drag'
 async function playPetDay(page, { mode = 'tap', shots = '' } = {}){
   const t = sel => tap(page, sel);
-  const lastSaid = re => page.evaluate(src => { const r = new RegExp(src); const m = window.__spoken.slice().reverse().find(x => r.test(x.text)); return m ? m.text : ''; }, re.source);
+  const lastSaid = async re => {       // cümle söylenene kadar bekler; okunan kayıt temizlenir
+    await page.waitForFunction(src => window.__bubu.clip.said.some(x => new RegExp(src).test(x)), re.source, { timeout: 15000 });
+    return page.evaluate(src => { const r = new RegExp(src), a = window.__bubu.clip.said; const m = a.slice().reverse().find(x => r.test(x)); a.length = 0; return m || ''; }, re.source);
+  };
   const place = async (itemSel, targetSel) => { if (mode === 'drag') await drag(page, itemSel, targetSel); else { await t(itemSel); await t(targetSel); } };
   const roomReady = async label => {
     try { await page.waitForSelector('.pet-scene.room'); await page.waitForSelector('#acts .pet-do.now', { timeout: 15000 }); }
@@ -462,7 +465,7 @@ async function playPetDay(page, { mode = 'tap', shots = '' } = {}){
     }, 'pet');
     await step('ikinci gün sürükleyerek oynanır; yanlış yiyecekte ipucu, ceza yok', async () => {
       await tap(pp, '.pet-do.now'); await waitFor(pp, '#bowl'); await pp.waitForTimeout(650);
-      const w = await pp.evaluate(() => (window.__spoken.slice().reverse().find(x => /, please!$/.test(x.text)) || {}).text.replace(', please!', '').toLowerCase());
+      const w = await pp.evaluate(() => window.__bubu.clip.said.slice().reverse().find(x => /, please!$/.test(x)).replace(', please!', '').toLowerCase());
       const wrong = await pp.$$eval('#field .item[data-item]', (els, w) => els.find(x => x.dataset.name.toLowerCase() !== w).dataset.key, w);
       await clearSpoken(pp);
       await drag(pp, `#field [data-key="${wrong}"]`, '#bowl'); await pp.waitForTimeout(1500);
@@ -606,7 +609,7 @@ async function playPetDay(page, { mode = 'tap', shots = '' } = {}){
   console.log('Kayıtlı doğal ses (http üzerinden)');
   if (want('voice') && fs.existsSync(path.join(here, '..', 'audio', 'us.json'))){
     const root = path.join(here, '..');
-    const types = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.bin': 'application/octet-stream', '.webp': 'image/webp' };
+    const types = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.mp3': 'audio/mpeg', '.webp': 'image/webp' };
     const srv = http.createServer((q, r) => {
       const f = path.join(root, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
       if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()){ r.writeHead(404); r.end(); return; }

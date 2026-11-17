@@ -1,6 +1,12 @@
 # Bubu ile İngilizce
 
-4–6 yaş, henüz okuma bilmeyen çocuklar için resimli İngilizce oyunu. Tek dosya: `index.html` (internet bağlantısı yalnızca Google Fonts yazı tipi için kullanılır; yazı tipi gelmezse sistem yazı tipiyle çalışır).
+4–6 yaş, henüz okuma bilmeyen çocuklar için resimli İngilizce oyunu.
+
+- `index.html`: uygulamanın tamamı.
+- `audio/`: önceden kaydedilmiş doğal ses klipleri (ABD ve İngiliz aksanı, ~2100 klip, ~12 MB; gerektikçe yüklenir).
+- `art/`: 3B resim atlasları (Microsoft Fluent Emoji 3D, MIT).
+
+Ses ve resim dosyaları için sayfanın bir **web adresinden** açılması gerekir (ör. GitHub Pages ya da aşağıdaki yerel sunucu). `index.html` dosyaya çift tıklanarak açılırsa uygulama yine çalışır ama cihazın kendi sesine ve emojilerine düşer. İnternete yalnızca Google Fonts yazı tipi için gidilir.
 
 ## İçindekiler
 
@@ -20,14 +26,23 @@ Eski kayıtlar (yıldız, kelimeler, hazineler, ayarlar) olduğu gibi korunur. K
 
 ## Gerçek telefonda ses testi
 
-Sesleri şimdilik telefonun kendi metin okuma motoru üretir; cihazdaki en kaliteli İngilizce ses (adında “Premium”, “Enhanced”, “Natural” geçen) otomatik seçilir. **Daha doğal ses için** cihaza yüksek kaliteli ses indirin: iPhone’da Ayarlar › Erişilebilirlik › Seslendirilen İçerik › Sesler › İngilizce › “Ava (Premium)” ya da “Zoe (Premium)”; Android’de Ayarlar › Metin okuma çıkışı › Google › Dil verilerini yükle › İngilizce (ABD). Önce cihaz üstü ses seçilir; çevrim içi (bulut) sesler metni dışarı gönderdiği için yalnızca Ebeveyn köşesinde **“Çevrim içi ses”** açılırsa kullanılır (varsayılan: kapalı).
+Uygulama, bütün İngilizce cümleleri **önceden kaydedilmiş doğal ses klipleriyle** söyler (Kokoro-82M sinir ağı sesi, Apache-2.0; ABD: `af_heart`, İngiliz: `bf_emma`). Klipler bu depoda durur; oyun oynanırken hiçbir metin dışarı gönderilmez. Klibi olmayan bir cümle çıkarsa cihazın kendi sesi kullanılır (bulut sesleri yalnızca Ebeveyn köşesinde “Çevrim içi ses” açıksa).
+
+Yeni kelime ya da cümle eklenince klipler yeniden üretilir:
+```bash
+node ingilizce-oyun/tools/dump-lines.mjs > lines.json
+```
+```bash
+python3 ingilizce-oyun/tools/make-voice.py lines.json <kokoro-model-klasörü> ingilizce-oyun/audio
+```
+Resim atlasları: `python3 ingilizce-oyun/tools/make-art.py <fluent-emoji-3d/assets>` (ayrıntılar araçların başında).
 
 1. Bilgisayarda depo kökünden yerel sunucu açın:
    ```bash
    python3 -m http.server 8000
    ```
    Telefonla aynı Wi‑Fi’de `http://<bilgisayarın-IP-adresi>:8000/ingilizce-oyun/` adresini açın.
-2. Sağ üstteki dişliye **1 saniye basılı tutun** → Ebeveyn köşesi. “İngilizce dene” düğmesine basın; kullanılan sesin adı ekranda yazar. Adında “Premium/Enhanced” geçmiyorsa yukarıdaki yoldan yüksek kaliteli bir ses indirip sayfayı yenileyin.
+2. Sağ üstteki dişliye **1 saniye basılı tutun** → Ebeveyn köşesi. “İngilizce dene” düğmesine basın; kayıtlı doğal sesi duymalısınız (yedek cihaz sesinin adı da orada yazar).
 3. Kontrol listesi:
    - [ ] Ana sayfadaki **Bubu’nun Pikniği**, **Minik Market** ve **Minik Dostum** kartlarına ilk dokunuşta konuşma hemen başlıyor ve hiç Türkçe konuşulmuyor.
    - [ ] iPhone’da sessiz düğmesi açık ve kapalıyken deneyin (oyun efektleri sessizde kısılabilir, konuşma devam etmeli).

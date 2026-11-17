@@ -1137,7 +1137,7 @@ const lineText = segs => segs.filter(s => s && s[1] && s[0] !== 'pause').map(s =
 /* ---------- kayıtlı doğal ses klipleri ----------
    Bütün İngilizce cümleler önceden doğal bir sesle kaydedilip audio/ klasörüne paketlenir (tools/make-voice.py).
    Klip varsa o çalınır; yoksa (ör. sayfa tek dosya olarak açıldıysa) cihazın metin okuma sesi kullanılır. */
-const CLIP = { acc: null, man: null, packs: {}, loading: {}, bufs: new Map(), cur: null, miss: [] };
+const CLIP = { acc: null, man: null, packs: {}, loading: {}, bufs: new Map(), cur: null, miss: [], said: [] };
 function audioCtx(){
   try {
     if (!AC){ const K = window.AudioContext || window.webkitAudioContext; if (!K) return null; AC = new K(); }
@@ -1157,7 +1157,7 @@ function loadManifest(){
 function loadPack(name){
   const key = CLIP.acc + '-' + name;
   if (CLIP.packs[key]) return Promise.resolve(CLIP.packs[key]);
-  if (!CLIP.loading[key]) CLIP.loading[key] = fetch(`audio/${key}.bin`).then(r => r.ok ? r.arrayBuffer() : null)
+  if (!CLIP.loading[key]) CLIP.loading[key] = fetch(`audio/${key}.mp3`).then(r => r.ok ? r.arrayBuffer() : null)
     .then(b => { if (b) CLIP.packs[key] = b; delete CLIP.loading[key]; return b; }).catch(() => { delete CLIP.loading[key]; return null; });
   return CLIP.loading[key];
 }
@@ -1221,6 +1221,7 @@ async function runParts(segs, id){
     if (!first) await wait(110);
     first = false;
     if (id !== speakId) return false;
+    CLIP.said.push(s[1]); if (CLIP.said.length > 60) CLIP.said.shift();
     await sayOne(s[1], id);
     segBoundary();
   }
