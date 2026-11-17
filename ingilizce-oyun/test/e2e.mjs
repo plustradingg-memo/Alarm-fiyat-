@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import http from 'node:http';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -63,7 +64,7 @@ async function step(name, fn, section){
   catch (e){ results.push(['FAIL', name, e.message]); console.log('  ✗', name, '\n    ', e.message.split('\n').filter(l => /waiting for|Expected|actual|expected|Error|assert|^[^ ]/.test(l)).slice(0, 4).join(' / ')); }
 }
 
-async function openPage(browser, { viewport = { width: 375, height: 667 }, dark = false, reducedMotion = false, tr = 'local', en = 'local', save = OLD_SAVE } = {}){
+async function openPage(browser, { viewport = { width: 375, height: 667 }, dark = false, reducedMotion = false, tr = 'local', en = 'local', save = OLD_SAVE, url = '' } = {}){
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, hasTouch: true, colorScheme: dark ? 'dark' : 'light', reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   page.__errors = []; page.__requests = [];
@@ -72,7 +73,7 @@ async function openPage(browser, { viewport = { width: 375, height: 667 }, dark 
   page.on('request', r => page.__requests.push(r.url()));
   await page.addInitScript(fakeSpeech, { tr, en });
   if (save) await page.addInitScript(s => { if (!sessionStorage.getItem('seeded')){ localStorage.setItem('bubu-english-v1', JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } }, save);
-  await page.goto(PAGE);
+  await page.goto(url || PAGE);
   await page.waitForTimeout(300);
   return page;
 }
@@ -600,6 +601,57 @@ async function playPetDay(page, { mode = 'tap', shots = '' } = {}){
       });
       await op.context().close();
     }
+  }
+
+  console.log('Kayıtlı doğal ses (http üzerinden)');
+  if (want('voice') && fs.existsSync(path.join(here, '..', 'audio', 'us.json'))){
+    const root = path.join(here, '..');
+    const types = { '.html': 'text/html; charset=utf-8', '.json': 'application/json', '.bin': 'application/octet-stream', '.webp': 'image/webp' };
+    const srv = http.createServer((q, r) => {
+      const f = path.join(root, decodeURIComponent(q.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
+      if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()){ r.writeHead(404); r.end(); return; }
+      r.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(r);
+    });
+    await new Promise(r => srv.listen(0, '127.0.0.1', r));
+    const url = `http://127.0.0.1:${srv.address().port}/index.html`;
+    for (const acc of ['us', 'uk']){
+      const vp = await openPage(browser, { url, save: { ...OLD_SAVE, settings: { ...OLD_SAVE.settings, accent: acc } } });
+      await vp.addInitScript(() => { window.__clipStarts = 0; const st = AudioBufferSourceNode.prototype.start; AudioBufferSourceNode.prototype.start = function(){ window.__clipStarts++; return st.apply(this, arguments); }; });
+      await vp.reload(); await vp.waitForTimeout(500);
+      await step(`${acc}: hikâye, market ve hayvanın günü yalnızca kayıtlı kliplerle konuşur`, async () => {
+        await vp.waitForFunction(() => window.__bubu.clip.man, null, { timeout: 8000 });
+        await playStory(vp, { mode: 'tap', wrong: true });
+        await tap(vp, '#picks .pick >> nth=0'); await vp.waitForSelector('.end-actions');
+        await tap(vp, '.end-actions [data-act="exit"]'); await vp.waitForSelector('.feature');
+        await tap(vp, '[data-act="market"]');
+        for (let r = 0; r < 4; r++){
+          await vp.waitForSelector('#mk[data-turn="child"]', { timeout: 40000 }); await vp.waitForTimeout(500);
+          const key = await vp.$eval('#shelf', e => e.dataset.want);
+          if (r === 0){ const wr = await vp.$$eval('#shelf .item[data-item]', (els, k) => els.find(e => e.dataset.key !== k).dataset.key, key); await tap(vp, `#shelf [data-key="${wr}"]`); await tap(vp, '#basket'); await vp.waitForTimeout(4000); }
+          await tap(vp, `#shelf [data-key="${key}"]`); await tap(vp, '#basket');
+          await vp.waitForFunction(n => document.querySelectorAll('#slots .slot.full').length >= n, r + 1, { timeout: 8000 });
+        }
+        await waitFor(vp, '.full-basket', 20000); await vp.waitForTimeout(6000);
+        await tap(vp, '.end-actions [data-act="exit"]'); await vp.waitForSelector('.feature');
+        await tap(vp, '[data-act="cat"][data-id="animals"]'); await tap(vp, '.word-card >> nth=1'); await vp.waitForTimeout(900);
+        const r = await vp.evaluate(() => ({ starts: window.__clipStarts, miss: window.__bubu.clip.miss, tts: window.__spoken.map(x => x.text) }));
+        assert.ok(r.starts > 40, 'klip çalınmadı: ' + r.starts);
+        assert.deepEqual(r.miss, [], 'klibi olmayan cümleler');
+        assert.deepEqual(r.tts, [], 'cihaz sesine düşen cümleler');
+        assert.deepEqual(vp.__errors, []);
+      });
+      await vp.context().close();
+    }
+    const pv = await openPage(browser, { url, save: { ...OLD_SAVE, pet: { kind: 'puppy', day: 1, step: 0, days: 0 } } });
+    await step('hayvanın günü: bütün cümlelerin klibi var', async () => {
+      await pv.waitForFunction(() => window.__bubu.clip.man, null, { timeout: 8000 });
+      await tap(pv, '[data-act="pet"]');
+      await playPetDay(pv, { mode: 'tap' });
+      const r = await pv.evaluate(() => ({ miss: window.__bubu.clip.miss, tts: window.__spoken.map(x => x.text) }));
+      assert.deepEqual(r.miss, []); assert.deepEqual(r.tts, []);
+    });
+    await pv.context().close();
+    srv.close();
   }
 
   console.log('Azaltılmış hareket ve klavye');

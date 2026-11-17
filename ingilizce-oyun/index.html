@@ -3015,8 +3015,8 @@ function viewPet(){
       b.innerHTML = tellHTML() + `<div class="act-main"><div class="pet-scene bathroom" data-time="${PET_TIMES[R.step]}"><span class="tub" aria-hidden="true"></span>
         <button class="pet-drop in-tub" data-drop id="petdrop" aria-label="${R.name}">${petHTML(R)}</button><span class="rain" id="rain" aria-hidden="true"></span></div></div>
         <div class="basket-row"><div class="field" id="field">
-          <button class="item" data-item data-key="tool:soap" data-name="soap" aria-pressed="false"><span class="ipic emo" aria-hidden="true">🧼</span><span class="sr-only" lang="en">soap</span></button>
-          <button class="item tool-btn" data-act="shower" id="shower" disabled><span class="ipic emo" aria-hidden="true">🚿</span><span class="sr-only" lang="en">shower</span></button>
+          <button class="item" data-item data-key="tool:soap" data-name="soap" aria-pressed="false"><span class="ipic" aria-hidden="true"><span class="emo">🧼</span></span><span class="sr-only" lang="en">soap</span></button>
+          <button class="item tool-btn" data-act="shower" id="shower" disabled><span class="ipic" aria-hidden="true"><span class="emo">🚿</span></span><span class="sr-only" lang="en">shower</span></button>
           <button class="item" data-item data-key="tool:towel" data-name="towel" aria-pressed="false" id="towel" disabled><span class="ipic towel" aria-hidden="true"></span><span class="sr-only" lang="en">towel</span></button>
         </div></div>`;
       let phase = 'soap', spots = 0;
@@ -3073,7 +3073,7 @@ function viewPet(){
         <span class="sky-stars" id="stars">${[0, 1, 2, 3, 4].map(k => `<button class="star-btn" data-act="star" data-i="${k}" aria-label="star" disabled>${star('off')}</button>`).join('')}</span>
         <button class="pet-drop sleeper" data-drop data-key="pet:${R.kind}" data-name="${R.name}" id="petdrop" aria-pressed="false" aria-label="${R.name}">${petHTML(R)}</button>
         <button class="bed" data-drop id="bed" aria-label="bed"><span class="bed-blanket"></span></button></div></div>
-        <div class="basket-row"><div class="field" id="field"><button class="item" data-item data-key="tool:toothbrush" data-name="toothbrush" aria-pressed="false" id="brush"><span class="ipic emo" aria-hidden="true">🪥</span><span class="sr-only" lang="en">toothbrush</span></button></div></div>`;
+        <div class="basket-row"><div class="field" id="field"><button class="item" data-item data-key="tool:toothbrush" data-name="toothbrush" aria-pressed="false" id="brush"><span class="ipic" aria-hidden="true"><span class="emo">🪥</span></span><span class="sr-only" lang="en">toothbrush</span></button></div></div>`;
       let phase = 'brush', count = 0;
       const lines = { brush: [['en', 'Brush your teeth!']], bed: [['en', 'Into bed!']], light: [['en', 'Turn off the light!']], stars: [['en', "Let's count the stars!"]] };
       const NUMS = ['One!', 'Two!', 'Three!', 'Four!', 'Five!'];
