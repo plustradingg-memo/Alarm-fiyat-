@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#17304f"/>
+  <rect x="22" y="22" width="468" height="468" rx="96" fill="none" stroke="#ffffff" stroke-width="16"/>
+  <!-- makas: ana hat ve sola ayrılan yan hat -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M206 452V300c0-70-70-90-70-160V62" stroke="#ffc531" stroke-width="30"/>
+    <path d="M306 452V62" stroke="#ffffff" stroke-width="30"/>
+    <path d="M206 300V62" stroke="#ffffff" stroke-width="30" opacity="0.35"/>
+  </g>
+  <g fill="#ffffff">
+    <rect x="170" y="370" width="172" height="18" rx="9"/>
+    <rect x="170" y="420" width="172" height="18" rx="9"/>
+  </g>
+  <circle cx="380" cy="150" r="46" fill="#23c06e" stroke="#ffffff" stroke-width="12"/>
+</svg>
