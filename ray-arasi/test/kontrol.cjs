@@ -32,6 +32,12 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   const pieces = (i, j) => page.evaluate(([i, j]) => RA.app.ws.grid.cell(i, j).pieces.map((q) => ({ t: q.type, n: RA.WS.portCount(q.m), lv: q.lv })), [i, j]);
   const toastTxt = () => page.evaluate(() => { const t = document.getElementById('ws-toast'); return { txt: t.textContent, err: t.classList.contains('err'), vis: !t.hidden }; });
   const uiTick = () => page.waitForTimeout(650); // üst şerit yarım saniyede bir güncellenir
+  // bekleyen talepleri boş kareler boyunca en kısa hatla bağlayan yardımcı (demiryolu/havalimanı bölümü için)
+  const CONNECT = `window.__connect = () => { const ws = RA.app.ws, WS = RA.WS, g = ws.grid;
+    for (const pl of ws.city.waiting()) { const need = WS.City.TYPES[pl.type].need; const key = (i, j) => i + ',' + j; const prev = new Map([[key(pl.i, pl.j), null]]); const q = [[pl.i, pl.j]]; let done = false;
+      while (q.length && !done) { const [i, j] = q.shift(); for (const d of ['N', 'E', 'S', 'W']) { const ni = i + WS.DV[d].x, nj = j + WS.DV[d].z; if (!g.inside(ni, nj) || prev.has(key(ni, nj))) continue; const c = g.cell(ni, nj);
+        if (c.pieces.some((x) => x.type === need && x.lv === 0)) { const cells = [{ i: ni, j: nj }]; let cur = [i, j]; while (cur) { cells.push({ i: cur[0], j: cur[1] }); cur = prev.get(key(cur[0], cur[1])); } ws.setTool(need); ws.style = 'grade'; ws.applyStroke(cells); ws.setTool('look'); if (pl.conn) { done = true; break; } continue; }
+        if (c.pieces.length || ws.city.placeAt(ni, nj)) continue; prev.set(key(ni, nj), [i, j]); q.push([ni, nj]); } } } };`;
 
   console.log('ANA EKRAN');
   ok(await page.locator('#menu').isVisible(), 'ana ekran görünür');
@@ -88,7 +94,9 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   console.log('\nTALEPLER');
   const dem = await page.evaluate(() => { RA.app.advance(9); const c = RA.app.ws.city; return c.places.map((p) => ({ type: p.type, i: p.i, j: p.j, conn: p.conn })); });
   ok(dem.length >= 1 && !dem[0].conn, 'birkaç saniye sonra ilk talep geldi: ' + dem.map((d) => d.type + ' (' + d.i + ',' + d.j + ')').join(', '));
-  ok(/Yeni talep/.test((await toastTxt()).txt), 'talep notu: "' + (await toastTxt()).txt + '"');
+  ok(dem[0].type === 'mahalle' && /İlk sakinler geliyor/.test((await toastTxt()).txt), 'ilk talep gerekçesiyle geldi: "' + (await toastTxt()).txt + '"');
+  const placeOk = await page.evaluate(() => { const ws = RA.app.ws, g = ws.grid, WS = RA.WS; return ws.city.places.every((p) => p.i >= 1 && p.j >= 1 && p.i <= g.cols - 2 && p.j <= g.rows - 2 && [[-1, 0], [1, 0], [0, -1], [0, 1], [-2, 0], [2, 0], [0, -2], [0, 2], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([a, b]) => { const c = g.cell(p.i + a, p.j + b); return c && c.pieces.some((q) => q.type === 'road'); })); });
+  ok(placeOk, 'talep tahtanın kenarında değil, yolun yanında ya da bir kare içeride');
   await uiTick();
   ok((await page.locator('#ws-dem').getAttribute('data-st')) === 'dem' && /1/.test(await page.locator('#ws-dem').textContent()), 'üstteki talep düğmesi turuncu ve sayıyı gösteriyor');
   ok(await page.evaluate(() => RA.app.ws.city.pins.length === RA.app.ws.city.waiting().length && RA.app.ws.builder.reserved.size >= 1), 'talep karesinde işaret ve yarı saydam bina taslağı var, kare süslerden boşaltıldı');
@@ -152,7 +160,18 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   ok(jam, 'sıkışan kavşakta kırmızı halka görünür');
   await uiTick();
   const moodTxt = await page.locator('#ws-mood b').textContent();
-  ok(/^%\d+$/.test(moodTxt), 'üst şeritte memnuniyet (' + moodTxt + ') ve nüfus (' + (await page.locator('#ws-popn b').textContent()) + ') görünüyor');
+  ok(/^%\d+$/.test(moodTxt), 'üst şeritte memnuniyet (' + moodTxt + ') ve aşama (' + (await page.locator('#ws-popn .lv b').textContent()) + ', ' + (await page.locator('#ws-popn .lv > span:not(.meter)').textContent()) + ' kişi) görünüyor');
+  await page.locator('#ws-mood').tap();
+  ok(/^Memnuniyet %\d+/.test((await toastTxt()).txt), 'memnuniyete dokununca nedeni yazıyor: "' + (await toastTxt()).txt + '"');
+  await page.locator('#ws-popn').tap();
+  ok(/kişi/.test((await toastTxt()).txt), 'aşamaya dokununca sonraki aşama yazıyor: "' + (await toastTxt()).txt + '"');
+  const roles = await page.evaluate(() => { const sim = RA.app.ws.sim; let home = 0, toHome = 0; for (let k = 0; k < 60; k++) { RA.app.advance(0.5); for (const c of sim.cars) if (c.role === 'home' && c.dest && !c.counted) { c.counted = true; home++; const L = c.dest.kind === 'lot' && sim.lots.get(c.dest.key); if (L && L.role === 'home') toHome++; } } return { home, toHome }; });
+  ok(roles.home >= 3 && roles.toHome / roles.home < 0.3, 'mahalleden çıkan araçlar başka yerlere (iş, okul, otopark, şehir dışı) gidiyor (' + roles.home + ' araçtan ' + roles.toHome + ' tanesi başka mahalleye)');
+  // büyüme kapısı: trafik sıkışıkken (memnuniyet düşük) yeni talep gelmez, nüfus artmaz
+  const gate = await page.evaluate(() => { const ws = RA.app.ws, c = ws.city; while (c.waiting().length) c.places.splice(c.places.indexOf(c.waiting()[0]), 1); const n0 = c.places.length, r0 = c.residents(); c.mood = 20; c.nextT = 0; c.gateHintT = 0; c.update(0.1); return { n0, n1: c.places.length, grew: c.residents() > r0 + 0.01, toast: document.getElementById('ws-toast').textContent }; });
+  ok(gate.n1 === gate.n0 && !gate.grew && /büyümek istiyor/.test(gate.toast), 'memnuniyet düşükken şehir büyümüyor ve nedenini söylüyor: "' + gate.toast + '"');
+  const lvl = await page.evaluate(() => { const c = RA.app.ws.city; const p = c.places.find((q) => q.conn && q.type === 'mahalle'); const was = c.level(); c.places.push({ id: 999, i: 0, j: 0, type: 'mahalle', conn: true, grow: 1, age: 0, cAge: 0, face: 'S' }); c.mood = 90; c.update(0.1); const now = c.level(); c.places.pop(); return { was, now, toast: document.getElementById('ws-toast').textContent }; });
+  ok(lvl.now > lvl.was && /Tebrikler/.test(lvl.toast), 'nüfus eşiği geçilince aşama atlanıyor: "' + lvl.toast + '"');
   await shot('05-sehir-buyudu');
 
   console.log('\nYAKINLAŞTIRMA VE KAYDIRMA');
@@ -210,16 +229,18 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   console.log('\nDEMİRYOLU VE HAVALİMANI');
   await page.evaluate(() => RA.app.showMenu());
   await page.locator('.card[data-mode="rail"]').tap();
-  const rail = await page.evaluate(() => { RA.app.manual = true; let closed = false; for (let k = 0; k < 200; k++) { RA.app.advance(0.5); for (const X of RA.app.ws.sim.xc.values()) if (X.state === 'closed') closed = true; } const s = RA.app.ws.sim; let rails = 0; RA.app.ws.grid.each((c) => c.pieces.forEach((q) => q.type === 'rail' && rails++)); return { trains: s.trains.length, trips: s.stats.trains, closed, rails, places: RA.app.ws.city.places.map((p) => p.type) }; });
+  await page.evaluate(CONNECT);
+  const rail = await page.evaluate(() => { RA.app.manual = true; let closed = false; for (let k = 0; k < 360; k++) { RA.app.advance(0.5); if (k % 8 === 0) window.__connect(); for (const X of RA.app.ws.sim.xc.values()) if (X.state === 'closed') closed = true; } const s = RA.app.ws.sim; let rails = 0; RA.app.ws.grid.each((c) => c.pieces.forEach((q) => q.type === 'rail' && rails++)); return { trains: s.trains.length, trips: s.stats.trains, closed, rails, places: RA.app.ws.city.places.map((p) => p.type) }; });
   ok(rail.rails >= 40 && rail.trains > 0 && rail.trips > 0, 'demiryolu iki düz hatla başlar; trenler sefer yaptı (' + rail.trains + ' tren, ' + rail.trips + ' sefer)');
   ok(rail.closed, 'hemzemin geçitte bariyerler tren gelince otomatik indi, ışıklar yanıp söndü');
-  ok(rail.places.includes('istasyon'), 'demiryolunda istasyon talebi geldi (' + rail.places.join(', ') + ')');
+  ok(rail.places.includes('istasyon'), 'nüfus artınca demiryolunda istasyon talebi geldi (' + rail.places.join(', ') + ')');
   await page.waitForTimeout(150); await shot('06-demiryolu');
   await page.evaluate(() => RA.app.showMenu());
   await page.locator('.card[data-mode="air"]').tap();
-  const air = await page.evaluate(() => { RA.app.manual = true; for (let k = 0; k < 100; k++) RA.app.advance(1); return Object.assign({ places: RA.app.ws.city.places.map((p) => p.type) }, RA.app.ws.sim.stats); });
+  await page.evaluate(CONNECT);
+  const air = await page.evaluate(() => { RA.app.manual = true; for (let k = 0; k < 180; k++) { RA.app.advance(1); if (k % 4 === 0) window.__connect(); } return Object.assign({ places: RA.app.ws.city.places.map((p) => p.type) }, RA.app.ws.sim.stats); });
   ok(air.land >= 2 && air.takeoff >= 1, 'havalimanı tek pist ve bir kapıyla başlar; kule iniş ve kalkışları sıraladı (' + air.land + ' iniş, ' + air.takeoff + ' kalkış)');
-  ok(air.places.includes('kapi'), 'havalimanında yeni kapı talebi geldi (' + air.places.join(', ') + ')');
+  ok(air.places.includes('kapi'), 'nüfus artınca havalimanında yeni kapı talebi geldi (' + air.places.join(', ') + ')');
   await page.waitForTimeout(150); await shot('07-havalimani');
   // örnek düzen hâlâ menüde
   await page.locator('#ws-menu').tap(); await page.locator('#ws-sample').tap();

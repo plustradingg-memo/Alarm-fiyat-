@@ -17,34 +17,53 @@ Hazır, dolu bir düzen görmek istersen sağ üstteki **⋯** menüsünden **Ö
 
 Tahta 12 × 20 karedir. Hepsinde aynı araçlar vardır, yani yolu, rayı ve havalimanını tek tahtada birlikte kurabilirsin.
 
-## Talepler: şehir büyür
+## Şehir nasıl büyür?
 
-- Birkaç saniye sonra ilk **talep** gelir: tahtada turuncu işaretli, yarı saydam bir bina taslağı belirir
-  (ör. *Mahalle yol istiyor*). Sonra her yarım dakikada bir yenisi gelir (aynı anda en çok 3 bekleyen, toplam 16 yer).
-- Üstteki turuncu **talep** düğmesine dokununca kamera sıradaki talebe gider ve ne yapman gerektiği yazılır.
-- **Bağlamak için** yolu o kareye kadar çiz; yol binada biter (çıkmaz uç = binanın girişi). Yanında yol varsa
-  **Otopark** aracıyla o kareye dokunmak da yeter. İstasyon talebine ray, kapı talebine taksi yolu çekilir.
-- Bağlanan yer kendi binasıyla görünür (evler, okul, AVM, hastane, fabrika, ofis kulesi, stadyum) ve araçlar oraya
-  gidip gelmeye başlar. Mahalleler çok araç gönderir, AVM ve stadyum çok araç çeker. İstasyonlar tren, kapılar uçak
-  sayısını artırır.
-- Uzun süre bağlanmayan talebin işareti kırmızıya döner ve memnuniyeti düşürür.
+Şehir **Köy** olarak başlar; nüfus arttıkça **Kasaba** (1.500), **İlçe** (4.000), **Şehir** (8.000) ve
+**Büyükşehir** (14.000) olur. Üst şeritteki aşama düğmesi nüfusu ve bir sonraki aşamaya ne kadar kaldığını gösterir.
 
-## Trafik sıkışır, memnuniyet düşer
+**Talepler şehrin ihtiyacından doğar** ve her biri gerekçesini söyler:
 
-- Her bağlanan yer zamanla büyür; yoldaki araç sayısı şehirle birlikte artar (en çok 44 araç).
-- Bir kavşağın, hemzemin geçidin ya da otopark girişinin önünde 5'ten çok araç birikince ya da biri 15 saniyeden
-  uzun beklerse orası **sıkışık** sayılır: yerde kırmızı halka yanar, talep düğmesi kırmızı **sıkışık** olur ve ona
-  dokununca kamera oraya gider.
-- Üst şeritteki **memnuniyet** çubuğu; araçların yolda durarak geçirdiği süreye, sıkışık kavşaklara, bekleyen
-  taleplere ve kımıldayamadığı için vazgeçen araçlara göre değişir. Yanında şehrin **nüfusu** yazar.
+| Talep | Ne zaman gelir |
+|---|---|
+| Mahalle | İlk sakinler için; sonra iş yerleri dolup çalışacak kimse kalmayınca ya da şehir büyüdükçe |
+| Okul | Nüfus 900'ü geçince, sonra her 2.400 kişide bir |
+| Fabrika | İş arayan çoğalınca (Köy'den itibaren) |
+| AVM | Kasaba olunca, alışveriş için |
+| Ofis | İlçe olunca, iş arayan çoğalınca |
+| Hastane | İlçe olunca, nüfus 3.500'ü geçince |
+| Stadyum | Şehir olunca |
+| İstasyon / Kapı | Demiryolu / Havalimanı kartında, nüfus 1.000'i geçince, sonra her 2.000 kişide bir |
+
+- Talep **yolun hemen yanına ya da bir kare içerisine** gelir, tahtanın kenarına ya da rayın, pistin dibine gelmez.
+  Türüne uygun yere çıkar: mahalle mahallelerin yanına ve sakin yerlere, fabrika şehir girişine ve evlerden uzağa,
+  AVM ve ofis kavşak yakınına, okul ve hastane mahallelerin yanına.
+- Üstteki turuncu **talep** düğmesine dokununca kamera talebe gider ve ne yapacağın yazılır.
+- **Bağlamak için** yolu o kareye kadar çiz; yol binada biter. Yanında yol varsa **Otopark** aracıyla o kareye
+  dokunmak da yeter. İstasyon talebine ray, kapı talebine taksi yolu çekilir.
+- Bağlanan yer kendi binasıyla görünür ve **zamanla dolar**: mahallenin nüfusu, iş yerinin çalışanı artar.
+- Aynı anda en çok 2 talep bekler.
+
+## Trafik sıkışınca büyüme durur
+
+- Trafik zamanla kendiliğinden artmaz; **şehrin büyüklüğünden** gelir. Mahallelerdeki aileler işe, okula,
+  alışverişe gider, sonra eve döner. Şehir dışından gelen araç sayısı sınırlıdır ve aşamayla biraz artar.
+- Bir kavşağın, hemzemin geçidin ya da otopark girişinin önünde araçlar birikince orası **sıkışık** sayılır: yerde
+  kırmızı halka yanar, talep düğmesi kırmızı **sıkışık** olur ve ona dokununca kamera oraya gider.
+- **Memnuniyet**; araçların yolda durarak geçirdiği süreye, sıkışık kavşaklara ve uzun bekleyen taleplere göre
+  değişir. Memnuniyet çubuğuna dokununca nedeni yazar.
+- Memnuniyet **%45'in altındaysa nüfus artmaz, %50'nin altındaysa yeni talep gelmez.** Şehir çökmez, yalnızca
+  büyümesi durur; sen trafiği rahatlatınca kaldığı yerden devam eder.
 - Çözüm senin elinde: kalabalık kavşağı köprü ya da alt geçitle ayır, trafiği dağıtacak paralel yol aç, demiryolunda
-  hemzemin geçitleri alt geçide çevir, havalimanında taksi yolunu çoğalt.
+  hemzemin geçitleri alt geçide çevir, havalimanında taksi yolunu çoğalt. Başlangıçtaki 4 yol aşağı yukarı İlçe
+  aşamasına kadar yeter; daha sık bir yol ağı aynı şehri çok daha uzun süre akıcı tutar.
 
 ## Araçlar nereye gider?
 
 Arabalar amaçsızca dolaşmaz. Her araç bir yolculuğa çıkar ve gideceği yeri baştan bilir:
 
-- **Şehir dışından gelir** (tahtanın kenarındaki yol ucu) ve bir binaya, otoparka ya da başka bir şehir çıkışına gider.
+- **Evden çıkar** (mahalle) ve işe, okula, alışverişe, otoparka ya da şehir dışına gider; oradan **eve döner**.
+- **Şehir dışından gelir** (tahtanın kenarındaki yol ucu) ve bir iş yerine, AVM'ye ya da başka bir çıkışa gider.
 - **Otoparka ya da binaya varınca** bariyer kalkar, araç içeri girip kaybolur (otoparkta çatıda bir yer dolar).
 - **Bir süre sonra otoparktan başka bir araç çıkar** ve başka bir otoparka ya da şehir dışına gider. Dolu otopark
   daha sık araç gönderir; dolu otoparkın ışığı kırmızı yanar ve oraya yeni araç yönlendirilmez.
@@ -148,7 +167,7 @@ Bütün görseller kodla üretilir (üç boyutlu modeller, dokular, sesler); dı
 
 Gerçek dokunuş ve sürüklemelerle şunları dener: ana ekran, 4 düz yolla başlayan şehir, parmakla yol çizme, kavşak,
 köprü, alt geçit, hatalı çizimin reddi, silme, geri alma, Otopark aracı, talebin gelmesi ve işareti, talep
-düğmesinin kamerayı götürmesi, talebi yolla bağlama ve binanın oluşması, araçların binaya girip kaybolması ve
+düğmesinin kamerayı götürmesi, talebin gerekçesi ve yol kenarındaki yeri, talebi yolla bağlama ve binanın oluşması, evden işe giden yolculuklar, aşama atlama, trafik sıkışınca büyümenin durması, araçların binaya girip kaybolması ve
 oradan yeni araçların çıkması, U dönüşü ve kalıcı kilitlenme olmaması, trafiğin şehirle büyümesi, sıkışma halkası,
 memnuniyet ve nüfus, + / − / tümü düğmeleri, kaydırma ve iki parmakla yakınlaştırma, yapay zekâ ışıkları, elle
 yönetim, kaydın korunması, Yeni şehir, eski kaydın taşınması, trenler ve istasyon talebi, hemzemin geçit, uçak

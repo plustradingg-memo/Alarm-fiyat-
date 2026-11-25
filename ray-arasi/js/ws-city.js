@@ -8,27 +8,36 @@
   const { DV } = WS;
   const rb = RA.rbox, mesh = RA.mesh;
 
-  // Talep türleri. need: bağlanması gereken hat ailesi (o karede çıkmaz uç olmalı).
-  // w: trafiğe katkı, pull: araç çekme, emit: araç gönderme, cap: içerideki araç yeri, start: bağlanınca içerideki araç
+  // Talep türleri. need: bağlanması gereken hat ailesi (o karede çıkmaz uç olmalı). role: yolculuk mantığı
+  // (evden işe, okula, alışverişe; oradan eve). res: sakin, jobs: iş/hizmet yeri (yer büyüdükçe dolar).
+  // cap: içerideki araç yeri, start: bağlanınca içerideki araç, w: trafiğe katkı, unlock: talep edilebildiği aşama.
   const TYPES = {
-    mahalle: { name: 'Mahalle', need: 'road', cap: 8, w: 5, pull: 0.8, emit: 1.6, start: 5, pop: 1500, col: '#e0662a', ask: 'Yeni mahalle yol istiyor' },
-    okul: { name: 'Okul', need: 'road', cap: 6, w: 3.5, pull: 1.3, emit: 0.9, start: 1, pop: 250, col: '#d99a00', ask: 'Okul yol istiyor' },
-    avm: { name: 'AVM', need: 'road', cap: 10, w: 4.5, pull: 1.7, emit: 1.1, start: 2, pop: 300, col: '#7a4fc2', ask: 'AVM yol istiyor' },
-    ofis: { name: 'Ofis', need: 'road', cap: 8, w: 4, pull: 1.4, emit: 1.0, start: 1, pop: 400, col: '#2f6fd6', ask: 'Ofis binası yol istiyor' },
-    hastane: { name: 'Hastane', need: 'road', cap: 6, w: 3, pull: 1.1, emit: 0.9, start: 1, pop: 200, col: '#d8432f', ask: 'Hastane yol istiyor' },
-    fabrika: { name: 'Fabrika', need: 'road', cap: 8, w: 4, pull: 1.2, emit: 1.0, start: 2, pop: 350, col: '#5f6b78', ask: 'Fabrika yol istiyor' },
-    stadyum: { name: 'Stadyum', need: 'road', cap: 12, w: 6, pull: 1.9, emit: 1.2, start: 0, pop: 0, col: '#1f9d61', ask: 'Stadyum yol istiyor' },
-    istasyon: { name: 'İstasyon', need: 'rail', trains: 1, pop: 500, col: '#d9861a', ask: 'Yeni istasyon ray istiyor' },
-    kapi: { name: 'Kapı', need: 'taxi', planes: 1, pop: 500, col: '#4d7cff', ask: 'Yeni yolcu kapısı taksi yolu istiyor' },
+    mahalle: { name: 'Mahalle', need: 'road', role: 'home', cap: 8, w: 3.6, emit: 1.5, start: 4, res: 1000, jobs: 0, unlock: 0, col: '#e0662a', why: 'Yeni aileler geliyor', ask: 'Mahalle yol istiyor' },
+    okul: { name: 'Okul', need: 'road', role: 'service', cap: 6, w: 1.5, emit: 0.9, start: 0, res: 0, jobs: 120, unlock: 0, col: '#d99a00', why: 'Çocuklar çoğaldı', ask: 'Okul yol istiyor' },
+    fabrika: { name: 'Fabrika', need: 'road', role: 'work', cap: 8, w: 1.8, emit: 1.0, start: 0, res: 0, jobs: 700, unlock: 0, col: '#5f6b78', why: 'İş arayan çok', ask: 'Fabrika yol istiyor' },
+    avm: { name: 'AVM', need: 'road', role: 'shop', cap: 10, w: 2.0, emit: 1.1, start: 0, res: 0, jobs: 400, unlock: 1, col: '#7a4fc2', why: 'Halk alışveriş yeri istiyor', ask: 'AVM yol istiyor' },
+    ofis: { name: 'Ofis', need: 'road', role: 'work', cap: 8, w: 1.8, emit: 1.0, start: 0, res: 0, jobs: 650, unlock: 2, col: '#2f6fd6', why: 'İş arayan çok', ask: 'Ofis binası yol istiyor' },
+    hastane: { name: 'Hastane', need: 'road', role: 'service', cap: 6, w: 1.4, emit: 0.9, start: 0, res: 0, jobs: 250, unlock: 2, col: '#d8432f', why: 'Nüfus büyüdü', ask: 'Hastane yol istiyor' },
+    stadyum: { name: 'Stadyum', need: 'road', role: 'event', cap: 12, w: 2.4, emit: 1.2, start: 0, res: 0, jobs: 100, unlock: 3, col: '#1f9d61', why: 'Şehrin bir takımı olsun', ask: 'Stadyum yol istiyor' },
+    istasyon: { name: 'İstasyon', need: 'rail', role: 'station', trains: 1, res: 0, jobs: 100, unlock: 0, col: '#d9861a', why: 'Banliyö yolcuları çoğaldı', ask: 'İstasyon ray istiyor' },
+    kapi: { name: 'Kapı', need: 'taxi', role: 'gate', planes: 1, res: 0, jobs: 150, unlock: 0, col: '#4d7cff', why: 'Uçuşlar doldu', ask: 'Yeni yolcu kapısı taksi yolu istiyor' },
   };
-  const HOW = { road: 'Yolu bu kareye kadar çiz; yol binada bitsin.', rail: 'Hattan bu kareye bir ray kolu çek; ray burada bitsin.', taxi: 'Taksi yolunu bu kareye uzat; burada bitsin.' };
-  // Hangi sırayla talep gelir (kart türüne göre)
-  const ORDER = {
-    road: ['mahalle', 'okul', 'mahalle', 'avm', 'ofis', 'mahalle', 'hastane', 'fabrika', 'mahalle', 'stadyum', 'avm', 'ofis', 'mahalle', 'okul'],
-    rail: ['istasyon', 'mahalle', 'okul', 'istasyon', 'avm', 'mahalle', 'istasyon', 'fabrika', 'ofis', 'mahalle', 'istasyon', 'hastane'],
-    air: ['kapi', 'mahalle', 'avm', 'kapi', 'ofis', 'mahalle', 'kapi', 'okul', 'hastane', 'kapi', 'fabrika', 'mahalle'],
+  const HOW = { road: 'Yolu bu kareye kadar çiz; yol binada bitsin. Yanında yol varsa Otopark aracıyla bu kareye dokunmak da yeter.', rail: 'Hattan bu kareye bir ray kolu çek; ray burada bitsin.', taxi: 'Taksi yolunu bu kareye uzat; burada bitsin.' };
+  // Şehrin aşamaları (nüfusa göre)
+  const LEVELS = [{ name: 'Köy', min: 0 }, { name: 'Kasaba', min: 1500 }, { name: 'İlçe', min: 4000 }, { name: 'Şehir', min: 8000 }, { name: 'Büyükşehir', min: 14000 }];
+  // Kim nereye gider: yolculuğun başladığı yerin türüne göre varış ağırlıkları (exit = şehir dışı)
+  const ROLE_W = {
+    home: { work: 1.0, shop: 0.7, service: 0.6, event: 0.5, park: 0.35, home: 0.12, station: 0, gate: 0, exit: 0.3 },
+    work: { home: 1.5, shop: 0.3, service: 0.15, event: 0.15, park: 0.2, work: 0.1, exit: 0.35 },
+    shop: { home: 1.5, shop: 0.1, work: 0.2, service: 0.15, event: 0.15, park: 0.2, exit: 0.35 },
+    service: { home: 1.5, shop: 0.3, work: 0.2, service: 0.05, event: 0.1, park: 0.2, exit: 0.3 },
+    event: { home: 1.5, shop: 0.4, work: 0.1, service: 0.05, park: 0.3, exit: 0.4 },
+    park: { home: 0.7, work: 0.5, shop: 0.5, service: 0.3, event: 0.3, park: 0.2, exit: 0.5 },
+    edge: { work: 1.0, shop: 0.8, event: 0.5, service: 0.3, park: 0.5, home: 0.4, exit: 0.7 },
   };
-  const MAX_PLACES = 16, MAX_WAITING = 3;
+  const BASE_RES = 300, BASE_JOBS = 200;
+  const MAX_PLACES = 24, MAX_WAITING = 2;
+  const GROW_MOOD = 45, SPAWN_MOOD = 50; // memnuniyet bunların altındaysa nüfus artmaz / yeni talep gelmez
   const upTR = (s) => s.toLocaleUpperCase('tr-TR');
 
   /* ---------- yer modelleri (yerel +z yola bakar, taban yaklaşık x∈[-0.95,0.95], z∈[-0.55,0.45]) ---------- */
@@ -127,33 +136,39 @@
       this.reset();
     }
     reset() {
-      this.places = []; this.t = 0; this.seq = 0; this.nextT = 6; this.mood = 80; this.ema = 0; this.uid = 1;
-      this.jams = []; this.jt = 0; this.saveT = 0; this.jamHintT = 0; this.focusN = 0;
+      this.places = []; this.t = 0; this.nextT = 5; this.mood = 85; this.ema = 0; this.uid = 1; this.lvl = 0;
+      this.jams = []; this.jt = 0; this.saveT = 0; this.jamHintT = 0; this.gateHintT = 0; this.focusN = 0;
       this.rnd = RA.rng(City.seed != null ? City.seed : (Date.now() % 100000) + 17); // testler sabit tohum verebilir
       this.clearVisuals();
     }
     load(data) {
       this.reset();
       if (!data || !data.places) return;
-      this.t = data.t || 0; this.seq = data.seq || 0; this.nextT = data.nextT != null ? data.nextT : 6;
-      this.mood = data.mood != null ? data.mood : 80; this.ema = data.ema || 0;
-      this.places = data.places.filter((p) => TYPES[p.type]).map((p) => ({ id: this.uid++, i: p.i, j: p.j, type: p.type, age: p.age || 0, cAge: p.cAge || 0, conn: !!p.conn, face: p.face || 'S' }));
+      this.t = data.t || 0; this.nextT = data.nextT != null ? data.nextT : 5;
+      this.mood = data.mood != null ? data.mood : 85; this.ema = data.ema || 0;
+      this.places = data.places.filter((p) => TYPES[p.type]).map((p) => ({ id: this.uid++, i: p.i, j: p.j, type: p.type, age: p.age || 0, cAge: p.cAge || 0, conn: !!p.conn, face: p.face || 'S', grow: p.grow != null ? p.grow : p.conn ? Math.min(1, (p.cAge || 0) / 90) : 0 }));
+      // eski kurallarla kaydedilmiş şehir: bağlı yerler kalır, rastgele açılmış bekleyen talepler silinir, memnuniyet yeniden hesaplanır
+      if (!data.v || data.v < 2) { this.places = this.places.filter((p) => p.conn); this.mood = 85; this.ema = 0; this.nextT = 8; }
+      this.lvl = this.levelOf(this.residents());
     }
     serialize() {
-      return { v: 1, t: Math.round(this.t), seq: this.seq, nextT: Math.round(this.nextT * 10) / 10, mood: Math.round(this.mood), ema: Math.round(this.ema * 100) / 100, places: this.places.map((p) => ({ i: p.i, j: p.j, type: p.type, age: Math.round(p.age), cAge: Math.round(p.cAge), conn: p.conn, face: p.face })) };
+      return { v: 2, t: Math.round(this.t), nextT: Math.round(this.nextT * 10) / 10, mood: Math.round(this.mood), ema: Math.round(this.ema * 100) / 100, places: this.places.map((p) => ({ i: p.i, j: p.j, type: p.type, age: Math.round(p.age), cAge: Math.round(p.cAge), conn: p.conn, face: p.face, grow: Math.round(p.grow * 1000) / 1000 })) };
     }
     type(p) { return TYPES[p.type]; }
     placeAt(i, j) { return this.places.find((p) => p.i === i && p.j === j) || null; }
     map() { const m = new Map(); for (const p of this.places) m.set(p.i + ',' + p.j, p); return m; }
     waiting() { return this.places.filter((p) => !p.conn); }
     connected(kind) { return this.places.filter((p) => p.conn && (!kind || TYPES[p.type].need === kind)).length; }
-    population() {
-      let n = 1200;
-      for (const p of this.places) if (p.conn) n += TYPES[p.type].pop * (0.45 + 0.55 * Math.min(1, p.cAge / 90));
-      return Math.round(n / 10) * 10;
-    }
-    // trafiğe katkı (bağlanalı ne kadar olduysa o kadar büyür)
-    weight(p) { const t = TYPES[p.type]; return (t.w || 0) * (0.55 + 0.45 * Math.min(1, p.cAge / 75)); }
+    counts() { const n = {}; for (const k in TYPES) n[k] = 0; for (const p of this.places) n[p.type]++; return n; }
+    // sakinler ve iş/hizmet yerleri: bağlanan yer büyüdükçe dolar
+    residents() { let n = BASE_RES; for (const p of this.places) if (p.conn) n += (TYPES[p.type].res || 0) * p.grow; return n; }
+    jobs() { let n = BASE_JOBS; for (const p of this.places) if (p.conn) n += (TYPES[p.type].jobs || 0) * p.grow; return n; }
+    population() { return Math.round(this.residents() / 10) * 10; }
+    levelOf(n) { let l = 0; LEVELS.forEach((L, k) => { if (n >= L.min) l = k; }); return l; }
+    level() { return this.lvl; }
+    levelInfo() { return { cur: LEVELS[this.lvl], next: LEVELS[this.lvl + 1] || null, idx: this.lvl }; }
+    // trafiğe katkı (yer büyüdükçe artar)
+    weight(p) { return (TYPES[p.type].w || 0) * (0.3 + 0.7 * p.grow); }
 
     /* ---------- ızgara ile eşitleme: bağlandı mı? ---------- */
     sync(grid) {
@@ -163,7 +178,7 @@
         const need = TYPES[p.type].need;
         const q = c.pieces[0];
         const dead = c.pieces.length === 1 && q.type === need && WS.portCount(q.m) === 1 && q.lv === 0;
-        if (dead) { if (!p.conn) { p.conn = true; p.cAge = 0; events.push(p); } p.face = WS.ports(q.m)[0]; return true; }
+        if (dead) { if (!p.conn) { p.conn = true; p.cAge = 0; p.grow = Math.max(p.grow, 0.15); events.push(p); } p.face = WS.ports(q.m)[0]; return true; }
         if (c.pieces.length) return false; // kareye başka bir şey yapıldı: talep kalkar
         p.conn = false;
         return true;
@@ -171,79 +186,140 @@
       return events;
     }
 
-    /* ---------- yeni talep ---------- */
+    /* ---------- yeni talep: şehrin ihtiyacından doğar ---------- */
     hasFamily(fam) { let n = 0; this.ws.grid.each((c) => { if (c.pieces.some((q) => q.type === fam)) n++; }); return n > 0; }
-    pickCell(need, want) {
+    needs() {
+      const R = this.residents(), J = this.jobs(), n = this.counts(), lvl = this.lvl, dom = this.ws.domain;
+      const ok = (t) => TYPES[t].unlock <= lvl && (TYPES[t].need === 'road' || this.hasFamily(TYPES[t].need));
+      const out = [];
+      const add = (t, s, why) => { if (ok(t) && s > 0) out.push({ type: t, s: s * (0.85 + this.rnd() * 0.3), why: why || TYPES[t].why }); };
+      // konut: hiç yoksa, iş yerleri boş kalıyorsa ya da şehir büyüyorsa
+      add('mahalle', n.mahalle === 0 ? 10 : 0.8 + Math.max(0, (J - R * 0.75) / 300), n.mahalle === 0 ? 'İlk sakinler geliyor' : J > R * 0.75 ? 'İş var ama çalışacak kimse yok' : 'Yeni aileler geliyor');
+      // iş: işsizler çoğaldıysa
+      const jobless = Math.max(0, R * 0.75 - J) / 300;
+      add('fabrika', jobless / (1 + n.fabrika * 0.6));
+      add('avm', jobless * 0.9 / (1 + n.avm * 0.8) + (n.avm === 0 ? 1 : 0));
+      add('ofis', jobless / (1 + n.ofis * 0.6));
+      // hizmetler: nüfus eşiklerinde
+      add('okul', R > 900 + n.okul * 2400 ? 3 : 0);
+      add('hastane', R > 3500 + n.hastane * 5500 ? 3 : 0);
+      add('stadyum', n.stadyum === 0 ? 2.5 : 0);
+      if (dom === 'rail') add('istasyon', R > 1000 + n.istasyon * 2000 ? 3.5 : 0);
+      if (dom === 'air') add('kapi', R > 1000 + n.kapi * 2000 ? 3.5 : 0);
+      return out.sort((a, b) => b.s - a.s);
+    }
+    // Yer seçimi: yol kenarında (en çok bir kare içeride), tahtanın içinde, türüne uygun bölgede
+    pickCell(type) {
+      const t = TYPES[type], need = t.need, role = t.role;
       const g = this.ws.grid, W = g.cols, H = g.rows;
-      // ailenin parçalarından boş karelere doğru yayılan uzaklık
+      const cell = (i, j) => g.cell(i, j);
+      const isRamp = (i, j) => ['N', 'E', 'S', 'W'].some((d) => { const c = cell(i + DV[d].x, j + DV[d].z); return c && c.pieces.some((q) => q.lv !== 0); });
+      // kol eklenebilecek parça: o aileden, zemin seviyesinde, 2-3 kollu (4 kollu kavşak ve çıkmaz uç olmaz), rampa değil
+      const src = (i, j) => { const c = cell(i, j); if (!c || c.pieces.length !== 1) return false; const q = c.pieces[0]; const n = WS.portCount(q.m); return q.type === need && q.lv === 0 && n >= 2 && n <= 3 && !isRamp(i, j); };
       const dist = new Int16Array(W * H).fill(-1), face = new Array(W * H).fill(null);
       const q = [];
-      g.each((c, i, j) => { if (c.pieces.some((p) => p.type === need)) { dist[j * W + i] = 0; q.push([i, j]); } });
+      g.each((c, i, j) => { if (src(i, j)) { dist[j * W + i] = 0; q.push([i, j]); } });
       const taken = this.map();
       while (q.length) {
         const [i, j] = q.shift(); const d0 = dist[j * W + i];
-        if (d0 >= 3) continue;
+        if (d0 >= 2) continue;
         for (const d of ['N', 'E', 'S', 'W']) {
           const ni = i + DV[d].x, nj = j + DV[d].z;
           if (!g.inside(ni, nj) || dist[nj * W + ni] >= 0) continue;
-          const c = g.cell(ni, nj); if (c.pieces.length || taken.has(ni + ',' + nj)) continue;
+          const c = cell(ni, nj); if (c.pieces.length || taken.has(ni + ',' + nj)) continue;
           dist[nj * W + ni] = d0 + 1; face[nj * W + ni] = WS.OPP[d]; q.push([ni, nj]);
         }
       }
-      const near = (i, j) => this.places.some((p) => Math.abs(p.i - i) <= 1 && Math.abs(p.j - j) <= 1);
+      const around = (i, j, r, fn) => { let n = 0; for (let a = -r; a <= r; a++) for (let b = -r; b <= r; b++) { const c = cell(i + a, j + b); if (c && fn(c, i + a, j + b)) n++; } return n; };
+      const near = (i, j, r, types) => this.places.filter((p) => Math.abs(p.i - i) <= r && Math.abs(p.j - j) <= r && (!types || types.includes(p.type))).length;
       const cand = [];
       g.each((c, i, j) => {
         const d = dist[j * W + i];
-        if (d < 1 || near(i, j) || j === 0) return; // en üst sıradaki işaret üst şeridin altında kalırdı
-        // kenardaki kareler biraz daha az tercih edilir
-        const edge = i === 0 || j === 0 || i === W - 1 || j === H - 1;
-        cand.push({ i, j, d, face: face[j * W + i], s: (d === want ? 3 : d === want + 1 || d === want - 1 ? 1.2 : 0.4) * (edge ? 0.5 : 1) * (0.5 + this.rnd()) });
+        if (d < 1) return;
+        if (i < 1 || j < 1 || i > W - 2 || j > H - 2) return; // tahtanın kenarına bina konmaz
+        if (near(i, j, 1)) return; // başka bir yerin dibine konmaz
+        // konut ve iş yerleri rayın, pistin, taksi yolunun dibine kurulmaz
+        if (need === 'road' && around(i, j, 1, (cc) => cc.pieces.some((x) => x.type === 'rail' || x.type === 'runway' || x.type === 'taxi'))) return;
+        const M = near(i, j, 3, ['mahalle']), F = near(i, j, 3, ['fabrika']), Wk = near(i, j, 3, ['ofis', 'avm', 'fabrika']);
+        const Jn = around(i, j, 2, (cc) => cc.pieces.some((x) => x.type === 'road' && WS.portCount(x.m) >= 3));
+        const edge = Math.min(i, j, W - 1 - i, H - 1 - j);
+        let zone = 1;
+        if (type === 'mahalle') zone = 1 + 0.4 * M - 0.8 * F + (Jn === 0 ? 0.4 : 0);
+        else if (type === 'fabrika') zone = 1 + (edge <= 1 ? 0.9 : 0) - 0.6 * M;
+        else if (role === 'service') zone = 1 + 0.5 * M;
+        else if (role === 'shop' || role === 'work') zone = 1 + 0.35 * Jn + 0.2 * Wk;
+        else if (role === 'event') zone = 1 + (edge <= 2 ? 0.6 : 0);
+        else zone = 1 + 0.3 * M;
+        cand.push({ i, j, d, face: face[j * W + i], s: (d === 1 ? 2.5 : 1) * Math.max(0.1, zone) * (0.6 + this.rnd() * 0.8) });
       });
       if (!cand.length) return null;
       cand.sort((a, b) => b.s - a.s);
       return cand[0];
     }
     trySpawn() {
-      const order = ORDER[this.ws.domain] || ORDER.road;
-      let type = order[this.seq % order.length];
-      if (TYPES[type].need !== 'road' && !this.hasFamily(TYPES[type].need)) type = 'mahalle';
-      const need = TYPES[type].need;
-      if (!this.hasFamily(need)) return false;
-      const want = this.seq < 2 ? 1 : RA.pick([1, 2, 2, 3], this.rnd);
-      const c = this.pickCell(need, need === 'road' ? want : Math.min(2, want));
-      if (!c) return false;
-      const p = { id: this.uid++, i: c.i, j: c.j, type, age: 0, cAge: 0, conn: false, face: c.face || 'S' };
-      this.places.push(p); this.seq++;
-      this.ws.rebuild(); this.ws.save();
-      this.ws.onDemand(p);
-      return true;
+      for (const nd of this.needs()) {
+        const c = this.pickCell(nd.type);
+        if (!c) continue;
+        const p = { id: this.uid++, i: c.i, j: c.j, type: nd.type, age: 0, cAge: 0, conn: false, face: c.face || 'S', grow: 0 };
+        this.places.push(p);
+        this.ws.rebuild(); this.ws.save();
+        this.ws.onDemand(p, nd.why);
+        return true;
+      }
+      return false;
     }
 
     /* ---------- adım ---------- */
     update(dt) {
       this.t += dt;
-      for (const p of this.places) { p.age += dt; if (p.conn) p.cAge += dt; }
+      const happy = this.mood >= GROW_MOOD;
+      for (const p of this.places) {
+        p.age += dt;
+        if (p.conn) { p.cAge += dt; if (happy) p.grow = Math.min(1, p.grow + dt / 90); } // trafik sıkışıkken nüfus artmaz
+      }
+      const L = this.levelOf(this.residents());
+      if (L > this.lvl) { this.lvl = L; this.ws.onLevel(LEVELS[L], L, Object.keys(TYPES).filter((k) => TYPES[k].unlock === L && (TYPES[k].need === 'road')).map((k) => TYPES[k].name)); }
+      // yeni talep: bekleyen az, memnuniyet yeterliyse
       const waiting = this.waiting().length;
       this.nextT -= dt;
       if (this.nextT <= 0) {
-        if (waiting < MAX_WAITING && this.places.length < MAX_PLACES && this.trySpawn()) this.nextT = 26 + this.rnd() * 14 + waiting * 10;
+        if (waiting >= MAX_WAITING || this.places.length >= MAX_PLACES) this.nextT = 6;
+        else if (this.mood < SPAWN_MOOD) {
+          this.nextT = 6;
+          if (!this.gateHintT) { this.gateHintT = 60; this.ws.toast('Şehir büyümek istiyor ama trafik sıkışık (memnuniyet %' + Math.round(this.mood) + '). Kırmızı halkalı yerleri rahatlatınca nüfus artar ve yeni talepler gelir.'); }
+        } else if (this.trySpawn()) this.nextT = 22 + this.rnd() * 12 + waiting * 8;
         else this.nextT = 8;
       }
       this.jt -= dt; if (this.jt <= 0) { this.jt = 0.5; this.measureJams(); }
-      // memnuniyet: araçların durarak geçirdiği süre, sıkışan kavşaklar, uzun süre bekleyen talepler
-      const waitPen = Math.min(40, Math.max(0, this.ema - 2.5) * 3.2);
-      const jamPen = Math.min(30, this.jams.length * 9);
-      let stuck = 0; for (const c of this.ws.sim.cars) if (!c.fade && c.still > 20) stuck++;
-      const stuckPen = Math.min(25, stuck * 2.5);
-      let demPen = 0; for (const p of this.places) if (!p.conn) demPen += RA.clamp((p.age - 40) / 5, 0, 12);
-      const bonus = Math.min(12, this.connected() * 1.5);
-      const target = RA.clamp(92 + bonus - waitPen - jamPen - stuckPen - Math.min(40, demPen), 0, 100);
-      this.mood += (target - this.mood) * Math.min(1, dt * 0.15);
-      this.jamHintT = Math.max(0, this.jamHintT - dt);
+      const parts = (this.parts = this.moodParts());
+      this.mood += (parts.total - this.mood) * Math.min(1, dt * 0.12);
+      this.jamHintT = Math.max(0, this.jamHintT - dt); this.gateHintT = Math.max(0, this.gateHintT - dt);
       this.saveT += dt; if (this.saveT > 10) { this.saveT = 0; this.ws.saveCity(); }
     }
+    // memnuniyet: araçların yolda durarak geçirdiği süre, sıkışan kavşaklar, kımıldayamayan araçlar, uzun bekleyen talepler
+    moodParts() {
+      const traffic = Math.min(45, Math.max(0, this.ema - 3) * 3);
+      const jam = Math.min(24, this.jams.length * 6);
+      let st = 0; for (const c of this.ws.sim.cars) if (!c.fade && c.still > 20) st++;
+      const stuck = Math.min(15, st * 1.5);
+      let demand = 0; for (const p of this.places) if (!p.conn) demand += RA.clamp((p.age - 60) / 8, 0, 6);
+      demand = Math.min(15, demand);
+      return { traffic, jam, stuck, demand, total: RA.clamp(96 - traffic - jam - stuck - demand, 0, 100) };
+    }
+    moodText() {
+      const p = this.parts || this.moodParts(), m = Math.round(this.mood), bits = [];
+      if (p.traffic >= 2) bits.push('araçlar yolda ortalama ' + Math.round(this.ema) + ' sn duruyor (−' + Math.round(p.traffic) + ')');
+      if (p.jam > 0) bits.push(this.jams.length + ' sıkışık kavşak (−' + Math.round(p.jam) + ')');
+      if (p.stuck >= 2) bits.push('kımıldayamayan araçlar (−' + Math.round(p.stuck) + ')');
+      if (p.demand >= 2) bits.push('uzun bekleyen talep (−' + Math.round(p.demand) + ')');
+      return 'Memnuniyet %' + m + (bits.length ? ': ' + bits.join(', ') + '.' : ': trafik akıyor, herkes memnun.') + (m < SPAWN_MOOD ? ' %' + SPAWN_MOOD + ' altında şehir büyümez.' : '');
+    }
+    levelText() {
+      const { cur, next } = this.levelInfo(), n = this.population().toLocaleString('tr-TR');
+      return cur.name + ': ' + n + ' kişi. ' + (next ? next.name + ' olmak için ' + next.min.toLocaleString('tr-TR') + ' kişi gerekir. Mahalleleri bağla, iş ve okul taleplerini karşıla; trafik sıkışırsa nüfus artmaz.' : 'En büyük aşamadasın!');
+    }
     onTrip(c) { this.ema += ((c.stopT || 0) - this.ema) * 0.08; }
-    onGiveUp(c) { this.ema += (60 - this.ema) * 0.08; this.mood = Math.max(0, this.mood - 3); this.giveUps = (this.giveUps || 0) + 1; }
+    onGiveUp(c) { this.ema += (40 - this.ema) * 0.06; this.giveUps = (this.giveUps || 0) + 1; }
 
     // Kavşak/geçit önünde duran araçları say: 5+ araç ya da 15 sn'den uzun bekleme = sıkışma
     measureJams() {
@@ -323,5 +399,7 @@
   }
   City.TYPES = TYPES;
   City.HOW = HOW;
+  City.LEVELS = LEVELS;
+  City.ROLE_W = ROLE_W;
   WS.City = City;
 })();

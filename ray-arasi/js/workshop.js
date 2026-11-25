@@ -44,6 +44,8 @@
       $('ws-sample').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.template(this.domain); this.commit('Örnek düzen yüklendi.'); });
       $('ws-clear').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = new WS.Grid(); this.city.reset(); this.commit('Tahta temizlendi. Geri almak için ↶'); });
       $('ws-dem').addEventListener('click', () => this.focusNext());
+      $('ws-mood').addEventListener('click', () => this.toast(this.city.moodText()));
+      $('ws-popn').addEventListener('click', () => this.toast(this.city.levelText()));
       const mid = () => ({ x: this.app.w / 2, y: this.app.h * 0.45 });
       $('ws-zin').addEventListener('click', () => { const m = mid(); this.zoomAt(m.x, m.y, 0.66); });
       $('ws-zout').addEventListener('click', () => { const m = mid(); this.zoomAt(m.x, m.y, 1.5); });
@@ -123,7 +125,7 @@
       this.setStyle('grade');
       // ilk açılışta kısa yönlendirme
       if (stale && this.undoStack.length) this.toast('Şehir 4 düz yolla baştan başladı. Eski çizimin ↶ ile geri gelir.');
-      else if (fresh) this.toast('Şehrin 4 düz yolla başlıyor. Birazdan talepler gelecek: turuncu işaretli yerlere yol yap.');
+      else if (fresh) this.toast('Köyünün 4 düz yolu var. Talepleri karşıladıkça köy kasabaya, sonra şehre büyür. Trafik sıkışırsa büyüme durur.');
       else this.toast('Yakınlaştırmak için iki parmağını aç ya da sağdaki + düğmesine dokun. İzle aracıyla tek parmakla kaydır, diğer araçlarla sürükleyerek çiz.');
       this.lastStats = 0;
     }
@@ -143,11 +145,17 @@
     saveCity() { RA.store.set('ws.city.' + this.domain, this.city.serialize()); }
 
     /* ---------- talepler ---------- */
-    onDemand(p) {
+    onDemand(p, why) {
       const t = WS.City.TYPES[p.type];
-      this.toast('Yeni talep: ' + t.ask + '. Üstteki talep düğmesi seni oraya götürür.');
+      this.toast((why ? why + ': ' : 'Yeni talep: ') + t.ask + '. Üstteki talep düğmesi seni oraya götürür.');
       RA.audio.play('point');
       const b = $('ws-dem'); b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping');
+    }
+    onLevel(L, idx, unlocked) {
+      this.toast('Tebrikler, artık bir ' + L.name + ' oldun (' + L.min.toLocaleString('tr-TR') + ' kişi)!' + (unlocked.length ? ' Yeni talepler: ' + unlocked.join(', ') + '.' : ''));
+      RA.audio.play('record');
+      const b = $('ws-popn'); b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping');
+      this.saveCity();
     }
     onConnect(list) {
       const p = list[list.length - 1], t = WS.City.TYPES[p.type];
@@ -416,7 +424,12 @@
       el.querySelector('b').textContent = '%' + mood;
       el.querySelector('.meter i').style.width = mood + '%';
       el.dataset.lv = mood >= 70 ? 'ok' : mood >= 45 ? 'mid' : 'bad';
-      $('ws-popn').querySelector('b').textContent = c.population().toLocaleString('tr-TR');
+      const li = c.levelInfo(), pop = c.population();
+      const pb = $('ws-popn');
+      pb.querySelector('.lv b').textContent = li.cur.name;
+      pb.querySelector('.lv > span:not(.meter)').textContent = pop.toLocaleString('tr-TR');
+      pb.querySelector('.meter i').style.width = (li.next ? RA.clamp((pop - li.cur.min) / (li.next.min - li.cur.min), 0, 1) * 100 : 100) + '%';
+      pb.title = li.next ? li.next.name + ' için ' + li.next.min.toLocaleString('tr-TR') + ' kişi' : 'En büyük aşama';
       const n = c.waiting().length, jam = c.jams.length;
       const b = $('ws-dem');
       b.dataset.st = n ? 'dem' : jam ? 'jam' : 'none';

@@ -70,11 +70,11 @@
         <button id="ws-menu" class="round-btn" type="button" aria-label="Diğer seçenekler"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
       </div>
       <div class="ws-city" id="ws-city">
-        <div class="ws-mood" id="ws-mood" data-lv="ok" title="Memnuniyet: araçlar az bekledikçe ve talepler karşılandıkça artar">
+        <button class="ws-mood" id="ws-mood" type="button" data-lv="ok" aria-label="Memnuniyet: neden bu kadar?">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/></svg>
-          <span class="meter"><i></i></span><b>%80</b>
-        </div>
-        <div class="ws-popn" id="ws-popn" title="Nüfus"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3"/></svg><b>1.200</b></div>
+          <span class="meter"><i></i></span><b>%85</b>
+        </button>
+        <button class="ws-popn" id="ws-popn" type="button" aria-label="Şehrin aşaması ve nüfusu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20V10l5-4 5 4v10"/><path d="M13 20v-7h8v7"/><path d="M2 20h20"/></svg><span class="lv"><b>Köy</b><span>300</span><span class="meter"><i></i></span></span></button>
         <button id="ws-dem" class="ws-dem" type="button" data-st="none" aria-label="Sıradaki talebe git"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><path d="M12 7v3.5M12 13h.01"/></svg><b>0</b><span>talep</span></button>
       </div>
       <div id="ws-pop" class="ws-pop" hidden>

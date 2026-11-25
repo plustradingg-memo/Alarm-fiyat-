@@ -184,7 +184,7 @@
         const ty = place && place.conn && WS.City.TYPES[place.type].need === 'road' ? WS.City.TYPES[place.type] : null;
         const cap = ty ? ty.cap : 6;
         const count = old && old.place === (ty ? place : null) ? Math.min(cap, old.count) : ty ? Math.min(cap, ty.start) : 1 + Math.floor(lr() * 3);
-        this.lots.set(L.key, { key: L.key, i: L.i, j: L.j, k: L.k, port: L.port, cap, count, incoming: 0, emitT: 1 + lr() * 5, lift: 0, dyn: L, place: ty ? place : null, pull: ty ? ty.pull : 1, emit: ty ? ty.emit : 1 });
+        this.lots.set(L.key, { key: L.key, i: L.i, j: L.j, k: L.k, port: L.port, cap, count, incoming: 0, emitT: 1 + lr() * 5, lift: 0, dyn: L, place: ty ? place : null, role: ty ? ty.role : 'park', emit: ty ? ty.emit : 1 });
       }
       for (const c of [...this.cars]) {
         const nm = remap(c.mv); if (!nm) { this.killCar(c, true); continue; }
@@ -193,7 +193,7 @@
         if (nm.dout === 'C') { c.plan = []; if (c.dest && this.lots.has(c.dest.key)) { this.lots.get(c.dest.key).incoming++; c.destHeld = true; } else { this.killCar(c); } continue; }
         const a = net.after(nm);
         if (a && a.out) { c.plan = [{ exit: true, len: 1.6 }]; c.dest = { kind: 'exit', key: 'x' + nm.i + ',' + nm.j + ',' + nm.dout }; continue; }
-        const trip = a ? this.findTrip({ i: a.i, j: a.j, k: a.k, din: a.din }, null, c.dest && c.dest.key) : null;
+        const trip = a ? this.findTrip({ i: a.i, j: a.j, k: a.k, din: a.din }, null, c.dest && c.dest.key, c.role) : null;
         if (!trip) { c.plan = []; this.killCar(c); continue; }
         c.plan = trip.route; c.dest = null; this.setDest(c, trip.dest);
       }
@@ -236,7 +236,7 @@
       this.scene.add(g);
       const P = CAR[type];
       const mv = trip.route.shift();
-      const c = { kind: 'car', id: uid++, type, P, L: P.L, g, mv, prev: null, s, v, acc: 0, plan: trip.route, dest: trip.dest, wait: 0, waitTot: 0, stopT: 0, still: 0, commit: null, wheelA: 0, rear: null, fade: 0, appear: 0 };
+      const c = { kind: 'car', id: uid++, type, P, L: P.L, g, mv, prev: null, s, v, acc: 0, plan: trip.route, dest: trip.dest, role: trip.role, wait: 0, waitTot: 0, stopT: 0, still: 0, commit: null, wheelA: 0, rear: null, fade: 0, appear: 0 };
       this.setDest(c, trip.dest);
       this.cars.push(c);
       this.placeCar(c, true);
@@ -253,7 +253,8 @@
       c.fade = 0.0001;
     }
     // Bir başlangıçtan ulaşılabilen hedefler (otopark ya da şehir dışı) ve en kısa yollar. U dönüşü yok, otoparkların içinden geçilmez.
-    findTrip(start, originKey, prefer) {
+    // role: yolculuğun başladığı yerin türü (ev, iş, alışveriş… ya da şehir dışı); varış ağırlıklarını belirler
+    findTrip(start, originKey, prefer, role) {
       const net = this.net;
       const sk = (q) => q.i + ',' + q.j + ',' + q.k + ',' + q.din;
       const prev = new Map([[sk(start), null]]);
@@ -281,11 +282,13 @@
       if (!dests.length) return null;
       let d = prefer ? dests.find((x) => x.key === prefer) : null;
       if (!d) {
-        // boş yeri çok olan otopark daha çok araç çeker
-        // şehir dışı çıkışları toplamda sınırlı bir pay alır; çok çıkış olsa da araçlar otoparkları da doldurur
+        // evden işe, okula, alışverişe; oradan eve. Boş yeri çok olan yer daha çok araç çeker.
+        // Şehir dışı çıkışları toplamda sınırlı bir pay alır (çok çıkış olsa da araçlar şehir içinde kalır).
+        const RW = (WS.City && WS.City.ROLE_W[role || 'park']) || { exit: 0.5 };
         const nEx = dests.reduce((n, x) => n + (x.kind === 'exit' ? 1 : 0), 0);
-        const exW = nEx ? Math.min(0.45, 2.4 / nEx) : 0;
-        const w = dests.map((x) => { if (x.kind !== 'lot') return exW; const L = this.lots.get(x.key); return (0.3 + (L.cap - L.count - L.incoming) / L.cap) * L.pull; });
+        const exW = nEx ? ((RW.exit || 0) * 3) / nEx : 0;
+        const w = dests.map((x) => { if (x.kind !== 'lot') return exW; const L = this.lots.get(x.key); return (0.3 + (L.cap - L.count - L.incoming) / L.cap) * (RW[L.role] != null ? RW[L.role] : 0.2); });
+        if (!w.some((v) => v > 0)) return null;
         let t = this.rnd() * w.reduce((a, b) => a + b, 0); d = dests[0];
         for (let n = 0; n < dests.length; n++) { t -= w[n]; if (t <= 0) { d = dests[n]; break; } }
       }
@@ -295,7 +298,7 @@
       const last = states[states.length - 1];
       if (d.kind === 'lot') route.push(net.movement(last.i, last.j, last.k, last.din, 'C'));
       else { route.push(net.movement(last.i, last.j, last.k, last.din, d.dout)); route.push({ exit: true, len: 1.6 }); }
-      return { route, dest: { kind: d.kind, key: d.key } };
+      return { route, dest: { kind: d.kind, key: d.key }, role: role || 'park' };
     }
     // kavşağa / geçide girebilir mi?
     canEnter(c, nx, buckets) {
@@ -447,15 +450,17 @@
       const braking = c.acc < -0.6 || c.v < 0.05;
       ud.brake.emissiveIntensity = braking ? 3.0 : 0.35; ud.brakeHalo.material.opacity = braking ? 0.7 : 0;
     }
-    // Şehir büyüdükçe yoldaki araç sayısı artar: şehir dışı girişleri + otoparklar + bağlanan yerler (zamanla büyür)
+    // Yoldaki araç sayısı şehrin büyüklüğünden gelir: biraz şehir dışından gelen (aşamayla artar) +
+    // bağlanan yerlerin trafiği (yer büyüdükçe artar). Zamanla kendiliğinden artmaz.
     carTarget() {
-      const city = this.ws.city;
+      const city = this.ws.city, lvl = city ? city.level() : 0;
       const ent = this.net.entries.filter((e) => e.fam === 'road').length;
-      let w = Math.min(8, ent * 0.8);
-      for (const L of this.lots.values()) w += L.place ? city.weight(L.place) : 2.5;
-      const grow = 1 + Math.min(0.5, (city ? city.t : 0) / 900);
       const dens = [0.55, 0.78, 1, 1.25, 1.5][this.density - 1] || 1;
-      return Math.min(44, Math.round(w * grow * dens));
+      const through = Math.min(ent * 0.6, 4 + lvl * 1.5);
+      let w = through;
+      for (const L of this.lots.values()) w += L.place ? city.weight(L.place) : 1.5;
+      this.throughTarget = Math.max(1, Math.round(through * dens));
+      return Math.min(44, Math.round(w * dens));
     }
     spawnCars(dt) {
       const net = this.net;
@@ -465,25 +470,31 @@
       const interval = RA.lerp(9, 2.6, (this.density - 1) / 4) * press;
       const free = (mv) => !this.cars.some((o) => o.mv.pk === mv.pk && (o.mv.din === mv.din || o.mv.dout === mv.dout) && o.s < o.L + 0.5);
       // şehir dışından gelenler (tahtanın kenarındaki yol uçları)
+      let edgeCars = 0; for (const c of this.cars) if (c.edge && !c.fade) edgeCars++;
       for (const e of net.entries) {
         if (e.fam !== 'road') continue;
         const key = e.i + ',' + e.j + ',' + e.d;
         let t = this.spawnT.get(key); if (t == null) t = this.rnd() * interval;
         t -= dt;
-        // nüfusun bir kısmı otoparklardan çıkanlara ayrılır
-        if (t <= 0 && this.cars.length < target * (this.lots.size ? 0.85 : 1)) {
-          const trip = this.findTrip({ i: e.i, j: e.j, k: e.k, din: e.d }, 'x' + e.i + ',' + e.j + ',' + e.d);
-          if (trip && free(trip.route[0])) { this.makeCar(trip, 0, 1.8); t = interval * (0.7 + this.rnd() * 0.8); } else t = 0.7;
+        // şehir dışından gelenler sınırlı; asıl trafik şehrin içindeki evlerden ve iş yerlerinden doğar
+        if (t <= 0 && this.cars.length < target && edgeCars < this.throughTarget) {
+          const trip = this.findTrip({ i: e.i, j: e.j, k: e.k, din: e.d }, 'x' + e.i + ',' + e.j + ',' + e.d, null, 'edge');
+          if (trip && free(trip.route[0])) { const c = this.makeCar(trip, 0, 1.8); c.edge = true; edgeCars++; t = interval * (0.7 + this.rnd() * 0.8); } else t = 0.7;
         }
         this.spawnT.set(key, t);
       }
       // otoparktan çıkanlar: içeride bekleyen araçlar sırayla başka bir yere gider
       for (const L of this.lots.values()) {
         L.lift = Math.max(0, L.lift - dt * 0.9);
+        // mahallede oturanların arabaları: nüfus büyüdükçe evde bekleyen araç sayısı tamamlanır
+        if (L.role === 'home' && L.place) {
+          const own = L.cap * (0.35 + 0.65 * L.place.grow);
+          if (L.count + L.incoming < own) { L.regen = (L.regen || 0) + dt / 5; if (L.regen >= 1) { L.regen = 0; L.count = Math.min(L.cap, L.count + 1); } }
+        }
         L.emitT -= dt;
         if (L.emitT > 0 || L.count <= 0 || this.cars.length >= target) continue;
         L.emitT = (interval * (0.7 + this.rnd() * 0.9)) / Math.max(0.55, L.count / (L.cap * 0.42)) / L.emit; // dolu otopark daha sık, azalan otopark daha seyrek araç gönderir
-        const trip = this.findTrip({ i: L.i, j: L.j, k: L.k, din: 'C' }, L.key);
+        const trip = this.findTrip({ i: L.i, j: L.j, k: L.k, din: 'C' }, L.key, null, L.role);
         if (!trip || !free(trip.route[0])) { L.emitT = 1.2; continue; }
         L.count--; L.lift = 1;
         const c = this.makeCar(trip, 0, 0.3); c.appear = 0.0001; c.g.scale.setScalar(SC * 0.25);
