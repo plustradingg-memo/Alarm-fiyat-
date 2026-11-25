@@ -246,7 +246,9 @@
         const path = new RA.Path(LV.geo.slicePts(e.st, e.s0, e.s1));
         const yf = (s) => e.y(e.s0 + (s / path.length) * e.len);
         stat.add(new T.Mesh(ribbonY(path, -0.78, 0.78, yf, 0.045, 0.2), m.asphalt));
-        for (const x of [-0.86, 0.86]) stat.add(new T.Mesh(ribbonY(path, x - 0.09, x + 0.09, yf, 0.06, 0.25), m.curb));
+        // kaldırım kavşağın içine girmez
+        const c0 = e.ta, c1 = path.length - e.tb;
+        if (c1 - c0 > 0.2) { const cp = path.slice(c0, c1), cy = (s) => yf(c0 + s); for (const x of [-0.86, 0.86]) stat.add(new T.Mesh(ribbonY(cp, x - 0.09, x + 0.09, cy, 0.06, 0.25), m.curb)); }
         // orta çizgi (kavşak ağızlarında kesik)
         const s0 = e.ta > 0 ? e.ta : 0.3, s1 = path.length - (e.tb > 0 ? e.tb : 0.3);
         if (s1 - s0 > 0.6) { const dm = new T.Mesh(ribbonY(path.slice(s0, s1), -0.045, 0.045, (s) => yf(s0 + s), 0.052, 0.2, 1 / 0.9), m.dash); dm.renderOrder = 3; root.add(dm); }
@@ -255,8 +257,20 @@
       // kavşak ve birleşme yerleri
       for (const n of net.nodes) {
         if (n.kind === 'j' || n.kind === 'joint') {
-          const r = n.kind === 'j' ? 1.32 : 0.95;
-          const pad = mesh(RA.geo('jpad' + r, () => { const c = new T.CircleGeometry(r, 28); c.rotateX(-Math.PI / 2); return c; }), m.asphalt, n.x, 0.05, n.z, false); pad.receiveShadow = true; stat.add(pad);
+          // kavşak zemini: kolların arasını dolduran düz asfalt
+          const r = n.kind === 'j' ? LV.C.JR + 0.02 : 0.9;
+          const pad = mesh(RA.geo('jpad' + r, () => { const c = new T.CircleGeometry(r, 32); c.rotateX(-Math.PI / 2); return c; }), m.asphalt, n.x, 0.05, n.z, false); pad.receiveShadow = true; stat.add(pad);
+          // kolların arasındaki köşeler: kaldırım kavisi
+          if (n.kind === 'j') {
+            const angs = n.arms.map((a) => a.ang).sort((p, q) => p - q);
+            for (let k = 0; k < angs.length; k++) {
+              const a0 = angs[k], a1 = k === angs.length - 1 ? angs[0] + Math.PI * 2 : angs[k + 1];
+              const g0 = a0 + Math.asin(Math.min(1, 0.86 / (LV.C.JR + 0.02))), g1 = a1 - Math.asin(Math.min(1, 0.86 / (LV.C.JR + 0.02)));
+              if (g1 - g0 < 0.05) continue;
+              const pts = []; for (let t = 0; t <= 8; t++) { const a = g0 + ((g1 - g0) * t) / 8; pts.push({ x: n.x + Math.cos(a) * (LV.C.JR + 0.02), z: n.z + Math.sin(a) * (LV.C.JR + 0.02) }); }
+              stat.add(new T.Mesh(ribbonY(new RA.Path(pts), -0.09, 0.09, () => 0, 0.06, 0.1), m.curb));
+            }
+          }
         }
         if (n.kind === 'j') {
           // her kolda dur çizgisi

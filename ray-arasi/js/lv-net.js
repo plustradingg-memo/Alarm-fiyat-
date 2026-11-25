@@ -115,14 +115,74 @@
     const out = []; for (let i = 0; i < n; i++) out.push(at(st, (st.len * i) / (n - 1)));
     return out;
   }
-  LV.smoothStroke = function (raw, keepHead, keepTail) {
-    // keepHead/keepTail: baştaki/sondaki kaç nokta olduğu gibi kalsın (bina çıkışının düz kısmı)
+  // Yol tasarımı gibi: çizgi birkaç düz parçaya indirilir, her köşe çember yayıyla yuvarlanır (yarıçap R_MIN…R_PREF).
+  // headDir/tailDir: uç bir binaya bağlıysa yol o uçta binadan dümdüz çıkar. Köşeye yay sığmıyorsa .sharp = true.
+  const R_MIN = 1.8, R_PREF = 3.5, STUB = 1.2;
+  function fillet(V, fixedEnds) {
+    // V: köşe noktaları; dönüş: {pts, sharp}
+    const n = V.length;
+    if (n < 3) return { pts: V.slice(), sharp: false };
+    const leg = []; for (let i = 0; i < n - 1; i++) leg.push(Math.hypot(V[i + 1].x - V[i].x, V[i + 1].z - V[i].z));
+    const out = [V[0]]; let sharp = false;
+    // köşelerin dönüş açıları; aradaki bacak iki köşe arasında ihtiyaca göre paylaşılır
+    const TT = [0];
+    for (let i = 1; i < n - 1; i++) {
+      const d1x = (V[i].x - V[i - 1].x) / leg[i - 1], d1z = (V[i].z - V[i - 1].z) / leg[i - 1];
+      const d2x = (V[i + 1].x - V[i].x) / leg[i], d2z = (V[i + 1].z - V[i].z) / leg[i];
+      TT.push(Math.tan(Math.atan2(Math.abs(d1x * d2z - d1z * d2x), d1x * d2x + d1z * d2z) / 2));
+    }
+    TT.push(0);
+    const share = (j, side) => { const a = TT[j], b = TT[j + 1]; if (j === 0 || j === n - 2) return leg[j] * 0.95; return leg[j] * (side === 'a' ? a : b) / (a + b || 1); };
+    for (let i = 1; i < n - 1; i++) {
+      const d1x = (V[i].x - V[i - 1].x) / leg[i - 1], d1z = (V[i].z - V[i - 1].z) / leg[i - 1];
+      const d2x = (V[i + 1].x - V[i].x) / leg[i], d2z = (V[i + 1].z - V[i].z) / leg[i];
+      const cr = d1x * d2z - d1z * d2x, dt = d1x * d2x + d1z * d2z;
+      const th = Math.atan2(Math.abs(cr), dt);
+      if (th < 0.02) { out.push(V[i]); continue; }
+      const avail = Math.min(share(i - 1, 'b'), share(i, 'a'));
+      const tt = Math.tan(th / 2);
+      let R = Math.min(R_PREF, avail / tt);
+      if (R < R_MIN) { sharp = true; R = Math.max(0.6, R); }
+      const t = R * tt;
+      const A = { x: V[i].x - d1x * t, z: V[i].z - d1z * t };
+      const sg = cr > 0 ? 1 : -1;
+      const nx = -d1z * sg, nz = d1x * sg; // dönüş tarafına dik
+      const C = { x: A.x + nx * R, z: A.z + nz * R };
+      const a0 = Math.atan2(A.z - C.z, A.x - C.x);
+      const steps = Math.max(2, Math.ceil((th * R) / 0.15));
+      for (let k = 0; k <= steps; k++) { const a = a0 + sg * th * (k / steps); out.push({ x: C.x + Math.cos(a) * R, z: C.z + Math.sin(a) * R }); }
+    }
+    out.push(V[n - 1]);
+    return { pts: out, sharp };
+  }
+  LV.smoothStroke = function (raw, headDir, tailDir) {
     const thin = [raw[0]];
     for (const p of raw) if (Math.hypot(p.x - thin[thin.length - 1].x, p.z - thin[thin.length - 1].z) > 0.25) thin.push(p);
-    if (thin[thin.length - 1] !== raw[raw.length - 1]) thin.push(raw[raw.length - 1]);
-    let s = rdp(thin, 0.18);
-    s = chaikin(s, 3);
-    return resample(s, C.SP);
+    if (thin.length < 2 || thin[thin.length - 1] !== raw[raw.length - 1]) thin.push(raw[raw.length - 1]);
+    let best = null;
+    // önce az sadeleştir; köşeler sığmazsa daha çok sadeleştir (parmak titremesi ve gereksiz kıvrım gider)
+    for (const eps of [0.35, 0.6, 0.9, 1.3]) {
+      let V = rdp(thin, eps);
+      // binadan çıkış düzlüğü: sonraki köşeye dönüş için gerektiği kadar uzun (1,2–3,5 m)
+      const stubLen = (E, dir, P) => { const vx = P.x - E.x, vz = P.z - E.z, l = Math.hypot(vx, vz) || 1; const th = Math.acos(RA.clamp((vx * dir.x + vz * dir.z) / l, -1, 1)); return RA.clamp(R_MIN * Math.tan(th / 2) * 1.15 + 0.2, STUB, 3.5); };
+      if (headDir) { const E = V[0]; const rest = V.slice(1).filter((q) => Math.hypot(q.x - E.x, q.z - E.z) > STUB + 1.0); const L = stubLen(E, headDir, rest[0] || V[V.length - 1]); V = [E, { x: E.x + headDir.x * L, z: E.z + headDir.z * L }].concat(rest.filter((q) => Math.hypot(q.x - E.x, q.z - E.z) > L + 0.8)); }
+      if (tailDir) { const E = V[V.length - 1]; const rest = V.slice(0, -1).filter((q) => Math.hypot(q.x - E.x, q.z - E.z) > STUB + 1.0); const L = stubLen(E, tailDir, rest[rest.length - 1] || V[0]); V = rest.filter((q) => Math.hypot(q.x - E.x, q.z - E.z) > L + 0.8).concat([{ x: E.x + tailDir.x * L, z: E.z + tailDir.z * L }, E]); }
+      // çok kısa ara bacakları birleştir
+      for (let guard = 0; guard < 40 && V.length > 3; guard++) {
+        let mi = -1, ml = 1e9;
+        for (let i = 1; i < V.length - 2; i++) { if ((headDir && i === 1) || (tailDir && i === V.length - 2)) continue; const l = Math.hypot(V[i + 1].x - V[i].x, V[i + 1].z - V[i].z); if (l < ml) { ml = l; mi = i; } }
+        if (mi < 0 || ml > 1.0) break;
+        const m = { x: (V[mi].x + V[mi + 1].x) / 2, z: (V[mi].z + V[mi + 1].z) / 2 };
+        const keep1 = headDir && mi === 1, keep2 = tailDir && mi + 1 === V.length - 2;
+        if (keep1) V.splice(mi + 1, 1); else if (keep2) V.splice(mi, 1); else V.splice(mi, 2, m);
+      }
+      const r = fillet(V);
+      best = r;
+      if (!r.sharp) break;
+    }
+    const pts = resample(best.pts, C.SP);
+    pts.sharp = best.sharp;
+    return pts;
   };
 
   /* ================= ağı kur ================= */
@@ -186,6 +246,20 @@
       }
     }
 
+    // --- kendi üstünden geçen yol ---
+    for (const st of S) {
+      for (let i = 0; i < st.pts.length - 1; i++) for (let j = i + 3; j < st.pts.length - 1; j++) {
+        const a = st.pts[i], b = st.pts[i + 1], c = st.pts[j], d = st.pts[j + 1];
+        if (segX(a.x, a.z, b.x, b.z, c.x, c.z, d.x, d.z)) return fail('Yol kendi üstünden geçemez.', c.x, c.z);
+      }
+    }
+    // --- dar açıyla kesişen yollar ---
+    const angOk = (A, sa, B, sb) => { const ta = tan(A, sa), tb = tan(B, sb); return Math.abs(ta.x * tb.z - ta.z * tb.x) > 0.5; };
+    for (let i = 0; i < S.length; i++) for (let j = i + 1; j < S.length; j++) for (const x of intersections(S[i], S[j])) {
+      if (x.sa < 0.2 || x.sa > S[i].len - 0.2 || x.sb < 0.2 || x.sb > S[j].len - 0.2) continue;
+      if (!angOk(S[i], x.sa, S[j], x.sb)) return fail('Yollar çok dar açıyla kesişiyor; daha dik kes.', x.x, x.z);
+    }
+    for (const st of S) for (const r of rails) for (const x of intersections(st, r)) if (!angOk(st, x.sa, r, x.sb)) return fail('Yol rayı çok dar açıyla kesiyor; daha dik kes.', x.x, x.z);
     // --- yol-yol kesişimleri ---
     const crossings = []; // işaretler (dokununca türü değişir)
     const humps = new Map(S.map((s) => [s.id, []])); // köprü yükseltileri: {a, b} düz kısım
@@ -295,8 +369,8 @@
       let bad = 0;
       for (let s = 0.5; s < A.len - 0.5; s += 0.4) {
         const p = at(A, s);
-        if (near.some((q) => Math.hypot(q.x - p.x, q.z - p.z) < 1.9)) continue;
-        if (nearest(B, p.x, p.z).d < 1.15) { bad++; if (bad >= 2) return fail('Yollar üst üste biniyor; biraz aralık bırak.', p.x, p.z); }
+        if (near.some((q) => Math.hypot(q.x - p.x, q.z - p.z) < 3.2)) continue; // kesişimin hemen çevresi doğal olarak yakın
+        if (nearest(B, p.x, p.z).d < 1.5) { bad++; if (bad >= 2) return fail('Yollar birbirine çok yakın; biraz aralık bırak.', p.x, p.z); }
       }
     }
 
@@ -320,7 +394,7 @@
       n.kind = n.deg >= 3 ? 'j' : n.deg === 2 ? 'joint' : n.deg === 1 ? 'end' : 'none';
       if (n.deg >= 3) {
         const a = n.arms.map((r) => r.ang).sort((p, q) => p - q);
-        for (let k = 0; k < a.length; k++) { const d = k === a.length - 1 ? a[0] + Math.PI * 2 - a[k] : a[k + 1] - a[k]; if (d < 0.45) return fail('Yollar çok dar açıyla birleşiyor.', n.x, n.z); }
+        for (let k = 0; k < a.length; k++) { const d = k === a.length - 1 ? a[0] + Math.PI * 2 - a[k] : a[k + 1] - a[k]; if (d < 0.55) return fail('Yollar çok dar açıyla birleşiyor; daha dik bağla.', n.x, n.z); }
         if (n.deg > 5) return fail('Bir kavşakta en çok 5 yol birleşir.', n.x, n.z);
       }
     }

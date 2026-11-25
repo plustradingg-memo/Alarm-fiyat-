@@ -65,6 +65,7 @@
 
     showScreen(name) { ['menu', 'ws', 'lv'].forEach((s) => { $(s).hidden = s !== name; }); }
     showMenu() {
+      if (this.lv) clearTimeout(this.lv.endT);
       this.state = 'menu';
       this.showScreen('menu');
       this.stage.dataset.mode = '';

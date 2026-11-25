@@ -32,6 +32,7 @@
     /* ---------- bölüm aç ---------- */
     open(id) {
       const def = LV.LEVELS.find((l) => l.id === id) || LV.LEVELS[0];
+      clearTimeout(this.endT); clearTimeout(this.hintT); // önceki bölümden bekleyen kart / ipucu yeni bölüme düşmesin
       this.level = LV.prep(def);
       this.strokes = []; this.choices = {}; this.nextId = 1; this.undoStack = [];
       this.started = false; this.running = false; this.speed = 1; this.ended = null;
@@ -74,14 +75,14 @@
       if (!raw || raw.length < 2) return false;
       raw = raw.map((p) => ({ x: RA.clamp(p.x, -LV.C.BX, LV.C.BX), z: RA.clamp(p.z, -LV.C.BZ, LV.C.BZ) }));
       const net = this.net;
-      const snapEnd = (p, isStart) => {
-        // bina girişi
+      const snapEnd = (p) => {
+        // bina girişi: yol binadan dümdüz çıkar
         let best = null, bd = 1.7;
         for (const bn of net.bNodes) { const d = Math.hypot(bn.x - p.x, bn.z - p.z); if (d < bd) { bd = d; best = bn; } }
         if (best) {
           if (best.deg > 0) return { err: 'Bu binanın yolu var; yeni yolu o yola bağla.' };
-          const b = best.bld; const E = { x: b.ex, z: b.ez }, F = { x: b.ex + b.ux * 0.9, z: b.ez + b.uz * 0.9 };
-          return { pts: isStart ? [E, F] : [F, E], b };
+          const b = best.bld;
+          return { pt: { x: b.ex, z: b.ez }, dir: { x: b.ux, z: b.uz }, b };
         }
         // var olan yol: ucu yakınsa uca, değilse üstündeki en yakın noktaya
         let q = null, qd = 1.1;
@@ -89,20 +90,17 @@
           for (const end of [0, st.len]) { const e = G.at(st, end); const d = Math.hypot(e.x - p.x, e.z - p.z) - 0.45; if (d < qd) { q = e; qd = d; } }
           const n = G.nearest(st, p.x, p.z); if (n.d < qd) { qd = n.d; q = { x: n.x, z: n.z }; }
         }
-        if (q) return { pts: [q] };
-        return { pts: null };
+        return { pt: q };
       };
-      const a = snapEnd(raw[0], true), b = snapEnd(raw[raw.length - 1], false);
+      const a = snapEnd(raw[0]), b = snapEnd(raw[raw.length - 1]);
       if (a.err || b.err) { this.toast(a.err || b.err, true); RA.audio.play('denied'); return false; }
       if (a.b && b.b && a.b === b.b) return false;
-      let mid = raw.slice(1, -1);
+      const head = a.pt || raw[0], tail = b.pt || raw[raw.length - 1];
       // yapışan ucun yakınındaki ham noktaları at (kıvrım olmasın)
-      const head = a.pts || [raw[0]], tail = b.pts || [raw[raw.length - 1]];
-      const h0 = head[head.length - 1], t0 = tail[0];
-      mid = mid.filter((p) => Math.hypot(p.x - h0.x, p.z - h0.z) > 0.7 && Math.hypot(p.x - t0.x, p.z - t0.z) > 0.7);
-      let pts = LV.smoothStroke(head.concat(mid, tail));
-      // uçlar tam yapışsın
-      pts[0] = head[0]; pts[pts.length - 1] = tail[tail.length - 1];
+      const mid = raw.slice(1, -1).filter((p) => Math.hypot(p.x - head.x, p.z - head.z) > 0.8 && Math.hypot(p.x - tail.x, p.z - tail.z) > 0.8);
+      const pts = LV.smoothStroke([head].concat(mid, [tail]), a.dir || null, b.dir || null);
+      if (pts.sharp) { this.toast('Viraj çok keskin: daha geniş bir kavisle çiz.', true); RA.audio.play('denied'); return false; }
+      pts[0] = head; pts[pts.length - 1] = tail;
       const st = G.stroke(this.nextId, pts);
       if (st.len < 1.2) return false;
       const choices = Object.assign({}, this.choices);
@@ -209,7 +207,7 @@
       this.toast(keep ? 'Yolların duruyor. Düzelt ve ▶ ile yeniden başlat.' : 'Bölüm baştan başladı.');
     }
     showHint() {
-      const paths = this.level.solution.map(([, raw]) => LV.smoothStroke(raw.map(([x, z]) => ({ x, z }))));
+      const paths = this.level.solution.map(([, raw]) => { const b0 = this.level.blds.find((b) => Math.hypot(b.ex - raw[0][0], b.ez - raw[0][1]) < 0.4), b1 = this.level.blds.find((b) => Math.hypot(b.ex - raw[raw.length - 1][0], b.ez - raw[raw.length - 1][1]) < 0.4); return LV.smoothStroke(raw.map(([x, z]) => ({ x, z })), b0 && { x: b0.ux, z: b0.uz }, b1 && { x: b1.ux, z: b1.uz }); });
       this.view.hint(paths);
       this.toast('İpucu: ' + this.level.tip);
       clearTimeout(this.hintT); this.hintT = setTimeout(() => this.view.hint(null), 6000);
@@ -251,10 +249,10 @@
         const stars = 1 + (c2 ? 1 : 0) + (c3 ? 1 : 0);
         LV.progress.set(this.level.id, stars);
         RA.audio.play('record');
-        setTimeout(() => this.showCard('win', { stars, c2, c3, len, peak }), 700);
+        this.endT = setTimeout(() => this.showCard('win', { stars, c2, c3, len, peak }), 700);
       } else {
         RA.audio.play('end');
-        setTimeout(() => this.showCard('lose', h), 700);
+        this.endT = setTimeout(() => this.showCard('lose', h), 700);
       }
     }
     hud(force) {

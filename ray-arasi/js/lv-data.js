@@ -83,7 +83,7 @@
       rails: [{ pts: [[-10.8, 5], [10.8, 5]], every: 11, cars: 3, first: 3 }],
       houses: [{ x: -6, z: 12.5, dir: 'N', color: 'or' }, { x: 6, z: 12.5, dir: 'N', color: 'bl' }],
       dests: [{ x: 6, z: -12, dir: 'S', color: 'or', type: 'fabrika' }, { x: -6, z: -12, dir: 'S', color: 'bl', type: 'hastane' }],
-      solution: [['tunnel', [[-6, 10.8], [-6, 1.5], [0, 0.5], [6, -1], [6, -10.1]]], ['road', [[6, 10.8], [6.8, 3], [3, -0.8], [-6, -1.6], [-6, -10.1]]]],
+      solution: [['tunnel', [[-6, 10.8], [-6, 2], [5.5, -2], [6, -10.1]]], ['road', [[6, 10.8], [6, 2], [-5.5, -2], [-6, -10.1]]]],
     },
     {
       id: 9, name: 'Göl', goal: 40, spawn: 2.5, budget: 80, star2: 70, bridges: 1, tunnels: 1,

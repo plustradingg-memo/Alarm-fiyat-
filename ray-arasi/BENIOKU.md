@@ -9,8 +9,10 @@ köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm b
 1. Ana ekrandan bir **bölüm** seç. Açılan kartta hedef yazar (ör. *30 araç ulaştır*) ve elindeki malzeme: asfalt
    (metre), köprü ve alt geçit hakkı.
 2. **Yol çiz** seçiliyken parmağını bir evin önündeki kesik çizgili halkadan başlatıp aynı renkteki iş yerinin önüne
-   kadar sürükle. Çizgi kare kare değil, istediğin eğriyle çizilir ve yumuşatılır. Uçları binanın girişine ya da
-   yakındaki bir yola kendiliğinden yapışır: bir yolu başka bir yolun ortasına bağlarsan orada kavşak olur.
+   kadar sürükle. Çizgi kare kare değil, istediğin eğriyle çizilir; gerçek yol tasarımı gibi düz parçalara ve en az
+   1,8 m yarıçaplı virajlara dönüştürülür (parmak titremesi silinir). Yol binadan dümdüz çıkar, binaya dümdüz girer.
+   Uçları binanın girişine ya da yakındaki bir yola kendiliğinden yapışır: bir yolu başka bir yolun ortasına
+   bağlarsan orada kavşak olur.
 3. **▶ Başlat**'a bas. Evlerden aynı renkte araçlar çıkar, iş yerine girip kaybolur. Üstteki çubuk kaç aracın
    ulaştığını gösterir.
 4. Bir evin üstündeki noktalar bekleyen kişileri gösterir. **Bir ev 8 kişiyi bekletirse kaybedersin.** Trafik
@@ -39,7 +41,9 @@ köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm b
 
 - Köprünün ve alt geçidin iki yanında rampa için yer olmalı; rampanın üstünde kavşak olamaz.
 - Bir binaya tek yol bağlanır; ikinci yolu ilk yola bağla.
-- Kavşaklar birbirine çok yakın olamaz, yollar çok dar açıyla birleşemez, yollar üst üste binemez.
+- Yol kendi üstünden geçemez (ilmek yapamaz); saç tokası gibi keskin virajlar olmaz.
+- Yollar birbirini ya da rayı çok yatık (30°'den dar) kesemez, çok dar açıyla birleşemez.
+- Kavşaklar birbirine çok yakın olamaz; yollar birbirine çok yakın (yan yana) gidemez.
 - Yol binaların içinden geçemez, suyun içinde bitemez, tahtanın dışına çıkamaz.
 - Toplam yol uzunluğu asfalt miktarını geçemez.
 
@@ -272,7 +276,8 @@ Ekran görüntüleri `test/cikti/` klasörüne yazılır.
 - Uçaklar taksi yolunda gidecekleri yolun tamamını (kapıya ya da piste kadar) tek seferde ayırır; tek şeritli
   taksi yollarında karşılıklı kilitlenmez. Kule kalkışları sıraya göre verir, uzun bekleyen kalkış varken iniş
   izni vermez. Kapısı kalmayan uçak yeni kapı arar, yoksa tekrar kalkar.
-- Bölümlerde çizilen yol yumuşatılır (Ramer–Douglas–Peucker sadeleştirme + Chaikin yumuşatma) ve her değişiklikte
+- Bölümlerde çizilen yol önce sadeleştirilir (Ramer–Douglas–Peucker), kısa parçalar birleştirilir, sonra her köşe
+  teğet çember yayıyla yuvarlanır (yarıçap 1,8–3,5 m; binadan çıkış düzlüğü gerektiği kadar uzar). Yol her değişiklikte
   bütün ağ çizgilerden yeniden kurulur: kesişimler bulunur, kavşaklar bölünür, köprü yükseklikleri (rampalı) hesaplanır,
   şeritler ve kavşak içi dönüş eğrileri üretilir. Kurala uymayan çizim uygulanmaz.
 - Gereksinim: WebGL destekleyen güncel bir tarayıcı (Chrome, Safari, Firefox, Edge).
