@@ -18,6 +18,19 @@
       this.conf = new Map();
       this.analyze();
     }
+    // bir kavşak kolu, kavşaksız ilerleyip bir otoparkta (çıkmaz yol ucu) mı bitiyor?
+    armToLot(i, j, d) {
+      let ci = i, cj = j, dir = d;
+      for (let n = 0; n < 40; n++) {
+        const mt = WS.mate(this.g, ci, cj, dir, 'road');
+        if (!mt || mt.p.lv !== 0 || this.g.cell(mt.i, mt.j).pieces.length !== 1) return false;
+        const ps = WS.ports(mt.p.m);
+        if (ps.length === 1) return true;
+        if (ps.length !== 2) return false;
+        dir = ps.find((x) => x !== OPP[dir]); ci = mt.i; cj = mt.j;
+      }
+      return false;
+    }
     cx(i) { return this.ox + i * S; }
     cz(j) { return this.oz + j * S; }
     piece(i, j, k) { const c = this.g.cell(i, j); return c ? c.pieces[k] : null; }
@@ -86,6 +99,15 @@
       }));
       this.rwOfCell = new Map();
       this.runways.forEach((r) => r.cells.forEach((c) => this.rwOfCell.set(c.i + ',' + c.j, r)));
+      // otoparka giden kolu olan üç yollu kavşaklar ışıksızdır: otopark tarafı yol verir
+      this.yieldAt = new Map();
+      this.junctions = this.junctions.filter((jn) => {
+        if (jn.ports.length !== 3) return true;
+        const minor = jn.ports.filter((d) => this.armToLot(jn.i, jn.j, d));
+        if (minor.length !== 1) return true;
+        this.yieldAt.set(jn.key, { minor: minor[0], info: jn });
+        return false;
+      });
       this.crossAt = new Map(); this.crossings.forEach((x) => this.crossAt.set(x.i + ',' + x.j, x));
       this.juncAt = new Map(); this.junctions.forEach((x) => this.juncAt.set(x.i + ',' + x.j + ',' + x.k, x));
     }
@@ -110,7 +132,11 @@
         const out = []; for (let t = 0; t <= n; t++) { const a = a0 + (da * t) / n; out.push({ x: K.x + Math.cos(a) * r, z: K.z + Math.sin(a) * r }); }
         return out;
       };
-      if (fam === 'road') {
+      if (fam === 'road' && (dout === 'C' || din === 'C')) {
+        // otopark: şeritten bina kapısına gir / kapıdan şeride çık
+        if (dout === 'C') { const h = neg(DV[din]), rI = right(h); pts = [edge(din, { x: rI.x * LO, z: rI.z * LO }), { x: C.x + rI.x * LO * 0.7 - h.x * 0.05, z: C.z + rI.z * LO * 0.7 - h.z * 0.05 }]; kind = 'park'; }
+        else { const h = DV[dout], ro = right(h); pts = [{ x: C.x + ro.x * LO * 0.7 + h.x * 0.05, z: C.z + ro.z * LO * 0.7 + h.z * 0.05 }, edge(dout, { x: ro.x * LO, z: ro.z * LO })]; kind = 'unpark'; }
+      } else if (fam === 'road') {
         if (din === dout) {
           kind = 'uturn';
           const h = neg(DV[din]); const rI = right(h);
@@ -170,7 +196,7 @@
       const p = this.piece(i, j, k); if (!p) return [];
       const fam = FAMILY[p.type];
       const ps = WS.ports(p.m).filter((d) => d !== din);
-      if (!ps.length) return fam === 'road' ? [din] : ['C'];
+      if (!ps.length) return ['C'];
       return ps;
     }
     // sanal giriş/çıkış (tahtanın dışı)

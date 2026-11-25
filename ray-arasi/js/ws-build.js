@@ -90,13 +90,50 @@
       return new RA.Path(pts);
     }
 
+    // Otopark binası: çok katlı, çatıda park etmiş arabalar (doluluk), giriş bariyeri, P levhası ve doluluk lambası
+    buildLot(root, stat, dyn, net, i, j, k, d, m) {
+      const x = net.cx(i), z = net.cz(j);
+      const g = new T.Group();
+      g.position.set(x - DV[d].x * 0.4, 0, z - DV[d].z * 0.4);
+      g.rotation.y = Math.atan2(DV[d].x, DV[d].z); // yerel +z yola bakar
+      const deck = RA.mat(0xd6d1c6, { roughness: 0.85 }), band = RA.mat(0x2f6fd6, { roughness: 0.6 }), pil = RA.mat(0xb3ada1);
+      for (const y of [0.52, 0.9, 1.28]) { g.add(mesh(rb(1.86, 0.07, 1.12, 0.02), deck, 0, y, 0)); g.add(mesh(rb(1.88, 0.06, 0.04, 0.01), band, 0, y + 0.01, 0.58, false)); }
+      for (const px of [-0.86, 0, 0.86]) for (const pz of [-0.5, 0.5]) g.add(mesh(rb(0.08, 1.28, 0.08, 0.01), pil, px, 0.64, pz));
+      g.add(mesh(rb(1.6, 0.012, 0.95, 0.01), RA.mat(0x3a3d44), 0, 0.02, 0, false));
+      stat.add(g);
+      // dinamik parçalar (aynı yerel çerçevede)
+      const dg = new T.Group(); dg.position.copy(g.position); dg.rotation.copy(g.rotation);
+      // çatıdaki park yerleri: doluluk kadar araba görünür
+      const carG = RA.geo('lotcar', () => { const b = new T.BoxGeometry(0.42, 0.16, 0.24); b.translate(0, 0.08, 0); return b; });
+      const inst = new T.InstancedMesh(carG, new T.MeshStandardMaterial({ roughness: 0.4 }), 6);
+      const o = new T.Object3D(); const rr = RA.rng(i * 37 + j * 101);
+      const cols = [0xd8432f, 0x2f6fd6, 0xeeeeee, 0x2f9e5a, 0xf08a24, 0xf7c21b, 0x8a96a3];
+      for (let n = 0; n < 6; n++) { o.position.set(-0.56 + (n % 3) * 0.56, 1.32, n < 3 ? -0.24 : 0.24); o.rotation.y = Math.PI / 2; o.updateMatrix(); inst.setMatrixAt(n, o.matrix); inst.setColorAt(n, new T.Color(cols[Math.floor(rr() * cols.length)])); }
+      inst.count = 0; inst.castShadow = true; dg.add(inst);
+      // giriş bariyeri (iki şeridi birden kapatır)
+      const post = mesh(rb(0.08, 0.3, 0.08, 0.02), RA.mat(0xf2f2ec), 0.9, 0.15, 0.78); dg.add(post);
+      const arm = new T.Group(); arm.position.set(0.9, 0.28, 0.78);
+      const armM = new T.Mesh(RA.geo('lotarm', () => { const b = new T.BoxGeometry(1.72, 0.045, 0.04); b.translate(-0.86, 0, 0); return b; }), RA.mat(0xf2f2ec)); arm.add(armM);
+      for (const ox of [-0.3, -0.75, -1.2, -1.6]) arm.add(mesh(RA.geo('lotst', () => new T.BoxGeometry(0.14, 0.05, 0.045)), RA.mat(0xd23b2f), ox, 0, 0, false));
+      dg.add(arm);
+      // P levhası ve doluluk lambası
+      const sp = new T.Group(); sp.position.set(-0.95, 0, 0.7);
+      sp.add(mesh(RA.geo('lotpole', () => new T.CylinderGeometry(0.025, 0.025, 0.9, 6)), m.rail, 0, 0.45, 0));
+      const pm = new T.Mesh(new T.PlaneGeometry(0.42, 0.42), new T.MeshBasicMaterial({ map: lotSignTex(), side: T.DoubleSide })); pm.position.set(0, 0.98, 0); pm.rotation.x = -0.6; sp.add(pm);
+      const lm = new T.MeshStandardMaterial({ color: 0x111111, emissive: 0x2bff6a, emissiveIntensity: 2.2 });
+      const lamp = new T.Mesh(RA.geo('lamp', () => new T.SphereGeometry(0.055, 12, 8)), lm); lamp.position.set(0, 1.24, 0); sp.add(lamp);
+      dg.add(sp);
+      root.add(dg);
+      dyn.lots.push({ key: i + ',' + j, i, j, k, port: d, arm, lm, inst });
+    }
+
     build(net) {
       this.dispose();
       const m = mats();
       const g = net.g;
       const root = new T.Group();
       const stat = new T.Group();
-      const dyn = { junctions: [], crossings: [], railSignals: [], stopbars: [], buffers: [] };
+      const dyn = { junctions: [], crossings: [], railSignals: [], stopbars: [], buffers: [], lots: [] };
       const sleepers = [], edgeLights = [], blueLights = [];
       const rnd = RA.rng(97);
       const hEdge = (i, j, k, d) => net.edgeH(i, j, k, d);
@@ -205,10 +242,11 @@
           }
           // kavşak/çıkmaz ortası
           const yC = p.lv > 0 ? WS.H_UP : p.lv < 0 ? WS.H_DN : 0;
-          if ((fam === 'road' || p.type === 'taxi') && ps.length !== 2) {
-            const pad = ps.length === 1 ? (fam === 'road' ? new T.CylinderGeometry(0.85, 0.85, 0.02, 24) : new T.BoxGeometry(1.75, 0.02, 1.75)) : new T.BoxGeometry(w, 0.02, w);
+          if (fam === 'road' && ps.length === 1 && p.lv === 0) {
+            this.buildLot(root, stat, dyn, net, i, j, k, ps[0], m);
+          } else if ((fam === 'road' || p.type === 'taxi') && ps.length !== 2) {
+            const pad = ps.length === 1 ? new T.BoxGeometry(1.75, 0.02, 1.75) : new T.BoxGeometry(w, 0.02, w);
             stat.add(mesh(pad, fam === 'road' ? m.asphalt : m.concrete, x, yC + 0.027, z, false));
-            if (ps.length === 1 && fam === 'road') { const pm = mesh(RA.geo('pmark', () => new T.BoxGeometry(0.5, 0.012, 0.05)), m.white, x, 0.04, z, false); stat.add(pm); for (const o of [-0.45, 0, 0.45]) stat.add(mesh(RA.geo('pslot', () => new T.BoxGeometry(0.04, 0.012, 0.55)), m.white, x + o, 0.04, z - 0.25, false)); }
             if (ps.length === 1 && p.type === 'taxi') { const bar = mesh(new T.BoxGeometry(0.9, 0.012, 0.07), m.yellow, x - DV[ps[0]].x * 0.55, 0.034, z - DV[ps[0]].z * 0.55, false); if (DV[ps[0]].x) bar.rotation.y = Math.PI / 2; stat.add(bar); }
           }
           if (fam === 'road' && ps.length >= 3) {
@@ -250,6 +288,17 @@
             }
           }
         });
+        // ışıksız (yol ver) kavşak: otopark kolunda kesik çizgi ve üçgen levha
+        const yj = net.yieldAt.get(i + ',' + j + ',0');
+        if (yj) {
+          const d = yj.minor, t = DV[d], rI = { x: t.z, z: -t.x };
+          for (let a = 0; a < 4; a++) { const off = 0.05 + a * 0.17; const dsh = mesh(RA.geo('ywd', () => new T.BoxGeometry(0.1, 0.012, 0.1)), m.white, x + t.x * 0.86 + rI.x * off, 0.04, z + t.z * 0.86 + rI.z * off, false); stat.add(dsh); }
+          const sg = new T.Group(); sg.position.set(x + t.x * 0.9 + rI.x * 0.92, 0, z + t.z * 0.9 + rI.z * 0.92);
+          sg.add(mesh(RA.geo('ysp', () => new T.CylinderGeometry(0.025, 0.025, 0.55, 6)), m.rail, 0, 0.27, 0));
+          const tri = new T.Shape(); tri.moveTo(-0.17, 0.15); tri.lineTo(0.17, 0.15); tri.lineTo(0, -0.14); tri.lineTo(-0.17, 0.15);
+          const tg = mesh(RA.geo('ytri', () => new T.ExtrudeGeometry(tri, { depth: 0.03, bevelEnabled: false })), RA.mat(0xd23b2f), 0, 0.66, 0);
+          tg.rotation.y = Math.atan2(t.x, t.z); sg.add(tg); stat.add(sg);
+        }
         // kavşak ışıkları
         const jn = net.juncAt.get(i + ',' + j + ',0');
         if (jn) {
@@ -334,6 +383,14 @@
     }
   }
   function H_UPv() { return WS.H_UP; }
+  let _lotTex = null;
+  function lotSignTex() {
+    if (_lotTex) return _lotTex;
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#1f5fc8'; g.fillRect(8, 8, 112, 112);
+    g.fillStyle = '#ffffff'; g.font = '900 96px Overpass, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('P', 64, 70);
+    _lotTex = new T.CanvasTexture(c); _lotTex.encoding = T.sRGBEncoding; return _lotTex;
+  }
   WS.Builder = Builder;
   WS.GH = GH;
 })();

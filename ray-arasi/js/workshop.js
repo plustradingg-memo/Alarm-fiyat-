@@ -7,7 +7,7 @@
   const $ = (id) => document.getElementById(id);
   const TITLES = { road: 'Karayolu', rail: 'Demiryolu', air: 'Havalimanı' };
   const DEF_TOOL = { road: 'road', rail: 'rail', air: 'taxi' };
-  const TOOL_COL = { road: 0x5b6270, rail: 0x9a6b43, taxi: 0xf2c230, runway: 0x2c2f36, erase: 0xe5372d };
+  const TOOL_COL = { road: 0x5b6270, rail: 0x9a6b43, taxi: 0xf2c230, runway: 0x2c2f36, erase: 0xe5372d, lot: 0x1f5fc8 };
 
   class Workshop {
     constructor(app) {
@@ -54,7 +54,8 @@
       if (this.builder.gridLines) this.builder.gridLines.visible = t !== 'look';
       const tips = {
         look: this.sim.ai ? 'İzle: tek parmakla kaydır, iki parmakla yakınlaştır. Işıkları, makasları ve kuleyi yapay zekâ yönetiyor.' : 'Elle yönet: kavşağa, makasa ya da bekleyen uçağa dokun. Tek parmakla kaydır.',
-        road: 'Yol: parmağını kareler üzerinde sürükle. Kenardan dışarı çizersen araçlar oradan girer.',
+        road: 'Yol: sürükleyerek çiz. Çıkmaz uç otopark olur; kenardan dışarı çizersen şehir dışına bağlanır.',
+        lot: 'Otopark: yolun yanındaki boş kareye dokun. Araçlar oraya park eder, sonra başka araçlar çıkar.',
         rail: 'Ray: sürükleyerek hat döşe. Hatta değen yeni hat makas olur.',
         taxi: 'Taksi yolu: pisti kapılara bağla. Çıkmaz uçlar uçak park yeridir.',
         runway: 'Pist: en az üç karelik düz bir çizgi çiz.',
@@ -98,8 +99,13 @@
       this.domain = domain;
       $('ws-title').textContent = TITLES[domain];
       const saved = RA.store.get('ws.' + domain, null);
-      try { this.grid = saved ? WS.Grid.load(saved) : WS.template(domain); } catch (e) { this.grid = WS.template(domain); }
+      // tahta boyutu değiştiyse (eski sürüm kaydı) yeni örnek düzen açılır; eski çizim ↶ ile geri getirilebilir
+      const resized = !!(saved && saved.cols && (saved.cols !== WS.COLS || saved.rows !== WS.ROWS));
+      let oldGrid = null;
+      try { if (saved) oldGrid = WS.Grid.load(saved); } catch (e) { oldGrid = null; }
+      this.grid = oldGrid && !resized ? oldGrid : WS.template(domain);
       this.undoStack = []; $('ws-undo').disabled = true;
+      if (resized && oldGrid && !oldGrid.isEmpty()) { this.undoStack.push(JSON.stringify(oldGrid.serialize())); $('ws-undo').disabled = false; this.save(); }
       this.sim.clearAll();
       this.sim.stats = { cars: 0, waitSum: 0, waitN: 0, trains: 0, land: 0, takeoff: 0 };
       this.sim.ai = RA.store.get('ws.ai', true) !== false; this.setAI(this.sim.ai);
@@ -110,7 +116,8 @@
       this.setTool('look');
       this.setStyle('grade');
       // ilk açılışta kısa yönlendirme
-      this.toast('Yakınlaştırmak için iki parmağını aç ya da sağdaki + düğmesine dokun. İzle aracıyla tek parmakla kaydır, diğer araçlarla sürükleyerek çiz.');
+      if (resized && this.undoStack.length) this.toast('Tahta küçüldü ve yeni örnek düzen açıldı. Eski çizimini ↶ ile geri getirebilirsin.');
+      else this.toast('Yakınlaştırmak için iki parmağını aç ya da sağdaki + düğmesine dokun. İzle aracıyla tek parmakla kaydır, diğer araçlarla sürükleyerek çiz.');
       this.lastStats = 0;
     }
     rebuild() {
@@ -184,7 +191,8 @@
         const p = local(e);
         if (g && g.kind === 'draw' && this.drag && e.pointerId === this.drag.id) {
           const d = this.drag; this.drag = null;
-          if (!d.moved) { this.prev.count = 0; this.tapAt(p.x, p.y); }
+          if (this.tool === 'lot' && e.type !== 'pointercancel') { this.prev.count = 0; this.placeLots(d.cells); }
+          else if (!d.moved) { this.prev.count = 0; this.tapAt(p.x, p.y); }
           else if (e.type === 'pointercancel') this.prev.count = 0;
           else this.applyStroke(d.cells);
         } else if (g && g.kind === 'pan' && e.pointerId === g.id && !g.moved && e.type !== 'pointercancel') this.tapAt(p.x, p.y);
@@ -265,6 +273,25 @@
       this.prev.material.color.setHex(TOOL_COL[this.tool] || 0xffffff);
       this.prev.material.opacity = this.tool === 'erase' ? 0.5 : 0.42;
     }
+    // Otopark: dokunulan boş kareyi yanındaki yola bağla (çıkmaz uç = otopark)
+    placeLots(cells) {
+      const before = JSON.stringify(this.grid.serialize());
+      const seen = new Set(); let n = 0, tried = 0;
+      for (const c of cells) {
+        const key = c.i + ',' + c.j; if (seen.has(key)) continue; seen.add(key);
+        const cell = this.grid.cell(c.i, c.j);
+        if (!cell || cell.pieces.length) continue;
+        tried++;
+        for (const d of ['S', 'N', 'E', 'W']) {
+          const nb = this.grid.cell(c.i + WS.DV[d].x, c.j + WS.DV[d].z);
+          if (!nb || !nb.pieces.some((q) => q.type === 'road' && q.lv === 0)) continue;
+          const r = WS.applyStroke(this.grid, [{ i: c.i, j: c.j }, { i: c.i + WS.DV[d].x, j: c.j + WS.DV[d].z }], 'road', 'grade');
+          if (r.ok) { n++; break; }
+        }
+      }
+      if (n) { this.undoStack.push(before); if (this.undoStack.length > 30) this.undoStack.shift(); $('ws-undo').disabled = false; this.commit(n > 1 ? n + ' otopark eklendi.' : 'Otopark eklendi: araçlar buraya park edecek, sonra buradan çıkacak.'); }
+      else if (tried) { this.toast('Otoparkı bir yolun yanındaki boş kareye koy.', true); RA.audio.play('denied'); }
+    }
     applyStroke(cells) {
       const seq = WS.strokeCells(cells.map((c) => ({ i: c.i, j: c.j })));
       this.prev.count = 0;
@@ -318,7 +345,10 @@
       if (now - this.lastStats > 500) {
         this.lastStats = now;
         const s = this.sim.stats, net = this.net, parts = [];
-        if (net.list.some((x) => x.fam === 'road')) parts.push(s.cars + ' araç geçti' + (s.waitN ? ' · bekleme ' + (s.waitSum / s.waitN).toFixed(1).replace('.', ',') + ' sn' : ''));
+        if (net.list.some((x) => x.fam === 'road')) {
+          const sources = this.sim.lots.size + net.entries.filter((e) => e.fam === 'road').length;
+          parts.push(sources ? s.cars + ' yolculuk · ' + this.sim.lots.size + ' otopark' + (s.waitN ? ' · bekleme ' + (s.waitSum / s.waitN).toFixed(1).replace('.', ',') + ' sn' : '') : 'Araçlar için otopark ya da şehir dışı çıkışı ekle');
+        }
         if (net.list.some((x) => x.fam === 'rail')) parts.push(this.sim.trains.length + ' tren · ' + s.trains + ' sefer');
         if (net.runways.length) parts.push(s.land + ' iniş · ' + s.takeoff + ' kalkış');
         $('ws-stats').textContent = parts.length ? parts.join(' · ') : 'Boş tahta: çizmeye başla';

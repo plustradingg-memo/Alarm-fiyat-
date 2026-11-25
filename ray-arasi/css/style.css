@@ -153,6 +153,9 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 .ws-bar { position: absolute; left: 0; right: 0; bottom: 0; background: var(--paper); color: var(--ink); border-radius: 18px 18px 0 0; padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 8px); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 -4px 0 rgba(0,0,0,0.18); }
 .ws-row { display: flex; align-items: center; gap: 6px; }
 .ws-tools button, .ws-styles button { flex: 1; min-width: 0; height: 52px; border: 2px solid #dfe4e7; background: #f5f7f8; color: var(--ink); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-weight: 800; font-size: 11.5px; padding: 3px 2px 1px; cursor: pointer; white-space: nowrap; }
+.ws-tools { gap: 4px; }
+.ws-tools button { font-size: 10.5px; white-space: normal; line-height: 1.05; text-align: center; padding: 2px 1px 1px; }
+.ws-tools button svg { width: 20px; height: 20px; flex: none; }
 .ws-tools svg, .ws-styles svg, .ws-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ws-tools button[data-tool="taxi"] svg { fill: currentColor; stroke: none; }
 .ws-tools button.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }

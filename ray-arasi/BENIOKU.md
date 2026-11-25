@@ -7,16 +7,30 @@ Ana ekranda üç kart vardır. Her kart kendi örnek düzeniyle açılır ve çi
 
 | Kart | Örnek düzende neler var |
 |---|---|
-| **Demiryolu** | İki ana hat, makaslı geçişler, geçiş yan hattı, ray köprüsü, hemzemin ray kesişimleri, iki istasyon, bariyerli hemzemin geçitler, rayların altından geçen yol, ayrı bir döngü hattı |
-| **Karayolu** | Üç cadde, dört sokak, ışıklı kavşaklar, bir köprü, iki alt geçit, çıkmaz sokaklar (otopark), kıvrımlı yollar |
-| **Havalimanı** | İki pist, paralel taksi yolu, kapılar, pistin altından geçen yol, taksi yolunu kesen ışıklı yol, havalimanı treni |
+| **Demiryolu** | İki ana hat, makaslı geçişler, geçiş yan hattı, ray köprüsü, hemzemin ray kesişimi, iki istasyon, bariyerli hemzemin geçitler, rayların altından geçen yol, ayrı bir döngü hattı, üç otopark |
+| **Karayolu** | Üç cadde, dört sokak, ışıklı kavşaklar, bir köprü, bir alt geçit, altı katlı otopark |
+| **Havalimanı** | İki pist, paralel taksi yolu, kapılar, pistin altından geçen yol, taksi yolunu kesen ışıklı yol, havalimanı treni, dört otopark |
 
-Tahta 16 × 26 karedir. Hepsinde aynı araçlar vardır, yani yolu, rayı ve havalimanını tek tahtada birlikte kurabilirsin.
+Tahta 12 × 20 karedir. Hepsinde aynı araçlar vardır, yani yolu, rayı ve havalimanını tek tahtada birlikte kurabilirsin.
+
+## Araçlar nereye gider?
+
+Arabalar amaçsızca dolaşmaz. Her araç bir yolculuğa çıkar ve gideceği yeri baştan bilir:
+
+- **Şehir dışından gelir** (tahtanın kenarındaki yol ucu) ve bir otoparka ya da başka bir şehir çıkışına gider.
+- **Otoparka varınca** bariyer kalkar, araç içeri girip kaybolur, binanın çatısında bir yer dolar.
+- **Bir süre sonra otoparktan başka bir araç çıkar** ve başka bir otoparka ya da şehir dışına gider. Dolu otopark
+  daha sık araç gönderir; dolu otoparkın ışığı kırmızı yanar ve oraya yeni araç yönlendirilmez.
+- Araçlar en kısa yolu seçer, U dönüşü yapmaz, bir otoparkın içinden geçip gitmez.
+- Otoparkın caddeye bağlandığı yerde ışık yoktur: otoparktan çıkan araç ana yoldan gelene yol verir.
 
 ## Kurmak
 
 Alttaki çubuktan bir araç seç (Yol, Ray, Taksi yolu, Pist) ve parmağını kareler üzerinde sürükle. Tahtanın
-kenarından dışarı doğru çizersen araçlar ve trenler oradan girip çıkar.
+kenarından dışarı doğru çizersen araçlar ve trenler oradan girip çıkar (şehir dışı).
+
+**Otopark** aracıyla bir yolun yanındaki boş kareye dokun: oraya katlı otopark kurulur ve yola bağlanır. Tahtanın
+içinde biten her yol ucu da otomatik olarak otopark olur.
 
 **Kesişim türü** (ikinci sıra), çizdiğin hat başka bir hattın üstünden geçtiğinde ne olacağını seçer:
 
@@ -59,7 +73,8 @@ Bekleyen bir uçağa dokunarak iniş ya da kalkış izni verirsin. Güvenlik kil
 pist doluluğu) elle yönetimde de çalışmaya devam eder.
 
 Çizimler tarayıcının yerel depolamasında saklanır; sayfayı yenileyince tahta olduğu gibi gelir. Önceki sürümün
-küçük tahtasında kalmış bir çizim, büyük tahtanın ortasına yerleşir.
+büyük tahtasında kalmış bir çizim varsa yeni örnek düzen açılır; **↶** ile eski çizim yeni tahtanın ortasına
+yerleştirilmiş olarak geri gelir (tahtaya sığmayan kenarlar kesilir).
 
 ## Çalıştırma
 
@@ -87,14 +102,14 @@ ray-arasi/
 ├── js/models.js            Oyuncak maket modelleri (tren, vagon, araçlar, uçak, ağaç, bina, ışık, sinyal)
 ├── js/ws-grid.js           Izgara, çizim/silme kuralları, örnek düzenler
 ├── js/ws-net.js            Şerit ve hat geometrisi, rampa yükseklikleri, kavşak çakışmaları, rota arama
-├── js/ws-build.js          Maket tahtası, köprü/alt geçit yapıları, ışıklar, bariyerler, sinyaller
-├── js/ws-sim.js            Araçlar, trenler, uçaklar ve yapay zekâ denetleyicileri
+├── js/ws-build.js          Maket tahtası, köprü/alt geçit yapıları, katlı otoparklar, ışıklar, bariyerler, sinyaller
+├── js/ws-sim.js            Araç yolculukları ve otoparklar, trenler, uçaklar, yapay zekâ denetleyicileri
 ├── js/workshop.js          Atölye ekranı: araç çubuğu, parmakla çizim, yakınlaştırma/kaydırma, geri al
 ├── js/menu.js              Ana ekrandaki üç canlı sahne
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran, üç atölye, yakın planlar ve masaüstü görüntüleri
+├── ekran-goruntuleri/      Ana ekran, üç atölye, otopark ve diğer yakın planlar, masaüstü görüntüsü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```
@@ -103,10 +118,11 @@ Bütün görseller kodla üretilir (üç boyutlu modeller, dokular, sesler); dı
 
 ## Kontrol betiği (isteğe bağlı)
 
-Gerçek dokunuş ve sürüklemelerle şunları dener: ana ekran, üç atölye, büyük tahta, parmakla yol çizme, kavşak,
-köprü, alt geçit, hatalı çizimin reddi, silme, geri alma, + / − / tümü düğmeleri, tek parmakla kaydırma, iki
-parmakla yakınlaştırma, yapay zekâ ışıkları, elle yönetim, kaydın korunması, trenler, hemzemin geçit ve iki pistte
-uçak iniş-kalkışları:
+Gerçek dokunuş ve sürüklemelerle şunları dener: ana ekran, üç atölye, 12 × 20 tahta, parmakla yol çizme, kavşak,
+köprü, alt geçit, hatalı çizimin reddi, silme, geri alma, Otopark aracı, araçların otoparka girip kaybolması ve
+otoparktan yeni araçların çıkması, U dönüşü ve takılan araç olmaması, + / − / tümü düğmeleri, tek parmakla kaydırma,
+iki parmakla yakınlaştırma, yapay zekâ ışıkları, elle yönetim, kaydın korunması, trenler, hemzemin geçit ve iki
+pistte uçak iniş-kalkışları:
 
 ```bash
 npm i -D playwright
@@ -120,4 +136,6 @@ Ekran görüntüleri `test/cikti/` klasörüne yazılır.
 
 - Sabit adımlı (1/60 sn) simülasyon. Trenler ve uçaklar blok rezervasyonuyla ilerler; ayrılmamış bir bloğa
   hiçbir koşulda girmezler.
+- Araç rotaları yol ağında genişlik öncelikli aramayla bulunur; tahta değiştiğinde yoldaki araçların rotası
+  yeniden hesaplanır. Kavşak ışığı sarı evredeyken tahta düzenlenirse ışık kaldığı yerden devam eder.
 - Gereksinim: WebGL destekleyen güncel bir tarayıcı (Chrome, Safari, Firefox, Edge).

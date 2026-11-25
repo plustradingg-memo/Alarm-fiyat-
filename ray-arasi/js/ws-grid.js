@@ -10,7 +10,7 @@
   const OPP = { N: 'S', S: 'N', E: 'W', W: 'E' };
   const AXIS = { N: 'NS', S: 'NS', E: 'EW', W: 'EW' };
   const FAMILY = { road: 'road', rail: 'rail', taxi: 'air', runway: 'air' };
-  Object.assign(WS, { DIRS, BIT, DV, OPP, AXIS, FAMILY, COLS: 16, ROWS: 26, S: 2.0 });
+  Object.assign(WS, { DIRS, BIT, DV, OPP, AXIS, FAMILY, COLS: 12, ROWS: 20, S: 2.0 });
 
   const ports = (m) => DIRS.filter((d) => m & BIT[d]);
   const count = (m) => ports(m).length;
@@ -34,9 +34,9 @@
     }
     static load(o) {
       const g = new Grid();
-      // eski (küçük) tahtadan gelen kayıt yeni tahtanın ortasına yerleşir
-      const oi = o && o.cols && o.cols < g.cols ? Math.floor((g.cols - o.cols) / 2) : 0;
-      const oj = o && o.rows && o.rows < g.rows ? Math.floor((g.rows - o.rows) / 2) : 0;
+      // farklı boyuttaki eski kayıt yeni tahtaya ortalanarak yerleşir (taşan kısım kırpılır)
+      const oi = o && o.cols ? Math.floor((g.cols - o.cols) / 2) : 0;
+      const oj = o && o.rows ? Math.floor((g.rows - o.rows) / 2) : 0;
       if (o && o.p) o.p.forEach(([i, j, type, m, lv, ax]) => { const c = g.cell(i + oi, j + oj); if (c && c.pieces.length < 2) c.pieces.push({ type, m, lv, ax: ax || undefined }); });
       normalize(g);
       return g;
@@ -140,7 +140,7 @@
       if (fam === 'air') { // havalimanı kenardan dışarı çıkmaz
         for (const d of ports(m)) if (!g.inside(seq[k].i + DV[d].x, seq[k].j + DV[d].z)) m &= ~BIT[d];
       }
-      steps.push({ i: seq[k].i, j: seq[k].j, m, end: k === inIdx[0] || k === inIdx[inIdx.length - 1] });
+      steps.push({ i: seq[k].i, j: seq[k].j, m, end: count(m) <= 1 });
     }
     if (steps.length === 1 && count(steps[0].m) < 1) return { ok: false, msg: '' };
     if (type === 'runway') {
@@ -219,61 +219,64 @@
   /* ---------- Örnek düzenler ---------- */
   const line = (i0, j0, i1, j1) => { const a = []; const n = Math.max(Math.abs(i1 - i0), Math.abs(j1 - j0)); for (let k = 0; k <= n; k++) a.push({ i: i0 + Math.sign(i1 - i0) * k, j: j0 + Math.sign(j1 - j0) * k }); return a; };
   const path = (...pts) => { const a = []; for (let k = 0; k < pts.length - 1; k++) { const l = line(pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1]); a.push(...(k ? l.slice(1) : l)); } return a; };
+  // Çıkmaz yol uçları otoparktır: araçlar oraya girip park eder, sonra başka araçlar çıkar.
   WS.templates = {
-    // 16 x 26 kare: üç cadde, dört sokak; kavşaklar, bir köprü, iki alt geçit, çıkmaz sokaklar (otopark)
+    // 12 x 20 kare: üç cadde, dört sokak; kavşaklar, köprü, alt geçit, altı otopark, şehir dışı girişleri
     road: [
-      ['road', 'grade', path([3, -1], [3, 26])],
-      ['road', 'grade', path([8, -1], [8, 26])],
-      ['road', 'grade', path([13, -1], [13, 26])],
-      ['road', 'grade', path([-1, 3], [16, 3])],
-      ['road', 'grade', path([-1, 9], [6, 9])],
-      ['road', 'bridge', path([6, 9], [11, 9])],
-      ['road', 'grade', path([11, 9], [16, 9])],
-      ['road', 'tunnel', path([-1, 15], [5, 15])],
-      ['road', 'grade', path([5, 15], [16, 15])],
-      ['road', 'grade', path([-1, 21], [10, 21])],
-      ['road', 'tunnel', path([10, 21], [16, 21])],
-      ['road', 'grade', path([13, 6], [15, 6])],
-      ['road', 'grade', path([3, 18], [1, 18])],
-      ['road', 'grade', path([8, 12], [10, 12], [10, 13], [11, 13])],
-      ['road', 'grade', path([8, 24], [6, 24], [6, 23], [5, 23])],
+      ['road', 'grade', path([2, -1], [2, 20])],
+      ['road', 'grade', path([6, -1], [6, 20])],
+      ['road', 'grade', path([10, -1], [10, 20])],
+      ['road', 'grade', path([-1, 3], [12, 3])],
+      ['road', 'grade', path([-1, 8], [4, 8])],
+      ['road', 'bridge', path([4, 8], [8, 8])],
+      ['road', 'grade', path([8, 8], [12, 8])],
+      ['road', 'tunnel', path([-1, 13], [4, 13])],
+      ['road', 'grade', path([4, 13], [12, 13])],
+      ['road', 'grade', path([-1, 17], [12, 17])],
+      ['road', 'grade', path([2, 1], [4, 1])],
+      ['road', 'grade', path([6, 5], [8, 5])],
+      ['road', 'grade', path([2, 10], [0, 10])],
+      ['road', 'grade', path([10, 10], [11, 10])],
+      ['road', 'grade', path([6, 15], [4, 15])],
+      ['road', 'grade', path([6, 19], [8, 19])],
     ],
-    // iki ana hat, makaslı geçişler, geçiş yan hattı, ray köprüsü, iki istasyon, hemzemin geçitler, yol alt geçitleri, ayrı bir döngü
+    // iki ana hat, makaslı geçişler, yan hat, ray köprüsü, istasyonlar, hemzemin geçitler, yol alt geçitleri, otoparklar
     rail: [
-      ['rail', 'grade', path([5, -1], [5, 26])],
-      ['rail', 'grade', path([11, -1], [11, 26])],
-      ['rail', 'grade', path([5, 4], [11, 4])],
-      ['rail', 'grade', path([5, 19], [11, 19])],
-      ['rail', 'grade', path([5, 8], [3, 8], [3, 14], [5, 14])],
-      ['rail', 'grade', path([-1, 11], [9, 11])],
-      ['rail', 'bridge', path([9, 11], [16, 11])],
-      ['rail', 'grade', path([11, 16], [14, 16])],
-      ['rail', 'grade', path([5, 23], [2, 23])],
-      ['rail', 'grade', path([13, 21], [15, 21], [15, 24], [13, 24], [13, 21])],
-      ['road', 'grade', path([-1, 17], [16, 17])],
-      ['road', 'tunnel', path([-1, 6], [16, 6])],
-      ['road', 'grade', path([8, 6], [8, 1])],
-      ['road', 'grade', path([8, 17], [8, 13])],
+      ['rail', 'grade', path([4, -1], [4, 20])],
+      ['rail', 'grade', path([8, -1], [8, 20])],
+      ['rail', 'grade', path([4, 3], [8, 3])],
+      ['rail', 'grade', path([4, 15], [8, 15])],
+      ['rail', 'grade', path([4, 6], [2, 6], [2, 11], [4, 11])],
+      ['rail', 'grade', path([-1, 9], [6, 9])],
+      ['rail', 'bridge', path([6, 9], [12, 9])],
+      ['rail', 'grade', path([8, 12], [10, 12])],
+      ['rail', 'grade', path([4, 17], [2, 17])],
+      ['rail', 'grade', path([9, 16], [11, 16], [11, 19], [9, 19], [9, 16])],
+      ['road', 'grade', path([-1, 13], [12, 13])],
+      ['road', 'tunnel', path([-1, 5], [12, 5])],
+      ['road', 'grade', path([6, 5], [6, 1])],
+      ['road', 'grade', path([6, 13], [6, 11])],
+      ['road', 'grade', path([1, 13], [1, 15])],
     ],
-    // iki pist, paralel taksi yolu, kapılar, pistin altından geçen yollar, havalimanı treni
+    // iki pist, taksi yolları, kapılar, pistin altından geçen yol, havalimanı treni, otoparklar
     air: [
-      ['runway', 'grade', path([4, 3], [4, 16])],
-      ['taxi', 'grade', path([4, 3], [7, 3], [7, 16], [4, 16])],
-      ['taxi', 'grade', path([4, 8], [7, 8])],
-      ['taxi', 'grade', path([4, 12], [7, 12])],
-      ['taxi', 'grade', path([7, 5], [10, 5])],
-      ['taxi', 'grade', path([7, 7], [9, 7])],
-      ['taxi', 'grade', path([7, 10], [10, 10])],
-      ['taxi', 'grade', path([7, 14], [9, 14])],
-      ['runway', 'grade', path([5, 22], [13, 22])],
-      ['taxi', 'grade', path([7, 16], [7, 19], [13, 19], [13, 22])],
-      ['taxi', 'grade', path([9, 19], [9, 22])],
-      ['taxi', 'grade', path([11, 19], [11, 17])],
-      ['taxi', 'grade', path([7, 19], [5, 19], [5, 22])],
-      ['road', 'grade', path([-1, 11], [16, 11])],
-      ['road', 'grade', path([-1, 24], [16, 24])],
-      ['road', 'grade', path([2, -1], [2, 26])],
-      ['rail', 'grade', path([15, -1], [15, 26])],
+      ['runway', 'grade', path([3, 2], [3, 12])],
+      ['taxi', 'grade', path([3, 2], [5, 2], [5, 12], [3, 12])],
+      ['taxi', 'grade', path([3, 6], [5, 6])],
+      ['taxi', 'grade', path([5, 4], [7, 4])],
+      ['taxi', 'grade', path([5, 10], [7, 10])],
+      ['runway', 'grade', path([4, 17], [10, 17])],
+      ['taxi', 'grade', path([5, 12], [5, 15], [10, 15], [10, 17])],
+      ['taxi', 'grade', path([7, 15], [7, 17])],
+      ['taxi', 'grade', path([9, 15], [9, 13])],
+      ['road', 'grade', path([-1, 8], [12, 8])],
+      ['road', 'grade', path([1, -1], [1, 20])],
+      ['road', 'grade', path([-1, 19], [12, 19])],
+      ['rail', 'grade', path([11, -1], [11, 20])],
+      ['road', 'grade', path([1, 4], [0, 4])],
+      ['road', 'grade', path([1, 14], [0, 14])],
+      ['road', 'grade', path([8, 8], [8, 10])],
+      ['road', 'grade', path([6, 19], [6, 18])],
     ],
   };
   // Ray örneğinde yan yol köprüsü bozulmasın diye sıra önemli; örnek yüklenirken uyarılar yok sayılır
