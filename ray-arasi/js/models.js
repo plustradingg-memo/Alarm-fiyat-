@@ -356,6 +356,41 @@
     return g;
   };
 
+  // Atölye için hafif ışık başı: yukarıdan okunan dört üçgen lamba
+  M.trafficLightLite = function () {
+    const g = new T.Group();
+    g.add(mesh(rb(0.62, 0.42, 0.62, 0.1), mat(0x23272d, { roughness: 0.5 }), 0, 0, 0));
+    const tri = new T.Shape(); tri.moveTo(-0.15, 0); tri.lineTo(0.15, 0); tri.lineTo(0, 0.2); tri.lineTo(-0.15, 0);
+    const triG = RA.geo('tltri2', () => { const e = new T.ExtrudeGeometry(tri, { depth: 0.05, bevelEnabled: false }); e.rotateX(-Math.PI / 2); return e; });
+    const lamps = { NS: [new T.MeshStandardMaterial({ color: 0x111111, emissive: 0xff2a1f, emissiveIntensity: 2.4, roughness: 0.3 })], EW: [new T.MeshStandardMaterial({ color: 0x111111, emissive: 0xff2a1f, emissiveIntensity: 2.4, roughness: 0.3 })] };
+    [['NS', 0, -1], ['NS', 0, 1], ['EW', -1, 0], ['EW', 1, 0]].forEach(([ax, dx, dz]) => {
+      const t = new T.Mesh(triG, lamps[ax][0]); t.position.set(dx * 0.14, 0.23, dz * 0.14); t.rotation.y = Math.atan2(dx, dz); g.add(t);
+    });
+    RA.compact(g);
+    const halo = RA.glowSprite(0xffffff, 1.0, 0.55); halo.position.set(0, 0.32, 0); g.add(halo);
+    g.userData.setAxis = function (axis, state) {
+      const col = state === 'green' ? 0x22e06a : state === 'yellow' ? 0xffb000 : 0xff2a1f;
+      const off = state !== 'green' && state !== 'yellow' && state !== 'red';
+      lamps[axis].forEach((m) => { m.emissive.setHex(col); m.emissiveIntensity = off ? 0.08 : 2.4; });
+      if (axis === 'NS') g.userData.ns = state; else g.userData.ew = state;
+      const any = g.userData.ns === 'green' || g.userData.ew === 'green' ? 0x22e06a : g.userData.ns === 'yellow' || g.userData.ew === 'yellow' ? 0xffb000 : 0xff3a2a;
+      halo.material.color.setHex(any); halo.material.opacity = off && (g.userData.ns !== 'yellow' && g.userData.ew !== 'yellow') ? 0.08 : 0.5;
+    };
+    return g;
+  };
+  // Atölye için hafif ray sinyali: direk + tek renk değiştiren lamba
+  M.signalLite = function () {
+    const g = new T.Group();
+    g.add(mesh(cyl(0.035, 0.9, 8), mat(0x50555c), 0, 0.45, 0));
+    g.add(mesh(rb(0.16, 0.22, 0.12, 0.04), mat(0x24272c), 0, 0.95, 0));
+    RA.compact(g);
+    const lm = new T.MeshStandardMaterial({ color: 0x111111, emissive: 0xff2a1f, emissiveIntensity: 2.4 });
+    const l = new T.Mesh(RA.geo('lamp', () => new T.SphereGeometry(0.055, 12, 8)), lm); l.position.set(0, 0.97, 0.07); g.add(l);
+    const halo = RA.glowSprite(0xff3b2f, 0.55, 0.8); halo.position.set(0, 0.97, 0.12); g.add(halo);
+    g.userData.set = function (s) { const c = s === 'red' ? 0xff2a1f : 0x2bff6a; lm.emissive.setHex(c); halo.material.color.setHex(c); };
+    return g;
+  };
+
   /* ================= HAVA ================= */
   M.plane = function (livery) {
     const g = new T.Group();

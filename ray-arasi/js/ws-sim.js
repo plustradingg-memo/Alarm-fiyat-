@@ -80,8 +80,10 @@
       const vt = Math.min(vmax, Math.sqrt(2 * P.dec * Math.max(0, limit)));
       if (this.v < vt) this.v = Math.min(vt, this.v + P.acc * dt); else this.v = Math.max(vt, this.v - P.dec * 2.2 * dt);
       this.s += this.v * dt;
-      while (this.s > this.head().len && this.plan.length) { this.s -= this.head().len; this.segs.push(this.plan.shift()); if (this.blockIdx != null) this.blockIdx--; }
-      if (this.s > this.head().len) this.s = this.head().len;
+      // yalnızca yeri ayrılmış hareketlere geçilebilir; ayrılmamış bloğun sınırında kesin dur
+      let allowed = this.blocked ? this.blockIdx : this.plan.length;
+      while (this.s > this.head().len && allowed > 0) { this.s -= this.head().len; this.segs.push(this.plan.shift()); allowed--; if (this.blocked) this.blockIdx--; }
+      if (this.s > this.head().len) { this.s = this.head().len; if (this.blocked || !this.plan.length) this.v = Math.min(this.v, 0.2); }
       this.wait = this.v < 0.05 ? this.wait + dt : 0;
       // uzun bekleme: engellenen daldan vazgeç, başka yol seç
       if (this.blocked && this.wait > 1.6 && P.replan && this.blockIdx > 0 && this.blockIdx < this.plan.length) {
@@ -151,6 +153,8 @@
         const segs = tr.mv.segs.map(remap);
         if (segs.some((x) => !x)) { this.killTrain(tr, true); continue; }
         tr.mv.segs = segs; tr.mv.plan = []; tr.mv.planEnd = null; tr.mv.held.clear();
+        // düzenleme iki taşıtı aynı bloğa düşürdüyse sonradan geleni kaldır
+        if (segs.some((m) => tr.mv.keysOf(m).some((k) => this.res.has(k) && this.res.get(k) !== tr))) { this.killTrain(tr, true); continue; }
         for (const m of segs) for (const k of tr.mv.keysOf(m)) { this.res.set(k, tr); tr.mv.held.add(k); }
       }
       for (const p of [...this.planes]) {
@@ -158,6 +162,7 @@
           const segs = p.mv.segs.map(remap);
           if (segs.some((x) => !x)) { this.killPlane(p, true); continue; }
           p.mv.segs = segs; p.mv.plan = []; p.mv.planEnd = null; p.mv.held.clear(); p.route = null; p.needRoute = true;
+          if (segs.some((m) => p.mv.keysOf(m).some((k) => this.res.has(k) && this.res.get(k) !== p))) { this.killPlane(p, true); continue; }
           for (const m of segs) for (const k of p.mv.keysOf(m)) { this.res.set(k, p); p.mv.held.add(k); }
         } else if (p.rw) {
           const rw = net.runways.find((r) => r.cells.length === p.rw.cells.length && r.cells[0].i === p.rw.cells[0].i && r.cells[0].j === p.rw.cells[0].j && r.ax === p.rw.ax);
@@ -177,8 +182,9 @@
       const r = this.rnd();
       const type = r < 0.1 ? 'bus' : r < 0.32 ? 'taxi' : 'car';
       const g = type === 'bus' ? M.bus(this.pick([0x2a7fb8, 0x1c9a6a, 0xe0662a])) : type === 'taxi' ? M.taxi() : M.car(this.pick(CAR_COLORS));
+      RA.compact(g);
       g.scale.setScalar(SC);
-      g.traverse((o) => { if (o.isMesh && !o.material.transparent) o.castShadow = true; });
+      g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
       this.scene.add(g);
       const P = CAR[type];
       const c = { kind: 'car', id: uid++, type, P, L: P.L, g, mv, prev: null, s, v, acc: 0, plan: [], wait: 0, waitTot: 0, trip: 0, commit: null, wheelA: 0, rear: null, fade: 0 };
@@ -316,7 +322,7 @@
     }
     spawnCars(dt) {
       const net = this.net;
-      const target = 4 + this.density * 6;
+      const target = 8 + this.density * 9;
       const roadEntries = net.entries.filter((e) => e.fam === 'road');
       const interval = RA.lerp(8.5, 2.2, (this.density - 1) / 4);
       const free = (mv, s) => !this.cars.some((o) => o.mv.pk === mv.pk && o.mv.din === mv.din && Math.abs(o.s - s) < o.L + 0.5);
@@ -402,7 +408,7 @@
     makeTrain(segs, s) {
       const units = M.train(this.rnd() < 0.5 ? 'passenger' : 'freight', RA.rng(Math.floor(this.rnd() * 1e9)), 1 + Math.floor(this.rnd() * 2));
       let off = 0;
-      units.forEach((u, n) => { u.g.scale.setScalar(SC); u.len *= SC; u.off = off + u.len / 2; off += u.len + (n < units.length - 1 ? 0.09 : 0); u.g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); this.scene.add(u.g); });
+      units.forEach((u, n) => { RA.compact(u.g); u.g.scale.setScalar(SC); u.len *= SC; u.off = off + u.len / 2; off += u.len + (n < units.length - 1 ? 0.09 : 0); u.g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); this.scene.add(u.g); });
       const tr = { kind: 'train', id: uid++, units, len: off, dwell: 0, wheelA: 0, fade: 0, revT: 0 };
       tr.mv = new Mover(this, tr, off);
       tr.mv.segs = segs; tr.mv.s = s; tr.mv.v = 0.6;
@@ -412,8 +418,8 @@
       return tr;
     }
     killTrain(tr, quick) {
-      tr.mv.releaseAll();
-      if (quick) { tr.units.forEach((u) => this.scene.remove(u.g)); this.trains.splice(this.trains.indexOf(tr), 1); return; }
+      // kaybolurken bloklarını tutar; tamamen kaybolunca bırakır
+      if (quick) { tr.mv.releaseAll(); tr.units.forEach((u) => this.scene.remove(u.g)); const n = this.trains.indexOf(tr); if (n >= 0) this.trains.splice(n, 1); return; }
       tr.fade = 0.0001;
     }
     chooseRail(tr, from) {
@@ -440,7 +446,7 @@
     updateTrains(dt) {
       for (let n = this.trains.length - 1; n >= 0; n--) {
         const tr = this.trains[n];
-        if (tr.fade) { tr.fade += dt; const f = Math.max(0.01, 1 - tr.fade / 0.6); tr.units.forEach((u) => u.g.scale.setScalar(SC * f)); if (tr.fade > 0.6) { tr.units.forEach((u) => this.scene.remove(u.g)); this.trains.splice(n, 1); } continue; }
+        if (tr.fade) { tr.fade += dt; const f = Math.max(0.01, 1 - tr.fade / 0.6); tr.units.forEach((u) => u.g.scale.setScalar(SC * f)); if (tr.fade > 0.6) this.killTrain(tr, true); continue; }
         const mv = tr.mv;
         mv.step(dt, { look: 4.6, vmax: V_TRAIN, acc: 1.1, dec: 2.4, replan: true, choose: (m) => this.chooseRail(tr, m) });
         tr.wheelA += (mv.v * dt) / (0.11 * SC);
@@ -485,7 +491,7 @@
     }
     spawnTrains(dt) {
       const net = this.net;
-      const target = Math.min(5, this.density);
+      const target = Math.min(7, this.density + 1);
       const rails = net.list.filter((x) => x.fam === 'rail');
       if (!rails.length || this.trains.length >= target) return;
       this.trainT -= dt; if (this.trainT > 0) return;
@@ -531,6 +537,8 @@
     /* ================= UÇAKLAR ================= */
     makePlane() {
       const g = M.plane(this.pick([0x2f6fd6, 0xe0402f, 0x1f9d61, 0x7a4fc2, 0xf08a24]));
+      const gearSet = new Set(); g.userData.gear.traverse((o) => gearSet.add(o));
+      RA.compact(g, (o) => gearSet.has(o));
       g.scale.setScalar(PSC);
       g.traverse((o) => { if (o.isMesh && !o.material.transparent) o.castShadow = true; });
       const shadow = RA.blobShadow(1.5, 1.3, 0.4);
@@ -540,12 +548,12 @@
       return p;
     }
     killPlane(p, quick) {
+      this.towerQ = this.towerQ.filter((q) => q.p !== p);
+      if (!quick) { p.fade = 0.0001; return; }
       if (p.mv) p.mv.releaseAll();
       for (const [k, o] of this.res) if (o === p) this.res.delete(k);
-      this.towerQ = this.towerQ.filter((q) => q.p !== p);
-      if (p.gateKey) this.claim.delete(p.gateKey);
-      if (quick) { this.scene.remove(p.g, p.shadow); this.planes.splice(this.planes.indexOf(p), 1); return; }
-      p.fade = 0.0001;
+      if (p.gateKey && this.claim) this.claim.delete(p.gateKey);
+      this.scene.remove(p.g, p.shadow); const n = this.planes.indexOf(p); if (n >= 0) this.planes.splice(n, 1);
     }
     // inişten sonra kapıya giden yol
     landingPlan(rw, dir) {
@@ -620,7 +628,7 @@
       for (let n = this.planes.length - 1; n >= 0; n--) {
         const p = this.planes[n];
         p.t += dt;
-        if (p.fade) { p.fade += dt; const f = Math.max(0.01, 1 - p.fade / 0.6); p.g.scale.setScalar(PSC * f); p.shadow.material.opacity *= f; if (p.fade > 0.6) { this.scene.remove(p.g, p.shadow); this.planes.splice(n, 1); } continue; }
+        if (p.fade) { p.fade += dt; const f = Math.max(0.01, 1 - p.fade / 0.6); p.g.scale.setScalar(PSC * f); p.shadow.material.opacity *= f; if (p.fade > 0.6) this.killPlane(p, true); continue; }
         if (p.state === 'inbound' || p.state === 'approach' || p.state === 'climb' || p.state === 'away') {
           const sp = p.state === 'approach' ? 3.2 : p.state === 'climb' ? 4.2 : 2.6;
           p.s += sp * dt;
@@ -783,7 +791,7 @@
     spawnPlanes(dt) {
       const net = this.net;
       if (!net.runways.length) return;
-      const target = Math.min(6, 1 + this.density);
+      const target = Math.min(7, 2 + this.density);
       if (this.planes.length >= target) return;
       this.planeT -= dt; if (this.planeT > 0) return;
       this.planeT = 6 + this.rnd() * 4;

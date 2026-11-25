@@ -485,6 +485,15 @@
     return out;
   };
 
+  // Bir modelin hareketsiz parçalarını malzemeye göre birleştir (çizim çağrısı azaltır). keep(o) true dönenler ayrı kalır.
+  RA.compact = function (g, keep) {
+    g.traverse((o) => { if (o.isMesh && keep && keep(o)) o.userData.keep = true; });
+    const merged = RA.mergeStatic(g);
+    merged.children.forEach((m) => { m.castShadow = true; m.receiveShadow = false; });
+    g.add(merged);
+    return g;
+  };
+
   /* ---------- kamera sığdırma ---------- */
   // Kamerayı verilen yönden hedefe bakarken, noktalar ekranın izin verilen bölgesine sığacak şekilde konumlar.
   RA.fitCamera = function (camera, opts) {

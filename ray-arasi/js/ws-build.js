@@ -253,18 +253,21 @@
         // kavşak ışıkları
         const jn = net.juncAt.get(i + ',' + j + ',0');
         if (jn) {
-          const head = M.trafficLight(); head.scale.setScalar(0.42); head.position.set(x + 0.9, 1.0, z + 0.9);
+          const head = M.trafficLightLite(); head.scale.setScalar(0.42); head.position.set(x + 0.9, 1.0, z + 0.9);
           root.add(head);
           const pole = mesh(RA.geo('jpole', () => new T.CylinderGeometry(0.03, 0.035, 1.0, 8)), m.rail, x + 0.9, 0.5, z + 0.9); root.add(pole);
           const bars = {};
+          const axM = { NS: new T.MeshBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.85, depthWrite: false }), EW: new T.MeshBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.85, depthWrite: false }) };
+          const bg = new T.Group();
           for (const d of jn.ports) {
             const t = DV[d]; const rI = { x: t.z, z: -t.x }; // içeri giren aracın sağı = right(-t)
-            const mt = new T.MeshBasicMaterial({ color: 0xff3020, transparent: true, opacity: 0.85, depthWrite: false });
+            const mt = axM[WS.AXIS[d]];
             const b = new T.Mesh(RA.geo('jbar', () => { const q = new T.PlaneGeometry(0.62, 0.12); q.rotateX(-Math.PI / 2); return q; }), mt);
             b.position.set(x + t.x * 0.94 + rI.x * WS.LANE, 0.045, z + t.z * 0.94 + rI.z * WS.LANE);
             if (t.z !== 0) b.rotation.y = 0; else b.rotation.y = Math.PI / 2;
-            root.add(b); bars[d] = mt;
+            bg.add(b); bars[d] = mt;
           }
+          const merged = RA.mergeStatic(bg); merged.children.forEach((q) => { q.castShadow = false; q.receiveShadow = false; q.renderOrder = 2; }); root.add(merged);
           dyn.junctions.push({ key: jn.key, i, j, k: 0, ports: jn.ports, head, bars, pos: new T.Vector3(x, 1.0, z) });
         }
         // hemzemin geçitler
@@ -299,7 +302,7 @@
       // ray sinyalleri
       for (const sg of net.railSignals) {
         const t = DV[sg.d]; const rI = { x: t.z, z: -t.x };
-        const s = M.signal(); s.scale.setScalar(0.5);
+        const s = M.signalLite(); s.scale.setScalar(0.5);
         const p = net.piece(sg.i, sg.j, sg.k);
         const y = p.lv > 0 ? WS.H_UP : 0;
         s.position.set(net.cx(sg.i) + t.x * 0.92 + rI.x * 0.48, y, net.cz(sg.j) + t.z * 0.92 + rI.z * 0.48);

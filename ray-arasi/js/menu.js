@@ -1,4 +1,4 @@
-/* RAY ARASI — ana ekran: üç canlı maket sahnesi */
+/* RAY ARASI — ana ekran: üç canlı maket sahnesi; her kart kendi atölyesini açar */
 (function () {
   'use strict';
   const RA = window.RA;
@@ -141,28 +141,9 @@
       this.app = app;
       this.t = 0;
       this.cards = Array.from(document.querySelectorAll('#menu .card'));
-      this.views = {};
-      this.kind = RA.store.get('menuKind', 'game') === 'ws' ? 'ws' : 'game';
-      this.cards.forEach((c) => { c.addEventListener('click', () => (this.kind === 'ws' ? app.openWorkshop(c.dataset.mode) : app.start(c.dataset.mode))); });
-      document.querySelectorAll('#menu .seg-btn').forEach((b) => b.addEventListener('click', () => this.setKind(b.dataset.kind)));
-      this.setKind(this.kind);
+      this.cards.forEach((c) => { c.addEventListener('click', () => app.openWorkshop(c.dataset.mode)); });
       this.scenes = { rail: railScene(), road: roadScene(), air: airScene() };
       this.bg = new T.Color(0x1a242b);
-    }
-    setKind(k) {
-      this.kind = k; RA.store.set('menuKind', k);
-      document.getElementById('menu').dataset.kind = k;
-      document.querySelectorAll('#menu .seg-btn').forEach((b) => { const on = b.dataset.kind === k; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
-      document.querySelectorAll('#menu .card-txt em').forEach((e) => (e.textContent = e.dataset[k === 'ws' ? 'ws' : 'game']));
-      const d = document.getElementById('menu-day');
-      if (d && k === 'ws') d.textContent = 'Atölyede süre yok: kur, izle, yapay zekâya bırak ya da elle yönet.';
-      else this.refresh && this.refreshDay();
-    }
-    refreshDay() { const d = document.getElementById('menu-day'); if (d) d.textContent = 'Günün trafiği: ' + RA.todayLabel() + '. Aynı gün aynı akış, yarın yeni sıra.'; }
-    refresh() {
-      document.querySelectorAll('[data-rec]').forEach((b) => (b.textContent = RA.records.get(b.dataset.rec)));
-      if (this.kind === 'ws') { const d = document.getElementById('menu-day'); if (d) d.textContent = 'Atölyede süre yok: kur, izle, yapay zekâya bırak ya da elle yönet.'; }
-      else this.refreshDay();
     }
     resize() { }
     render(dt) {

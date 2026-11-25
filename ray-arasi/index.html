@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ray Arası</title>
-<meta name="description" content="Masadaki maket şehrin trafiğini tek elle yönettiğin 45 saniyelik Türkçe oyun: Demiryolu, Karayolu, Hava Trafiği.">
+<meta name="description" content="Masadaki maket tahtasına yol, ray ve havalimanı kur; kavşak, köprü ve alt geçit ekle; ışıkları yapay zekâ yönetsin.">
 <meta name="theme-color" content="#1a242b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -20,17 +20,12 @@
 <div id="app">
   <div id="stage" data-mode="">
     <canvas id="gl" aria-label="Oyun sahnesi"></canvas>
-    <div id="labels" aria-hidden="true"></div>
 
     <!-- ANA EKRAN -->
-    <section id="menu" class="screen" aria-label="Mod seçimi">
+    <section id="menu" class="screen" aria-label="Atölye seçimi">
       <header class="menu-head">
         <div class="title-plate"><h1>RAY ARASI</h1></div>
-        <p class="tagline">Masadaki maket şehrin trafiği sende.</p>
-        <div class="seg" role="tablist" aria-label="Oyun türü">
-          <button class="seg-btn on" type="button" role="tab" data-kind="game" aria-selected="true">45 sn Görev</button>
-          <button class="seg-btn" type="button" role="tab" data-kind="ws" aria-selected="false">Atölye: Kendin Kur</button>
-        </div>
+        <p class="tagline">Maket tahtana yol, ray ve havalimanı kur; trafiği yapay zekâ yönetsin.</p>
         <button class="btn-sound round-btn" type="button" aria-label="Sesi kapat" aria-pressed="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l6 6M22 9l-6 6"/></svg>
         </button>
@@ -40,49 +35,28 @@
           <span class="card-view"></span>
           <span class="card-plate">
             <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="7" y="4" width="18" height="18" rx="4"/><rect x="10" y="8" width="12" height="6" rx="1.5" class="cut"/><circle cx="11.5" cy="18" r="1.6" class="cut"/><circle cx="20.5" cy="18" r="1.6" class="cut"/><path d="M9 28l3-5M23 28l-3-5" class="ln"/></svg>
-            <span class="card-txt"><strong>Demiryolu</strong><em data-game="Makası sen yönet" data-ws="Ray, makas, köprü, alt geçit kur">Makası sen yönet</em></span>
-            <span class="card-rec">Rekor<b data-rec="rail">0</b></span><span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+            <span class="card-txt"><strong>Demiryolu</strong><em>Ray, makas, köprü, alt geçit kur</em></span>
+            <span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
         <button class="card" type="button" data-mode="road">
           <span class="card-view"></span>
           <span class="card-plate">
             <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="10" y="2.5" width="12" height="27" rx="4"/><circle cx="16" cy="8.5" r="2.8" class="cut"/><circle cx="16" cy="16" r="2.8" class="cut"/><circle cx="16" cy="23.5" r="2.8" class="cut"/></svg>
-            <span class="card-txt"><strong>Karayolu</strong><em data-game="Kavşak sende" data-ws="Yol, kavşak, köprü, alt geçit kur">Kavşak sende</em></span>
-            <span class="card-rec">Rekor<b data-rec="road">0</b></span><span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+            <span class="card-txt"><strong>Karayolu</strong><em>Yol, kavşak, köprü, alt geçit kur</em></span>
+            <span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
         <button class="card" type="button" data-mode="air">
           <span class="card-view"></span>
           <span class="card-plate">
             <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c1.3 0 2 1.4 2 3v6.5l10 6v3l-10-3v5.5l3 2.4V29l-5-1.4-5 1.4v-2.6l3-2.4V18.5l-10 3v-3l10-6V6c0-1.6.7-3 2-3z"/></svg>
-            <span class="card-txt"><strong>Hava Trafiği</strong><em data-game="İniş sırasını sen ver" data-ws="Pist, taksi yolu, kapı kur">İniş sırasını sen ver</em></span>
-            <span class="card-rec">Rekor<b data-rec="air">0</b></span><span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
+            <span class="card-txt"><strong>Havalimanı</strong><em>Pist, taksi yolu, kapı kur</em></span>
+            <span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
       </div>
-      <footer class="menu-foot"><span id="menu-day">Günün trafiği</span></footer>
-    </section>
-
-    <!-- OYUN İÇİ GÖSTERGE -->
-    <section id="hud" class="screen" hidden>
-      <div class="hud-top">
-        <button id="btn-pause" class="round-btn" type="button" aria-label="Duraklat">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>
-        </button>
-        <div id="hud-timebox" class="hud-plate hud-time" role="timer" aria-label="Kalan süre">
-          <span id="hud-time">45</span><small>sn</small>
-          <i class="bar"><b id="hud-bar"></b></i>
-        </div>
-        <div id="hud-scorebox" class="hud-plate hud-score" aria-live="polite">
-          <span id="hud-score">0</span>
-          <small>Rekor <b id="hud-best">0</b></small>
-        </div>
-      </div>
-      <div id="hint" class="hint">
-        <span id="hud-mode" class="hint-mode"></span>
-        <p id="hint-text"></p>
-      </div>
+      <footer class="menu-foot"><span id="menu-day">Süre yok: kur, izle, yapay zekâya bırak ya da elle yönet.</span></footer>
     </section>
 
 
@@ -100,6 +74,11 @@
         <button id="ws-clear" type="button">Tahtayı temizle</button>
       </div>
       <div id="ws-toast" class="ws-toast" hidden role="status"></div>
+      <div class="ws-zoom" role="group" aria-label="Görünüm">
+        <button id="ws-zin" class="round-btn" type="button" aria-label="Yakınlaştır"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ln" d="M12 5v14M5 12h14"/></svg></button>
+        <button id="ws-zout" class="round-btn" type="button" aria-label="Uzaklaştır"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ln" d="M5 12h14"/></svg></button>
+        <button id="ws-zfit" class="round-btn" type="button" aria-label="Tüm tahtayı göster"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ln" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
       <div class="ws-bar">
         <div class="ws-row ws-tools" role="toolbar" aria-label="Çizim aracı">
           <button type="button" data-tool="look" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>İzle</button>
@@ -125,46 +104,14 @@
       </div>
     </section>
 
-    <!-- TUR SONU -->
-    <section id="result" class="screen overlay" hidden>
-      <div class="res-card" role="dialog" aria-labelledby="res-title">
-        <p class="res-kicker" id="res-title">Süre doldu</p>
-        <div class="res-score"><span id="res-score">0</span><small id="res-unit">tren</small></div>
-        <p id="res-sentence" class="res-sentence"></p>
-        <p id="res-record" class="res-record"></p>
-        <div class="res-btns">
-          <button id="btn-again" class="btn primary" type="button">Tekrar Oyna</button>
-          <button id="btn-modes" class="btn" type="button">Mod Seç</button>
-        </div>
-        <p id="res-day" class="res-day"></p>
-      </div>
-    </section>
 
-    <!-- DURAKLATMA -->
-    <section id="pause" class="screen overlay" hidden>
-      <div class="res-card" role="dialog" aria-labelledby="pause-title">
-        <p class="res-kicker" id="pause-title">Duraklatıldı</p>
-        <p id="pause-sub" class="res-sentence">Süre durdu.</p>
-        <div class="res-btns">
-          <button id="btn-resume" class="btn primary" type="button">Devam Et</button>
-          <button id="btn-pause-menu" class="btn" type="button">Mod Seç</button>
-        </div>
-        <button class="btn-sound round-btn light" type="button" aria-label="Sesi kapat" aria-pressed="true">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l6 6M22 9l-6 6"/></svg>
-        </button>
-      </div>
-    </section>
-
-    <div id="rotate" class="screen overlay" aria-live="polite"><div class="res-card"><p class="res-kicker">Dikey ekran</p><p class="res-sentence">Ray Arası tek elle, telefon dik tutularak oynanır. Telefonunu çevir.</p></div></div>
+    <div id="rotate" class="screen overlay" aria-live="polite"><div class="res-card"><p class="res-kicker">Dikey ekran</p><p class="res-sentence">Ray Arası telefon dik tutularak kullanılır. Telefonunu çevir.</p></div></div>
     <div id="fatal" class="screen overlay" hidden><div class="res-card"><p class="res-kicker">WebGL gerekli</p><p class="res-sentence"></p></div></div>
   </div>
 </div>
 <script src="js/vendor/three.min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/models.js"></script>
-<script src="js/rail.js"></script>
-<script src="js/road.js"></script>
-<script src="js/air.js"></script>
 <script src="js/ws-grid.js"></script>
 <script src="js/ws-net.js"></script>
 <script src="js/ws-build.js"></script>
