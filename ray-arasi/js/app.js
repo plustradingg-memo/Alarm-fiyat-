@@ -93,6 +93,7 @@
       this.renderer.setSize(w, vh, false);
       this.canvas.style.width = w + 'px'; this.canvas.style.height = vh + 'px';
       if (this.mode) this.mode.resize(w, vh);
+      if (this.ws) this.ws.resize(w, vh);
       this.menu.resize(w, vh);
     }
 
@@ -116,7 +117,7 @@
 
     /* ---------- ekranlar ---------- */
     showScreen(name) {
-      ['menu', 'hud', 'result', 'pause'].forEach((s) => { $(s).hidden = s !== name && !(name === 'pause' && s === 'hud') && !(name === 'result' && s === 'hud'); });
+      ['menu', 'hud', 'result', 'pause', 'ws'].forEach((s) => { $(s).hidden = s !== name && !(name === 'pause' && s === 'hud') && !(name === 'result' && s === 'hud'); });
     }
     showMenu() {
       this.state = 'menu';
@@ -127,6 +128,21 @@
       this.stage.dataset.mode = '';
     }
     clearLabels() { this.labels.innerHTML = ''; }
+
+    // Atölye: serbest kurma modu (süre ve puan yok)
+    openWorkshop(domain) {
+      RA.audio.unlock();
+      if (!this.ws) this.ws = new RA.Workshop(this);
+      this.clearLabels();
+      this.round = null;
+      this.state = 'workshop';
+      this.stage.dataset.mode = 'ws';
+      this.showScreen('ws');
+      this.ws.resize(this.w, this.h);
+      this.ws.open(domain);
+      this.ws.resize(this.w, this.h);
+      this.acc = 0; this.last = performance.now();
+    }
 
     start(id) {
       RA.audio.unlock();
@@ -241,6 +257,7 @@
     // testler için zamanı ileri sar
     advance(seconds) {
       const n = Math.round(seconds / STEP);
+      if (this.state === 'workshop') { for (let i = 0; i < n; i++) this.ws.update(STEP); this.ws.frame(0); return; }
       for (let i = 0; i < n; i++) { if (this.state === 'play') this.step(STEP); }
       if (this.mode && this.mode.frame) this.mode.frame(0);
       this.updateTimer();
@@ -251,6 +268,14 @@
       let dt = (now - this.last) / 1000; this.last = now;
       if (dt > 0.1) dt = 0.1;
       if (this.state === 'menu') { this.menu.render(dt); return; }
+      if (this.state === 'workshop') {
+        if (!this.manual) { this.acc += dt; let n = 0; while (this.acc >= STEP && n < 6) { this.ws.update(STEP); this.acc -= STEP; n++; } if (n >= 6) this.acc = 0; }
+        this.ws.frame(dt);
+        this.renderer.setScissorTest(false);
+        this.renderer.setViewport(0, 0, this.w, this.h);
+        this.renderer.render(this.ws.scene, this.ws.camera);
+        return;
+      }
       if (!this.mode) return;
       if (this.state === 'play' && !this.manual) {
         this.acc += dt;

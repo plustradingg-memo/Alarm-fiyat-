@@ -344,12 +344,13 @@
     g.userData.lamps = lamps;
     g.userData.setAxis = function (axis, state) {
       const col = state === 'green' ? 0x22e06a : state === 'yellow' ? 0xffb000 : 0xff2a1f;
+      const off = state !== 'green' && state !== 'yellow' && state !== 'red';
       lamps[axis].forEach((set) => {
         set.red.emissiveIntensity = state === 'red' ? 2.8 : 0.06;
         set.yellow.emissiveIntensity = state === 'yellow' ? 2.8 : 0.06;
         set.green.emissiveIntensity = state === 'green' ? 2.8 : 0.06;
-        set.top.emissive.setHex(col); set.top.emissiveIntensity = 2.4;
-        set.halo.material.color.setHex(col); set.halo.material.opacity = state === 'green' ? 0.9 : 0.55;
+        set.top.emissive.setHex(col); set.top.emissiveIntensity = off ? 0.08 : 2.4;
+        set.halo.material.color.setHex(col); set.halo.material.opacity = off ? 0 : state === 'green' ? 0.9 : 0.55;
       });
     };
     return g;

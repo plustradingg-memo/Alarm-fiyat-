@@ -209,3 +209,59 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 /* telefon yatay tutulursa: dikey uyarısı */
 #rotate { display: none; z-index: 20; }
 @media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) { #rotate { display: grid; } }
+
+/* ---------------- ANA EKRAN: Görev / Atölye seçici ---------------- */
+.seg { display: flex; gap: 0; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.18); border-radius: 12px; padding: 3px; margin-top: 2px; }
+.seg-btn { border: 0; background: transparent; color: var(--muted); font-weight: 800; font-size: 13.5px; padding: 7px 12px 5px; border-radius: 9px; cursor: pointer; }
+.seg-btn.on { background: var(--sign-yellow); color: var(--ink); }
+.card-build { display: none; align-items: center; gap: 2px; font-weight: 900; font-size: 15px; color: var(--ink); background: var(--sign-yellow); border-radius: 10px; padding: 6px 8px 4px 10px; }
+.card-build svg { width: 16px; height: 16px; fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; margin-top: -2px; }
+#menu[data-kind="ws"] .card-rec { display: none; }
+#menu[data-kind="ws"] .card-build { display: flex; }
+
+/* ---------------- ATÖLYE ---------------- */
+#ws { pointer-events: none; }
+#ws button, #ws .ws-bar, #ws .ws-top, #ws .ws-pop { pointer-events: auto; }
+.ws-top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 7px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px 0; pointer-events: none !important; }
+.ws-top > * { pointer-events: auto; }
+.ws-top .round-btn { width: 42px; height: 42px; flex: none; }
+.ws-top .round-btn svg { width: 20px; height: 20px; }
+.round-btn svg .ln { fill: none; stroke: var(--paper); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+#ws-play .pl { display: none; }
+#ws-play.paused .pz { display: none; }
+#ws-play.paused .pl { display: inline; }
+.ws-head { flex: 1; min-width: 0; background: var(--hud); border: 2px solid rgba(255,255,255,0.85); border-radius: 14px; padding: 5px 10px 3px; display: flex; flex-direction: column; }
+.ws-head strong { font-size: 15px; font-weight: 900; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ws-head small { font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.ws-ai { flex: none; height: 42px; display: flex; align-items: center; gap: 6px; border-radius: 21px; border: 2px solid rgba(255,255,255,0.85); background: var(--hud); color: var(--paper); font-weight: 900; font-size: 13px; padding: 2px 11px 0 9px; cursor: pointer; }
+.ws-ai .dot { width: 11px; height: 11px; border-radius: 50%; background: #6c7a83; margin-top: -2px; }
+.ws-ai.on { background: var(--road); border-color: #b9f5d3; }
+.ws-ai.on .dot { background: #b9ffd6; box-shadow: 0 0 0 3px rgba(185,255,214,0.35); animation: aipulse 1.6s ease-in-out infinite; }
+@keyframes aipulse { 50% { box-shadow: 0 0 0 6px rgba(185,255,214,0.1); } }
+.ws-pop { position: absolute; right: 10px; top: calc(env(safe-area-inset-top, 0px) + 60px); background: var(--paper); color: var(--ink); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 6px 0 rgba(0,0,0,0.25); z-index: 3; }
+.ws-pop button { border: 0; background: #eef1f3; color: var(--ink); border-radius: 10px; padding: 10px 14px 8px; font-weight: 800; font-size: 14px; text-align: left; cursor: pointer; }
+.ws-toast { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 132px); background: var(--paper); color: var(--ink); border-radius: 12px; padding: 8px 12px 6px; font-weight: 800; font-size: 14px; line-height: 1.3; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,0.25); pointer-events: none !important; text-wrap: balance; }
+.ws-toast.err { background: var(--red); color: var(--paper); }
+.ws-toast.show { animation: toastin 0.25s ease-out; }
+@keyframes toastin { from { opacity: 0; transform: translateY(8px); } }
+.ws-bar { position: absolute; left: 0; right: 0; bottom: 0; background: var(--paper); color: var(--ink); border-radius: 18px 18px 0 0; padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 8px); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 -4px 0 rgba(0,0,0,0.18); }
+.ws-row { display: flex; align-items: center; gap: 6px; }
+.ws-tools button, .ws-styles button { flex: 1; min-width: 0; height: 52px; border: 2px solid #dfe4e7; background: #f5f7f8; color: var(--ink); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-weight: 800; font-size: 11.5px; padding: 3px 2px 1px; cursor: pointer; white-space: nowrap; }
+.ws-tools svg, .ws-styles svg, .ws-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ws-tools button[data-tool="taxi"] svg { fill: currentColor; stroke: none; }
+.ws-tools button.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.ws-tools button[data-tool="erase"].on { background: var(--red); border-color: var(--red); }
+.ws-styles { flex: 1; display: flex; gap: 6px; min-width: 0; transition: opacity 0.2s; }
+.ws-styles button { height: 46px; flex-direction: row; gap: 4px; font-size: 12.5px; }
+.ws-styles button svg { width: 18px; height: 18px; }
+.ws-styles button.on { background: var(--sign-yellow); border-color: #d9a300; }
+.ws-styles.dim { opacity: 0.4; }
+.ws-icon { flex: none; width: 46px; height: 46px; border-radius: 12px; border: 2px solid #dfe4e7; background: #f5f7f8; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
+.ws-icon:disabled { opacity: 0.35; cursor: default; }
+.ws-dens { flex: none; display: flex; align-items: center; gap: 4px; }
+.ws-dens button { width: 30px; height: 46px; border-radius: 10px; border: 2px solid #dfe4e7; background: #f5f7f8; color: var(--ink); font-weight: 900; font-size: 18px; cursor: pointer; padding: 0; }
+#ws-dens { display: flex; align-items: flex-end; gap: 2px; height: 22px; }
+#ws-dens i { width: 4px; background: #d3d9dd; border-radius: 2px; }
+#ws-dens i:nth-child(1) { height: 8px; } #ws-dens i:nth-child(2) { height: 11px; } #ws-dens i:nth-child(3) { height: 14px; } #ws-dens i:nth-child(4) { height: 18px; } #ws-dens i:nth-child(5) { height: 22px; }
+#ws-dens i.on { background: var(--road); }
+@media (max-width: 360px) { .ws-styles button { font-size: 11px; } .ws-styles button svg { display: none; } }

@@ -26,7 +26,11 @@
     <section id="menu" class="screen" aria-label="Mod seçimi">
       <header class="menu-head">
         <div class="title-plate"><h1>RAY ARASI</h1></div>
-        <p class="tagline">Masadaki maket şehrin trafiği sende. Bir tur 45 saniye.</p>
+        <p class="tagline">Masadaki maket şehrin trafiği sende.</p>
+        <div class="seg" role="tablist" aria-label="Oyun türü">
+          <button class="seg-btn on" type="button" role="tab" data-kind="game" aria-selected="true">45 sn Görev</button>
+          <button class="seg-btn" type="button" role="tab" data-kind="ws" aria-selected="false">Atölye: Kendin Kur</button>
+        </div>
         <button class="btn-sound round-btn" type="button" aria-label="Sesi kapat" aria-pressed="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l6 6M22 9l-6 6"/></svg>
         </button>
@@ -36,24 +40,24 @@
           <span class="card-view"></span>
           <span class="card-plate">
             <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="7" y="4" width="18" height="18" rx="4"/><rect x="10" y="8" width="12" height="6" rx="1.5" class="cut"/><circle cx="11.5" cy="18" r="1.6" class="cut"/><circle cx="20.5" cy="18" r="1.6" class="cut"/><path d="M9 28l3-5M23 28l-3-5" class="ln"/></svg>
-            <span class="card-txt"><strong>Demiryolu</strong><em>Makası sen yönet</em></span>
-            <span class="card-rec">Rekor<b data-rec="rail">0</b></span>
+            <span class="card-txt"><strong>Demiryolu</strong><em data-game="Makası sen yönet" data-ws="Ray, makas, köprü, alt geçit kur">Makası sen yönet</em></span>
+            <span class="card-rec">Rekor<b data-rec="rail">0</b></span><span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
         <button class="card" type="button" data-mode="road">
           <span class="card-view"></span>
           <span class="card-plate">
             <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><rect x="10" y="2.5" width="12" height="27" rx="4"/><circle cx="16" cy="8.5" r="2.8" class="cut"/><circle cx="16" cy="16" r="2.8" class="cut"/><circle cx="16" cy="23.5" r="2.8" class="cut"/></svg>
-            <span class="card-txt"><strong>Karayolu</strong><em>Kavşak sende</em></span>
-            <span class="card-rec">Rekor<b data-rec="road">0</b></span>
+            <span class="card-txt"><strong>Karayolu</strong><em data-game="Kavşak sende" data-ws="Yol, kavşak, köprü, alt geçit kur">Kavşak sende</em></span>
+            <span class="card-rec">Rekor<b data-rec="road">0</b></span><span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
         <button class="card" type="button" data-mode="air">
           <span class="card-view"></span>
           <span class="card-plate">
             <svg class="card-ico" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c1.3 0 2 1.4 2 3v6.5l10 6v3l-10-3v5.5l3 2.4V29l-5-1.4-5 1.4v-2.6l3-2.4V18.5l-10 3v-3l10-6V6c0-1.6.7-3 2-3z"/></svg>
-            <span class="card-txt"><strong>Hava Trafiği</strong><em>İniş sırasını sen ver</em></span>
-            <span class="card-rec">Rekor<b data-rec="air">0</b></span>
+            <span class="card-txt"><strong>Hava Trafiği</strong><em data-game="İniş sırasını sen ver" data-ws="Pist, taksi yolu, kapı kur">İniş sırasını sen ver</em></span>
+            <span class="card-rec">Rekor<b data-rec="air">0</b></span><span class="card-build">Kur<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></span>
           </span>
         </button>
       </div>
@@ -78,6 +82,46 @@
       <div id="hint" class="hint">
         <span id="hud-mode" class="hint-mode"></span>
         <p id="hint-text"></p>
+      </div>
+    </section>
+
+
+    <!-- ATÖLYE -->
+    <section id="ws" class="screen" hidden aria-label="Atölye">
+      <div class="ws-top">
+        <button id="ws-back" class="round-btn" type="button" aria-label="Ana ekrana dön"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ln" d="M15 5l-7 7 7 7"/></svg></button>
+        <div class="ws-head"><strong id="ws-title">Atölye</strong><small id="ws-stats"></small></div>
+        <button id="ws-ai" class="ws-ai on" type="button" aria-pressed="true" title="Yapay zekâ ışıkları, makasları ve kuleyi yönetsin"><span class="dot"></span><span class="lbl">YZ</span></button>
+        <button id="ws-play" class="round-btn" type="button" aria-label="Trafiği durdur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="pz" x="6" y="5" width="4" height="14" rx="1.2"/><rect class="pz" x="14" y="5" width="4" height="14" rx="1.2"/><path class="pl" d="M8 5l11 7-11 7z"/></svg></button>
+        <button id="ws-menu" class="round-btn" type="button" aria-label="Diğer seçenekler"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+      </div>
+      <div id="ws-pop" class="ws-pop" hidden>
+        <button id="ws-sample" type="button">Örnek düzeni yükle</button>
+        <button id="ws-clear" type="button">Tahtayı temizle</button>
+      </div>
+      <div id="ws-toast" class="ws-toast" hidden role="status"></div>
+      <div class="ws-bar">
+        <div class="ws-row ws-tools" role="toolbar" aria-label="Çizim aracı">
+          <button type="button" data-tool="look" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>İzle</button>
+          <button type="button" data-tool="road" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M8 3L4 21M16 3l4 18"/><path d="M12 4v3M12 10v4M12 17v3"/></svg>Yol</button>
+          <button type="button" data-tool="rail" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 2v20M15 2v20"/><path d="M6 6h12M6 11h12M6 16h12"/></svg>Ray</button>
+          <button type="button" data-tool="taxi" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3c.8 0 1.2.8 1.2 1.8V9l5.8 3.4v1.8l-5.8-1.7v3.8l1.8 1.4V19l-3-.8-3 .8v-1.3l1.8-1.4v-3.8L5 14.2v-1.8L10.8 9V4.8C10.8 3.8 11.2 3 12 3z"/></svg>Taksi yolu</button>
+          <button type="button" data-tool="runway" aria-pressed="false"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="1.5"/><path d="M12 5v3M12 11v3M12 17v2"/></svg>Pist</button>
+          <button type="button" data-tool="erase" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 16l9-9 7 7-6 6H8z"/><path d="M9 20h11"/></svg>Sil</button>
+        </div>
+        <div class="ws-row">
+          <div id="ws-styles" class="ws-styles" role="toolbar" aria-label="Kesişim türü">
+            <button type="button" data-style="grade" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg>Kavşak</button>
+            <button type="button" data-style="bridge" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 8h20"/><path d="M5 21v-7a7 7 0 0 1 14 0v7"/><path d="M5 8v4M19 8v4"/></svg>Köprü</button>
+            <button type="button" data-style="tunnel" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 9h20"/><path d="M6 21v-6a6 6 0 0 1 12 0v6"/><path d="M2 21h20"/></svg>Alt geçit</button>
+          </div>
+          <button id="ws-undo" class="ws-icon" type="button" aria-label="Geri al" disabled><svg viewBox="0 0 24 24"><path d="M9 7H4V2"/><path d="M4.5 7.5A8 8 0 1 1 6 18"/></svg></button>
+          <div class="ws-dens" aria-label="Trafik yoğunluğu">
+            <button id="ws-less" type="button" aria-label="Trafiği azalt">−</button>
+            <span id="ws-dens"><i></i><i></i><i></i><i></i><i></i></span>
+            <button id="ws-more" type="button" aria-label="Trafiği artır">+</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -121,6 +165,11 @@
 <script src="js/rail.js"></script>
 <script src="js/road.js"></script>
 <script src="js/air.js"></script>
+<script src="js/ws-grid.js"></script>
+<script src="js/ws-net.js"></script>
+<script src="js/ws-build.js"></script>
+<script src="js/ws-sim.js"></script>
+<script src="js/workshop.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/app.js"></script>
 </body>
