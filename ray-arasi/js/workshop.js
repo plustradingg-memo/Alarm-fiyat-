@@ -19,6 +19,7 @@
       this.lights = RA.makeLights(this.scene, { sky: 0xe6f0ff, ground: 0x7a6a4a, hemi: 0.75, sun: 0xffe2b8, sunI: 2.0, sunPos: [-14, 26, 12], sunTarget: [0, 0, 0], shadowSize: 18, fill: 0xbfd4ff, fillI: 0.25 });
       this.builder = new WS.Builder(this.scene);
       this.sim = new WS.Sim(this);
+      this.city = new WS.City(this);
       this.tool = 'look'; this.style = 'grade'; this.domain = 'road';
       this.paused = false; this.undoStack = [];
       // çizim önizlemesi
@@ -39,8 +40,10 @@
       $('ws-less').addEventListener('click', () => this.setDensity(this.sim.density - 1));
       $('ws-more').addEventListener('click', () => this.setDensity(this.sim.density + 1));
       $('ws-menu').addEventListener('click', (e) => { e.stopPropagation(); $('ws-pop').hidden = !$('ws-pop').hidden; });
+      $('ws-new').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.start(this.domain); this.city.reset(); this.sim.clearAll(); this.commit('Yeni şehir: 4 düz yol. Talepler birazdan gelir. Eski çizim ↶ ile geri gelir.'); });
       $('ws-sample').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.template(this.domain); this.commit('Örnek düzen yüklendi.'); });
-      $('ws-clear').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = new WS.Grid(); this.commit('Tahta temizlendi. Geri almak için ↶'); });
+      $('ws-clear').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = new WS.Grid(); this.city.reset(); this.commit('Tahta temizlendi. Geri almak için ↶'); });
+      $('ws-dem').addEventListener('click', () => this.focusNext());
       const mid = () => ({ x: this.app.w / 2, y: this.app.h * 0.45 });
       $('ws-zin').addEventListener('click', () => { const m = mid(); this.zoomAt(m.x, m.y, 0.66); });
       $('ws-zout').addEventListener('click', () => { const m = mid(); this.zoomAt(m.x, m.y, 1.5); });
@@ -99,34 +102,72 @@
       this.domain = domain;
       $('ws-title').textContent = TITLES[domain];
       const saved = RA.store.get('ws.' + domain, null);
-      // tahta boyutu değiştiyse (eski sürüm kaydı) yeni örnek düzen açılır; eski çizim ↶ ile geri getirilebilir
-      const resized = !!(saved && saved.cols && (saved.cols !== WS.COLS || saved.rows !== WS.ROWS));
+      // eski sürüm kaydı (başka boyut ya da biçim): şehir 4 düz yolla baştan başlar; eski çizim ↶ ile geri getirilebilir
+      const stale = !!(saved && (saved.v !== WS.SAVE_V || saved.cols !== WS.COLS || saved.rows !== WS.ROWS));
       let oldGrid = null;
       try { if (saved) oldGrid = WS.Grid.load(saved); } catch (e) { oldGrid = null; }
-      this.grid = oldGrid && !resized ? oldGrid : WS.template(domain);
+      const fresh = !oldGrid || stale;
+      this.grid = fresh ? WS.start(domain) : oldGrid;
+      this.city.load(fresh ? null : RA.store.get('ws.city.' + domain, null));
       this.undoStack = []; $('ws-undo').disabled = true;
-      if (resized && oldGrid && !oldGrid.isEmpty()) { this.undoStack.push(JSON.stringify(oldGrid.serialize())); $('ws-undo').disabled = false; this.save(); }
+      if (stale && oldGrid && !oldGrid.isEmpty()) { this.undoStack.push(JSON.stringify(oldGrid.serialize())); $('ws-undo').disabled = false; }
       this.sim.clearAll();
       this.sim.stats = { cars: 0, waitSum: 0, waitN: 0, trains: 0, land: 0, takeoff: 0 };
       this.sim.ai = RA.store.get('ws.ai', true) !== false; this.setAI(this.sim.ai);
       this.setDensity(RA.store.get('ws.density', 3));
       this.setPaused(false);
       this.rebuild();
+      if (fresh) this.save();
       this.userView = false; if (this.fit) this.fitView();
       this.setTool('look');
       this.setStyle('grade');
       // ilk açılışta kısa yönlendirme
-      if (resized && this.undoStack.length) this.toast('Tahta küçüldü ve yeni örnek düzen açıldı. Eski çizimini ↶ ile geri getirebilirsin.');
+      if (stale && this.undoStack.length) this.toast('Şehir 4 düz yolla baştan başladı. Eski çizimin ↶ ile geri gelir.');
+      else if (fresh) this.toast('Şehrin 4 düz yolla başlıyor. Birazdan talepler gelecek: turuncu işaretli yerlere yol yap.');
       else this.toast('Yakınlaştırmak için iki parmağını aç ya da sağdaki + düğmesine dokun. İzle aracıyla tek parmakla kaydır, diğer araçlarla sürükleyerek çiz.');
       this.lastStats = 0;
     }
     rebuild() {
+      // talepler: hangisi bağlandı? Bağlananlar kendi binasıyla, bekleyenler işaretle çizilir
+      const ev = this.city.sync(this.grid);
+      this.builder.places = this.city.map();
+      this.builder.reserved = new Set(this.city.waiting().map((p) => p.i + ',' + p.j));
       this.net = new WS.Net(this.grid);
       const dyn = this.builder.build(this.net);
       this.sim.setNet(this.net, dyn);
+      this.city.rebuildVisuals(this.net);
       if (this.builder.gridLines) this.builder.gridLines.visible = this.tool !== 'look';
+      if (ev.length) this.onConnect(ev);
     }
-    save() { RA.store.set('ws.' + this.domain, this.grid.serialize()); }
+    save() { RA.store.set('ws.' + this.domain, this.grid.serialize()); this.saveCity(); }
+    saveCity() { RA.store.set('ws.city.' + this.domain, this.city.serialize()); }
+
+    /* ---------- talepler ---------- */
+    onDemand(p) {
+      const t = WS.City.TYPES[p.type];
+      this.toast('Yeni talep: ' + t.ask + '. Üstteki talep düğmesi seni oraya götürür.');
+      RA.audio.play('point');
+      const b = $('ws-dem'); b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping');
+    }
+    onConnect(list) {
+      const p = list[list.length - 1], t = WS.City.TYPES[p.type];
+      const msg = { road: t.name + ' bağlandı! Araçlar gelip gitmeye başladı.', rail: 'İstasyon bağlandı! Daha çok tren sefer yapacak.', taxi: 'Yeni kapı açıldı! Daha çok uçak gelecek.' }[t.need];
+      this.pendingMsg = msg; // çizim mesajının yerine geçsin
+      RA.audio.play('clear');
+      this.saveCity();
+    }
+    // Talep düğmesi: sıradaki bekleyen talebe (yoksa sıkışan kavşağa) yakınlaş
+    focusNext() {
+      const w = this.city.waiting();
+      const items = w.map((p) => ({ i: p.i, j: p.j, msg: WS.City.TYPES[p.type].ask + '. ' + WS.City.HOW[WS.City.TYPES[p.type].need] }));
+      for (const e of this.city.jams) items.push({ i: e.i, j: e.j, msg: 'Burası sıkışık (' + e.n + ' araç bekliyor). Köprü, alt geçit ya da yeni bir yol dene.' });
+      if (!items.length) { this.toast('Şu an bekleyen talep yok. Yeni talepler kendiliğinden gelir.'); return; }
+      const it = items[this.city.focusN++ % items.length];
+      this.view.t.set(this.net.cx(it.i), 0, this.net.cz(it.j) + 1.5);
+      this.view.d = this.fit.d * 0.34; this.clampView(); this.applyCam(); this.userView = true;
+      this.toast(it.msg);
+      RA.audio.play('tap');
+    }
     pushUndo() { this.undoStack.push(JSON.stringify(this.grid.serialize())); if (this.undoStack.length > 30) this.undoStack.shift(); $('ws-undo').disabled = false; }
     undo() {
       const s = this.undoStack.pop();
@@ -135,7 +176,7 @@
       this.commit('Geri alındı.');
       $('ws-undo').disabled = !this.undoStack.length;
     }
-    commit(msg) { this.save(); this.rebuild(); if (msg) this.toast(msg); RA.audio.play('switch'); }
+    commit(msg) { this.pendingMsg = null; this.save(); this.rebuild(); const m = this.pendingMsg || msg; this.pendingMsg = null; if (m) this.toast(m); RA.audio.play('switch'); }
 
     /* ---------- girdi ---------- */
     cellAt(x, y) {
@@ -148,7 +189,7 @@
       const local = (e) => { const r = st.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
       const two = () => { const [a, b] = [...this.ptrs.values()]; return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }; };
       st.addEventListener('pointerdown', (e) => {
-        if (this.app.state !== 'workshop' || e.target.closest('button, .ws-bar, .ws-top, #ws-pop, .ws-zoom')) return;
+        if (this.app.state !== 'workshop' || e.target.closest('button, .ws-bar, .ws-top, .ws-city, #ws-pop, .ws-zoom')) return;
         RA.audio.unlock();
         e.preventDefault();
         const p = local(e);
@@ -281,6 +322,8 @@
         const key = c.i + ',' + c.j; if (seen.has(key)) continue; seen.add(key);
         const cell = this.grid.cell(c.i, c.j);
         if (!cell || cell.pieces.length) continue;
+        const pl = this.city.placeAt(c.i, c.j);
+        if (pl && WS.City.TYPES[pl.type].need !== 'road') { this.toast(WS.City.TYPES[pl.type].name + ' için ' + (WS.City.TYPES[pl.type].need === 'rail' ? 'ray' : 'taksi yolu') + ' gerekir.', true); return; }
         tried++;
         for (const d of ['S', 'N', 'E', 'W']) {
           const nb = this.grid.cell(c.i + WS.DV[d].x, c.j + WS.DV[d].z);
@@ -293,13 +336,23 @@
       else if (tried) { this.toast('Otoparkı bir yolun yanındaki boş kareye koy.', true); RA.audio.play('denied'); }
     }
     applyStroke(cells) {
-      const seq = WS.strokeCells(cells.map((c) => ({ i: c.i, j: c.j })));
+      let seq = WS.strokeCells(cells.map((c) => ({ i: c.i, j: c.j })));
       this.prev.count = 0;
       if (this.tool === 'erase') {
         const before = JSON.stringify(this.grid.serialize());
         if (WS.eraseStroke(this.grid, seq)) { this.undoStack.push(before); $('ws-undo').disabled = false; this.commit(); }
         return;
       }
+      // talep kareleri: hat talebin karesinde biter (çıkmaz uç = bina girişi); başka tür hat oraya giremez
+      let cut = seq;
+      for (let k = 0; k < seq.length; k++) {
+        const pl = this.city.placeAt(seq[k].i, seq[k].j); if (!pl) continue;
+        const t = WS.City.TYPES[pl.type];
+        if (pl.conn) { this.toast(t.name + ' zaten bağlı; tek girişi var. Yolu yanından geçir.', true); RA.audio.play('denied'); return; }
+        if (t.need !== this.tool) { this.toast('Bu kare ' + t.name + ' için ayrıldı: ' + WS.City.HOW[t.need], true); RA.audio.play('denied'); return; }
+        if (k > 0) { cut = seq.slice(0, k + 1); break; }
+      }
+      seq = cut;
       const before = JSON.stringify(this.grid.serialize());
       const r = WS.applyStroke(this.grid, seq, this.tool, this.style);
       if (!r.ok) { if (r.msg) { this.toast(r.msg, true); RA.audio.play('denied'); RA.vibrate([20, 40, 20]); } return; }
@@ -338,25 +391,41 @@
     }
 
     /* ---------- döngü ---------- */
-    update(dt) { if (!this.paused) this.sim.update(dt); }
+    update(dt) { if (!this.paused) { this.sim.update(dt); this.city.update(dt); } }
     frame(dt) {
       this.sim.visuals();
+      this.city.visuals(performance.now() / 1000, this.view ? this.view.d : 60);
       const now = performance.now();
       if (now - this.lastStats > 500) {
         this.lastStats = now;
         const s = this.sim.stats, net = this.net, parts = [];
         if (net.list.some((x) => x.fam === 'road')) {
           const sources = this.sim.lots.size + net.entries.filter((e) => e.fam === 'road').length;
-          parts.push(sources ? s.cars + ' yolculuk · ' + this.sim.lots.size + ' otopark' + (s.waitN ? ' · bekleme ' + (s.waitSum / s.waitN).toFixed(1).replace('.', ',') + ' sn' : '') : 'Araçlar için otopark ya da şehir dışı çıkışı ekle');
+          parts.push(sources ? s.cars + ' yolculuk · ' + this.sim.cars.length + ' araç' + (s.waitN ? ' · bekleme ' + (s.waitSum / s.waitN).toFixed(1).replace('.', ',') + ' sn' : '') : 'Araçlar için otopark ya da şehir dışı çıkışı ekle');
         }
         if (net.list.some((x) => x.fam === 'rail')) parts.push(this.sim.trains.length + ' tren · ' + s.trains + ' sefer');
         if (net.runways.length) parts.push(s.land + ' iniş · ' + s.takeoff + ' kalkış');
         $('ws-stats').textContent = parts.length ? parts.join(' · ') : 'Boş tahta: çizmeye başla';
+        this.cityUI();
       }
+    }
+    // Şehir şeridi: memnuniyet, nüfus, bekleyen talep / sıkışma
+    cityUI() {
+      const c = this.city, mood = Math.round(c.mood);
+      const el = $('ws-mood');
+      el.querySelector('b').textContent = '%' + mood;
+      el.querySelector('.meter i').style.width = mood + '%';
+      el.dataset.lv = mood >= 70 ? 'ok' : mood >= 45 ? 'mid' : 'bad';
+      $('ws-popn').querySelector('b').textContent = c.population().toLocaleString('tr-TR');
+      const n = c.waiting().length, jam = c.jams.length;
+      const b = $('ws-dem');
+      b.dataset.st = n ? 'dem' : jam ? 'jam' : 'none';
+      b.querySelector('b').textContent = n ? String(n) : jam ? String(jam) : '0';
+      b.querySelector('span').textContent = n ? (n > 1 ? 'talep' : 'talep') : jam ? 'sıkışık' : 'talep';
     }
     resize(w, h) {
       this.camera.aspect = w / h; this.camera.updateProjectionMatrix();
-      const top = $('ws').querySelector('.ws-top'), bar = $('ws').querySelector('.ws-bar');
+      const top = $('ws-city') && $('ws-city').offsetHeight ? $('ws-city') : $('ws').querySelector('.ws-top'), bar = $('ws').querySelector('.ws-bar');
       const tb = top && top.offsetHeight ? top.getBoundingClientRect().bottom - this.app.stage.getBoundingClientRect().top + 6 : 70;
       const zm = $('ws').querySelector('.ws-zoom');
       const lowTop = zm && zm.offsetHeight ? zm.getBoundingClientRect().top : bar && bar.offsetHeight ? bar.getBoundingClientRect().top : 0;

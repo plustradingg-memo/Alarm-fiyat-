@@ -127,7 +127,7 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 
 /* ---------------- ATÖLYE ---------------- */
 #ws { pointer-events: none; }
-#ws button, #ws .ws-bar, #ws .ws-top, #ws .ws-pop { pointer-events: auto; }
+#ws button, #ws .ws-bar, #ws .ws-top, #ws .ws-pop, #ws .ws-city > * { pointer-events: auto; }
 .ws-top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 7px; padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px 0; pointer-events: none !important; }
 .ws-top > * { pointer-events: auto; }
 .ws-top .round-btn { width: 42px; height: 42px; flex: none; }
@@ -144,7 +144,7 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 .ws-ai.on { background: var(--road); border-color: #b9f5d3; }
 .ws-ai.on .dot { background: #b9ffd6; box-shadow: 0 0 0 3px rgba(185,255,214,0.35); animation: aipulse 1.6s ease-in-out infinite; }
 @keyframes aipulse { 50% { box-shadow: 0 0 0 6px rgba(185,255,214,0.1); } }
-.ws-pop { position: absolute; right: 10px; top: calc(env(safe-area-inset-top, 0px) + 60px); background: var(--paper); color: var(--ink); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 6px 0 rgba(0,0,0,0.25); z-index: 3; }
+.ws-pop { position: absolute; right: 10px; top: calc(env(safe-area-inset-top, 0px) + 96px); background: var(--paper); color: var(--ink); border-radius: 14px; padding: 6px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 6px 0 rgba(0,0,0,0.25); z-index: 3; }
 .ws-pop button { border: 0; background: #eef1f3; color: var(--ink); border-radius: 10px; padding: 10px 14px 8px; font-weight: 800; font-size: 14px; text-align: left; cursor: pointer; }
 .ws-toast { position: absolute; left: 12px; right: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 180px); background: var(--paper); color: var(--ink); border-radius: 12px; padding: 8px 12px 6px; font-weight: 800; font-size: 14px; line-height: 1.3; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,0.25); pointer-events: none !important; text-wrap: balance; }
 .ws-toast.err { background: var(--red); color: var(--paper); }
@@ -177,6 +177,27 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 
 .card-build { display: flex; align-items: center; gap: 2px; font-weight: 900; font-size: 15px; color: var(--ink); background: var(--sign-yellow); border-radius: 10px; padding: 6px 8px 4px 10px; flex: none; }
 .card-build svg { width: 16px; height: 16px; fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; margin-top: -2px; }
+
+/* şehir şeridi: memnuniyet, nüfus, talepler */
+.ws-city { position: absolute; left: 10px; right: 10px; top: calc(env(safe-area-inset-top, 0px) + 58px); display: flex; align-items: center; gap: 6px; pointer-events: none; }
+.ws-city svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ws-mood, .ws-popn { height: 32px; display: flex; align-items: center; gap: 6px; background: var(--hud); border: 2px solid rgba(255,255,255,0.85); border-radius: 16px; padding: 0 10px 0 7px; font-weight: 900; font-size: 13px; font-variant-numeric: tabular-nums; }
+.ws-mood { flex: 1; min-width: 0; }
+.ws-mood .meter { flex: 1; min-width: 30px; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.18); overflow: hidden; }
+.ws-mood .meter i { display: block; height: 100%; width: 80%; border-radius: 4px; background: var(--green); transition: width 0.6s, background 0.6s; }
+.ws-mood[data-lv="mid"] .meter i { background: var(--amber); }
+.ws-mood[data-lv="bad"] .meter i { background: var(--red); }
+.ws-mood[data-lv="ok"] svg { color: #b9ffd6; } .ws-mood[data-lv="mid"] svg { color: var(--amber); } .ws-mood[data-lv="bad"] svg { color: #ff8a80; }
+.ws-mood b { min-width: 34px; text-align: right; }
+.ws-popn { flex: none; }
+.ws-dem { flex: none; height: 32px; display: flex; align-items: center; gap: 4px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.85); background: var(--hud); color: var(--paper); font-weight: 900; font-size: 13px; padding: 1px 11px 0 8px; cursor: pointer; font-family: inherit; }
+.ws-dem span { font-weight: 800; }
+.ws-dem[data-st="none"] { opacity: 0.75; }
+.ws-dem[data-st="dem"] { background: #ff8a1f; border-color: #ffe0bf; color: #1b130a; }
+.ws-dem[data-st="jam"] { background: var(--red); border-color: #ffc9c4; }
+.ws-dem.ping { animation: demping 0.9s ease-out 2; }
+@keyframes demping { 30% { transform: scale(1.16); box-shadow: 0 0 0 6px rgba(255,138,31,0.35); } }
+@media (max-width: 350px) { .ws-popn { display: none; } }
 
 /* yakınlaştırma / kaydırma */
 .ws-zoom { position: absolute; right: 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 130px); display: flex; flex-direction: row; gap: 8px; }

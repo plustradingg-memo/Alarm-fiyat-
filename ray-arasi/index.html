@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Ray Arası</title>
-<meta name="description" content="Masadaki maket tahtasına yol, ray ve havalimanı kur; kavşak, köprü ve alt geçit ekle; ışıkları yapay zekâ yönetsin.">
+<meta name="description" content="4 düz yolla başlayan maket şehrini büyüt: talepleri karşıla, yol, ray ve havalimanı kur, sıkışan trafiği köprü ve alt geçitle çöz.">
 <meta name="theme-color" content="#1a242b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -25,7 +25,7 @@
     <section id="menu" class="screen" aria-label="Atölye seçimi">
       <header class="menu-head">
         <div class="title-plate"><h1>RAY ARASI</h1></div>
-        <p class="tagline">Maket tahtana yol, ray ve havalimanı kur; trafiği yapay zekâ yönetsin.</p>
+        <p class="tagline">Şehrin büyüdükçe yol, ray ve havalimanı kur; ışıkları yapay zekâ yönetsin.</p>
         <button class="btn-sound round-btn" type="button" aria-label="Sesi kapat" aria-pressed="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l6 6M22 9l-6 6"/></svg>
         </button>
@@ -56,7 +56,7 @@
           </span>
         </button>
       </div>
-      <footer class="menu-foot"><span id="menu-day">Süre yok: kur, izle, yapay zekâya bırak ya da elle yönet.</span></footer>
+      <footer class="menu-foot"><span id="menu-day">4 düz yolla başla, talepleri karşıla, sıkışan trafiği çöz.</span></footer>
     </section>
 
 
@@ -69,7 +69,16 @@
         <button id="ws-play" class="round-btn" type="button" aria-label="Trafiği durdur"><svg viewBox="0 0 24 24" aria-hidden="true"><rect class="pz" x="6" y="5" width="4" height="14" rx="1.2"/><rect class="pz" x="14" y="5" width="4" height="14" rx="1.2"/><path class="pl" d="M8 5l11 7-11 7z"/></svg></button>
         <button id="ws-menu" class="round-btn" type="button" aria-label="Diğer seçenekler"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
       </div>
+      <div class="ws-city" id="ws-city">
+        <div class="ws-mood" id="ws-mood" data-lv="ok" title="Memnuniyet: araçlar az bekledikçe ve talepler karşılandıkça artar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/></svg>
+          <span class="meter"><i></i></span><b>%80</b>
+        </div>
+        <div class="ws-popn" id="ws-popn" title="Nüfus"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c2.4-.3 4.4 1.2 5 4.3"/></svg><b>1.200</b></div>
+        <button id="ws-dem" class="ws-dem" type="button" data-st="none" aria-label="Sıradaki talebe git"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><path d="M12 7v3.5M12 13h.01"/></svg><b>0</b><span>talep</span></button>
+      </div>
       <div id="ws-pop" class="ws-pop" hidden>
+        <button id="ws-new" type="button">Yeni şehir (4 düz yol)</button>
         <button id="ws-sample" type="button">Örnek düzeni yükle</button>
         <button id="ws-clear" type="button">Tahtayı temizle</button>
       </div>
@@ -117,6 +126,7 @@
 <script src="js/ws-net.js"></script>
 <script src="js/ws-build.js"></script>
 <script src="js/ws-sim.js"></script>
+<script src="js/ws-city.js"></script>
 <script src="js/workshop.js"></script>
 <script src="js/menu.js"></script>
 <script src="js/app.js"></script>

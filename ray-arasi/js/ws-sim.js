@@ -43,6 +43,18 @@
       for (const key of ks) { this.sim.res.set(key, this.owner); this.held.add(key); }
       return true;
     }
+    // ayırmadan yalnızca bak: bu hareketin bütün blokları alınabilir mi?
+    canReserve(m) {
+      for (const key of this.keysOf(m)) {
+        if (this.held.has(key)) continue;
+        const own = this.sim.res.get(key);
+        if (own && own !== this.owner) { this.blockOwner = own; return false; }
+        const xc = this.sim.xc.get(key);
+        if (xc) { xc.request = true; if (xc.state !== 'closed') return false; }
+        if (key.startsWith('rw') && !this.sim.towerGrant(key, this.owner)) return false;
+      }
+      return true;
+    }
     stillNeeded(key) {
       for (const m of this.segs) if (this.keysOf(m).includes(key)) return true;
       for (const m of this.plan) if (this.held.has(key) && this.keysOf(m).includes(key)) return true;
@@ -70,7 +82,19 @@
       // yer ayırt (sinyal / makas / pist izni)
       let dist = this.head().len - this.s, limit = Infinity;
       this.blocked = null;
-      for (let n = 0; n < this.plan.length; n++) {
+      // tek seferde ayırma (uçaklar): yolun tamamı alınamıyorsa hiçbir yeni blok ayrılmaz, olduğu yerde beklenir.
+      // Tek şeritli taksi yollarında karşılıklı gelen iki uçağın kafa kafaya kilitlenmesini önler.
+      if (P.atomic && this.plan.length) {
+        if (this.plan.every((m) => this.canReserve(m))) {
+          // hepsi alınabilir: kuleye ikinci kez sormadan hepsini birden ayır
+          for (const m of this.plan) for (const key of this.keysOf(m)) { this.sim.res.set(key, this.owner); this.held.add(key); }
+        } else {
+          limit = dist - 0.08; this.blocked = this.plan[0]; this.blockIdx = 0;
+          // yolda pist varsa kule sırasına şimdiden gir (inişler kalkışı sonsuza dek bekletmesin)
+          for (const m of this.plan) for (const key of this.keysOf(m)) if (key.startsWith('rw') && !this.held.has(key)) this.sim.towerWant(key, this.owner);
+        }
+      }
+      for (let n = 0; n < this.plan.length && !this.blocked; n++) {
         const m = this.plan[n];
         if (!this.tryReserve(m)) { limit = dist - 0.08; this.blocked = m; this.blockIdx = n; break; }
         dist += m.len;
@@ -152,7 +176,16 @@
       const prevLots = this.lots || new Map();
       this.lots = new Map();
       const lr = RA.rng(net.g.cols * 7 + dyn.lots.length);
-      for (const L of dyn.lots) { const old = prevLots.get(L.key); this.lots.set(L.key, { key: L.key, i: L.i, j: L.j, k: L.k, port: L.port, cap: 6, count: old ? old.count : 1 + Math.floor(lr() * 3), incoming: 0, emitT: 1 + lr() * 5, lift: 0, dyn: L }); }
+      const city = this.ws.city;
+      for (const L of dyn.lots) {
+        const old = prevLots.get(L.key);
+        // talep yeri (mahalle, okul…) ise kapasitesi ve çekim gücü türüne göre; değilse sıradan otopark
+        const place = city && city.placeAt(L.i, L.j);
+        const ty = place && place.conn && WS.City.TYPES[place.type].need === 'road' ? WS.City.TYPES[place.type] : null;
+        const cap = ty ? ty.cap : 6;
+        const count = old && old.place === (ty ? place : null) ? Math.min(cap, old.count) : ty ? Math.min(cap, ty.start) : 1 + Math.floor(lr() * 3);
+        this.lots.set(L.key, { key: L.key, i: L.i, j: L.j, k: L.k, port: L.port, cap, count, incoming: 0, emitT: 1 + lr() * 5, lift: 0, dyn: L, place: ty ? place : null, pull: ty ? ty.pull : 1, emit: ty ? ty.emit : 1 });
+      }
       for (const c of [...this.cars]) {
         const nm = remap(c.mv); if (!nm) { this.killCar(c, true); continue; }
         c.mv = nm; c.prev = remap(c.prev) || null; c.destHeld = false;
@@ -203,7 +236,7 @@
       this.scene.add(g);
       const P = CAR[type];
       const mv = trip.route.shift();
-      const c = { kind: 'car', id: uid++, type, P, L: P.L, g, mv, prev: null, s, v, acc: 0, plan: trip.route, dest: trip.dest, wait: 0, waitTot: 0, commit: null, wheelA: 0, rear: null, fade: 0, appear: 0 };
+      const c = { kind: 'car', id: uid++, type, P, L: P.L, g, mv, prev: null, s, v, acc: 0, plan: trip.route, dest: trip.dest, wait: 0, waitTot: 0, stopT: 0, still: 0, commit: null, wheelA: 0, rear: null, fade: 0, appear: 0 };
       this.setDest(c, trip.dest);
       this.cars.push(c);
       this.placeCar(c, true);
@@ -252,7 +285,7 @@
         // şehir dışı çıkışları toplamda sınırlı bir pay alır; çok çıkış olsa da araçlar otoparkları da doldurur
         const nEx = dests.reduce((n, x) => n + (x.kind === 'exit' ? 1 : 0), 0);
         const exW = nEx ? Math.min(0.45, 2.4 / nEx) : 0;
-        const w = dests.map((x) => { if (x.kind !== 'lot') return exW; const L = this.lots.get(x.key); return 0.3 + (L.cap - L.count - L.incoming) / L.cap; });
+        const w = dests.map((x) => { if (x.kind !== 'lot') return exW; const L = this.lots.get(x.key); return (0.3 + (L.cap - L.count - L.incoming) / L.cap) * L.pull; });
         let t = this.rnd() * w.reduce((a, b) => a + b, 0); d = dests[0];
         for (let n = 0; n < dests.length; n++) { t -= w[n]; if (t <= 0) { d = dests[n]; break; } }
       }
@@ -279,21 +312,39 @@
         return true;
       };
       const boxFree = () => { for (const o of buckets.get(nx.pk) || []) if (o !== c && net.conflicts(o.mv, nx)) return false; return true; };
+      // kavşağı tıkama: araç, arka arkaya gelen kavşak karelerinin hepsi boş, ışıkları yeşil ve çıkışta yer
+      // yoksa ilk kareye girmez (kutunun içinde ya da rayların üstünde beklenmez)
+      const isBox = (m) => this.jc.has(m.i + ',' + m.j + ',' + m.k) || net.yieldAt.has(m.i + ',' + m.j + ',' + m.k);
+      const chainBlocked = () => {
+        for (let q = 1; q < c.plan.length && q < 6; q++) {
+          const m = c.plan[q];
+          if (!m || m.exit) return false;
+          const J2 = this.jc.get(m.i + ',' + m.j + ',' + m.k);
+          if (J2 && !(J2.flash || J2.green === AXIS[m.din] || c.commit === J2.key)) return true;
+          const X2 = this.xc.get('c' + m.i + ',' + m.j);
+          if (X2 && (X2.kind === 'level' || X2.kind === 'taxiRoad') && (X2.state !== 'open' || this.res.has(X2.key))) return true;
+          const b = buckets.get(m.pk) || [];
+          if (!isBox(m) && !X2) { for (const o of b) if (o.mv.din === m.din && o.s - o.L < c.L + 0.3) return true; return false; }
+          for (const o of b) if (o !== c && !o.fade && net.conflicts(o.mv, m)) return true;
+        }
+        return false;
+      };
       if (J) {
         const ax = AXIS[nx.din];
         const go = J.flash || J.green === ax || c.commit === J.key;
         if (!go) return { ok: false, red: true };
-        if (!boxFree() || !spaceAfter()) return { ok: false };
+        if (!boxFree() || (c.commit === J.key ? !spaceAfter() : chainBlocked())) return { ok: false };
         return { ok: true };
       }
       if (Y) {
         // otoparktan çıkan, ana yoldan yaklaşan araca yol verir
-        if (!boxFree()) return { ok: false };
+        if (!boxFree() || chainBlocked()) return { ok: false };
         if (nx.din === Y.minor) {
           for (const o of this.cars) {
             const on = o.plan[0];
             if (o === c || o.fade || !on || on.exit || on.i !== nx.i || on.j !== nx.j || on.k !== nx.k || on.din === Y.minor) continue;
-            if (o.v < 0.3 && c.wait > 2) continue; // ana yolda kuyrukta duran araç: bir süre sonra çıkılır (o da kutu doluyken girmez)
+            if (o.v < 0.3 && c.still > 2) continue; // ana yolda kuyrukta duran araç: bir süre sonra çıkılır (o da kutu doluyken girmez)
+            if (c.still > 8 && o.mv.len - o.s > 0.9) continue; // uzun beklemede yalnızca çok yakındaki araca yol ver
             if (o.mv.len - o.s < 1.7 && net.conflicts(on, nx)) return { ok: false, red: true };
           }
         }
@@ -302,7 +353,7 @@
       }
       if (x && (x.kind === 'level' || x.kind === 'taxiRoad')) {
         if (x.state !== 'open' || this.res.has(x.key)) return { ok: false, red: true };
-        if (!spaceAfter()) return { ok: false };
+        if (chainBlocked()) return { ok: false }; // rayların üstünde beklenmez
         return { ok: true };
       }
       return { ok: true };
@@ -348,6 +399,9 @@
         c.v = Math.max(0, c.v + a * dt);
         if (gap < 0.03) c.v = 0;
         if (c.v < 0.1 && red) { c.wait += dt; c.waitTot += dt; } else c.wait = 0;
+        if (c.v < 0.15 && !c.appear && !parking) { c.stopT += dt; c.still += dt; } else c.still = 0;
+        // 45 sn'den uzun kımıldayamayan araç vazgeçer (kilitlenen trafik sonsuza kadar donmasın)
+        if (c.still > 45) { this.stats.giveUp = (this.stats.giveUp || 0) + 1; if (this.ws.city) this.ws.city.onGiveUp(c); this.killCar(c); continue; }
         c.s += c.v * dt;
         c.wheelA += (c.v * dt) / (0.14 * SC);
         // otoparka varış: bariyer kalkar, araç içeri girip kaybolur, çatıda bir yer dolar
@@ -372,7 +426,7 @@
         this.placeCar(c);
       }
     }
-    finishTrip(c) { this.stats.cars++; this.stats.waitSum += c.waitTot; this.stats.waitN++; }
+    finishTrip(c) { this.stats.cars++; this.stats.waitSum += c.waitTot; this.stats.waitN++; if (this.ws.city) this.ws.city.onTrip(c); }
     placeCar(c, init) {
       const P = c.P;
       const F = {};
@@ -393,10 +447,22 @@
       const braking = c.acc < -0.6 || c.v < 0.05;
       ud.brake.emissiveIntensity = braking ? 3.0 : 0.35; ud.brakeHalo.material.opacity = braking ? 0.7 : 0;
     }
+    // Şehir büyüdükçe yoldaki araç sayısı artar: şehir dışı girişleri + otoparklar + bağlanan yerler (zamanla büyür)
+    carTarget() {
+      const city = this.ws.city;
+      const ent = this.net.entries.filter((e) => e.fam === 'road').length;
+      let w = Math.min(8, ent * 0.8);
+      for (const L of this.lots.values()) w += L.place ? city.weight(L.place) : 2.5;
+      const grow = 1 + Math.min(0.5, (city ? city.t : 0) / 900);
+      const dens = [0.55, 0.78, 1, 1.25, 1.5][this.density - 1] || 1;
+      return Math.min(44, Math.round(w * grow * dens));
+    }
     spawnCars(dt) {
       const net = this.net;
-      const target = 6 + this.density * 6;
-      const interval = RA.lerp(9, 2.6, (this.density - 1) / 4);
+      const target = this.carTarget();
+      // yoldaki araç hedefin altındaysa girişler ve otoparklar daha sık araç gönderir (şehir büyüdükçe trafik gerçekten artar)
+      const press = RA.clamp(this.cars.length / Math.max(1, target), 0.3, 1);
+      const interval = RA.lerp(9, 2.6, (this.density - 1) / 4) * press;
       const free = (mv) => !this.cars.some((o) => o.mv.pk === mv.pk && (o.mv.din === mv.din || o.mv.dout === mv.dout) && o.s < o.L + 0.5);
       // şehir dışından gelenler (tahtanın kenarındaki yol uçları)
       for (const e of net.entries) {
@@ -405,7 +471,7 @@
         let t = this.spawnT.get(key); if (t == null) t = this.rnd() * interval;
         t -= dt;
         // nüfusun bir kısmı otoparklardan çıkanlara ayrılır
-        if (t <= 0 && this.cars.length < target * (this.lots.size ? 0.55 : 1)) {
+        if (t <= 0 && this.cars.length < target * (this.lots.size ? 0.85 : 1)) {
           const trip = this.findTrip({ i: e.i, j: e.j, k: e.k, din: e.d }, 'x' + e.i + ',' + e.j + ',' + e.d);
           if (trip && free(trip.route[0])) { this.makeCar(trip, 0, 1.8); t = interval * (0.7 + this.rnd() * 0.8); } else t = 0.7;
         }
@@ -416,7 +482,7 @@
         L.lift = Math.max(0, L.lift - dt * 0.9);
         L.emitT -= dt;
         if (L.emitT > 0 || L.count <= 0 || this.cars.length >= target) continue;
-        L.emitT = (interval * (0.7 + this.rnd() * 0.9)) / Math.max(0.55, L.count / 2.5); // dolu otopark daha sık, azalan otopark daha seyrek araç gönderir
+        L.emitT = (interval * (0.7 + this.rnd() * 0.9)) / Math.max(0.55, L.count / (L.cap * 0.42)) / L.emit; // dolu otopark daha sık, azalan otopark daha seyrek araç gönderir
         const trip = this.findTrip({ i: L.i, j: L.j, k: L.k, din: 'C' }, L.key);
         if (!trip || !free(trip.route[0])) { L.emitT = 1.2; continue; }
         L.count--; L.lift = 1;
@@ -566,7 +632,7 @@
     }
     spawnTrains(dt) {
       const net = this.net;
-      const target = Math.min(7, this.density + 1);
+      const target = Math.min(9, this.density + 1 + (this.ws.city ? this.ws.city.connected('rail') : 0));
       const rails = net.list.filter((x) => x.fam === 'rail');
       if (!rails.length || this.trains.length >= target) return;
       this.trainT -= dt; if (this.trainT > 0) return;
@@ -642,9 +708,10 @@
         if (n === cells.length - 1 && p.m & WS.BIT[dir]) sides.push(dir);
         for (const sd of sides) {
           const mExit = net.movement(cc.i, cc.j, cc.k, back, sd);
-          const a = net.after(mExit); if (!a || a.out) continue;
-          const r = net.route({ i: a.i, j: a.j, k: a.k, din: a.din }, (s) => { const q = net.piece(s.i, s.j, s.k); return q && q.type === 'taxi' && WS.portCount(q.m) === 1 && !this.claim.has(s.i + ',' + s.j); }, (s) => net.rwOfCell.has(s.i + ',' + s.j));
-          if (!r && !(net.piece(a.i, a.j, a.k).type === 'taxi' && WS.portCount(net.piece(a.i, a.j, a.k).m) === 1)) continue;
+          const a = net.after(mExit); if (!a || a.out || this.planeAt(a)) continue;
+          // başka uçağın durduğu karelerden geçen yol seçilmez (pistte kilitlenmeyi önler; yoksa dokun-kalk)
+          const r = net.route({ i: a.i, j: a.j, k: a.k, din: a.din }, (s) => { const q = net.piece(s.i, s.j, s.k); return q && q.type === 'taxi' && WS.portCount(q.m) === 1 && this.gateFree(s); }, (s) => net.rwOfCell.has(s.i + ',' + s.j) || this.planeAt(s));
+          if (!r && !(net.piece(a.i, a.j, a.k).type === 'taxi' && WS.portCount(net.piece(a.i, a.j, a.k).m) === 1 && this.gateFree(a))) continue;
           const mvs = [];
           for (let q = 0; q <= n; q++) mvs.push(net.movement(cells[q].i, cells[q].j, cells[q].k, back, q === n ? sd : dir));
           const goal = r ? r.goal : { i: a.i, j: a.j, k: a.k, din: a.din };
@@ -654,6 +721,14 @@
         }
       }
       return null;
+    }
+    planeAt(s, p) { const o = this.res.get(this.net.resKey(s.i, s.j, s.k)); return !!(o && o.kind === 'plane' && o !== p); }
+    // Kapı boş mu: başka uçak ayırmamış ve kapı karesinde (kalkmak üzere olan dahil) uçak yok
+    gateFree(s, p) {
+      const key = s.i + ',' + s.j;
+      if (this.claim.has(key) && this.claim.get(key) !== p) return false;
+      const o = this.res.get(this.net.resKey(s.i, s.j, s.k));
+      return !o || o === p;
     }
     departurePlan(p, start) {
       const net = this.net;
@@ -672,6 +747,10 @@
       for (let q = 1; q < cells.length; q++) mvs.push(net.movement(cells[q].i, cells[q].j, cells[q].k, OPP[dir], dir));
       return { mvs, rw, dir };
     }
+    towerWant(key, owner) {
+      if (owner.kind !== 'plane' || this.res.get(key) === owner) return;
+      if (!this.towerQ.find((x) => x.p === owner)) this.towerQ.push({ p: owner, key, type: owner.departing ? 'depart' : 'cross', t: this.t });
+    }
     towerGrant(key, owner) {
       if (this.res.get(key) === owner) return true;
       if (this.res.has(key)) return false;
@@ -679,6 +758,9 @@
       const q = this.towerQ.find((x) => x.p === owner);
       if (!q) this.towerQ.push({ p: owner, key, type: owner.state === 'ground' && owner.departing ? 'depart' : 'cross', t: this.t });
       if (!this.ai) return !!owner.cleared;
+      // kalkış ve pist geçişleri geliş sırasıyla: daha önce sıraya giren yerdeki uçak beklerken sonraki alamaz
+      const me = this.towerQ.find((x) => x.p === owner);
+      if (this.towerQ.some((x) => x.p !== owner && x.key === key && x.type !== 'land' && x.t < me.t - 0.01 && this.planes.includes(x.p))) return false;
       // YZ kule: uzun bekleyen inişe öncelik
       const landWait = this.towerQ.filter((x) => x.key === key && x.type === 'land').reduce((m, x) => Math.max(m, this.t - x.t), 0);
       const mine = this.towerQ.find((x) => x.p === owner);
@@ -689,17 +771,6 @@
     updatePlanes(dt) {
       const net = this.net;
       if (!this.claim) this.claim = new Map();
-      // kule: iniş izinleri
-      for (const rw of net.runways) {
-        if (this.res.has(rw.key)) continue;
-        const hold = this.planes.filter((p) => p.state === 'hold' && p.rw === rw);
-        if (!hold.length) continue;
-        const depWait = this.towerQ.filter((x) => x.key === rw.key && x.type !== 'land').reduce((m, x) => Math.max(m, this.t - x.t), 0);
-        hold.sort((a, b) => a.holdT0 - b.holdT0);
-        const p = hold[0];
-        if (this.ai) { if (depWait > 5 && this.t - p.holdT0 < 10) continue; this.clearLanding(p); }
-        else if (p.cleared) this.clearLanding(p);
-      }
       for (let n = this.planes.length - 1; n >= 0; n--) {
         const p = this.planes[n];
         p.t += dt;
@@ -726,12 +797,28 @@
           const onRw = p.mv.head().type === 'runway';
           if (p.rollV != null) p.rollV = Math.max(V_TAXI, p.rollV - 2.0 * dt);
           let vmax = p.departing && p.rolling ? 4.6 : onRw && p.rollV ? p.rollV : V_TAXI;
-          p.mv.step(dt, { look: 2.6, vmax, acc: p.rolling ? 1.6 : 0.9, dec: p.rolling ? 3 : 1.8, choose: () => (p.route && p.route.length ? p.route.shift() : p.departing && p.rolling ? 'exit' : 'stop') });
+          p.mv.step(dt, { look: 1e9, atomic: true, vmax, acc: p.rolling ? 1.6 : 0.9, dec: p.rolling ? 3 : 1.8, choose: () => (p.route && p.route.length ? p.route.shift() : p.departing && p.rolling ? 'exit' : 'stop') });
+          // taksi yolunda karşılıklı kilitlenme: uzun süre ilerleyemeyen uçak çekiciyle kaldırılır
+          // kapısı kalmayan (tahta değişti) uçak: yeniden kapı ara, bulamazsa tekrar kalkışa git
+          if (!p.departing && !p.rolling && !p.mv.plan.length && (!p.route || !p.route.length) && p.mv.head().dout !== 'C') {
+            p.noRouteT = (p.noRouteT || 0) + dt;
+            if (p.noRouteT > 1.5) {
+              p.noRouteT = 0; this.reroute(p);
+              if (!p.route.length) { const a = net.after(p.mv.head()); const dp = a && !a.out ? this.departurePlan(p, { i: a.i, j: a.j, k: a.k, din: a.din }) : null; if (dp) { p.route = dp.mvs; p.departing = true; } }
+              if (p.route.length) p.mv.planEnd = null;
+            }
+          } else p.noRouteT = 0;
+          if (p.mv.wait > 45 && !p.rolling && p.mv.head().din !== 'C') { this.stats.towed = (this.stats.towed || 0) + 1; this.toastOnce('Sıkışan bir uçak çekiciyle kaldırıldı. Taksi yollarını çift yönlü dolaşılabilir yap.'); this.killPlane(p); continue; }
           const h = p.mv.head();
           if (p.departing && !p.rolling && h.type === 'runway' && AXIS[h.din] === AXIS[h.dout]) { p.rolling = true; this.toastOnce('Kule kalkış izni verdi.'); }
           if (!p.rolling && !onRw) p.rollV = null;
           // kapıya vardı
-          if (h.dout === 'C' && p.mv.s >= h.len - 0.05 && p.mv.v < 0.05 && !p.departing) { p.state = 'parked'; p.dwell = 6 + this.rnd() * 4; p.pushT = 0; }
+          if (h.dout === 'C' && p.mv.s >= h.len - 0.05 && p.mv.v < 0.05 && !p.departing) {
+            p.state = 'parked'; p.dwell = 6 + this.rnd() * 4; p.pushT = 0;
+            // park eden uçak yalnızca kendi kapısını tutar; arkasındaki taksi yolu kavşağını bırakır
+            p.mv.segs = [h]; p.mv.plan = []; const gk = p.mv.keysOf(h);
+            for (const k of [...p.mv.held]) if (!gk.includes(k)) p.mv.release(k);
+          }
           // kalkış
           if (p.rolling) {
             const d = p.mv.head().virtual ? p.mv.s : 0;
@@ -760,6 +847,17 @@
         }
         this.placePlane(p);
       }
+      // kule: iniş izinleri (yerdeki uçaklar yollarını ayırdıktan sonra)
+      for (const rw of net.runways) {
+        if (this.res.has(rw.key)) continue;
+        const hold = this.planes.filter((p) => p.state === 'hold' && p.rw === rw);
+        if (!hold.length) continue;
+        const depWait = this.towerQ.filter((x) => x.key === rw.key && x.type !== 'land').reduce((m, x) => Math.max(m, this.t - x.t), 0);
+        hold.sort((a, b) => a.holdT0 - b.holdT0);
+        const p = hold[0];
+        if (this.ai) { if (depWait > 5 && (this.t - p.holdT0 < 30 || depWait > 20)) continue; this.clearLanding(p); }
+        else if (p.cleared) this.clearLanding(p);
+      }
     }
     toastOnce(msg) { if (this.lastToast !== msg || this.t - (this.lastToastT || 0) > 12) { this.lastToast = msg; this.lastToastT = this.t; if (!/Kule/.test(msg)) this.toast(msg); } }
     reroute(p) {
@@ -773,8 +871,16 @@
       } else {
         const a = this.net.after(h);
         if (!a || a.out) { p.route = []; return; }
-        const r = this.net.route({ i: a.i, j: a.j, k: a.k, din: a.din }, (s) => { const q = this.net.piece(s.i, s.j, s.k); return q && q.type === 'taxi' && WS.portCount(q.m) === 1; });
-        p.route = r ? [...r.mvs, this.net.movement(r.goal.i, r.goal.j, r.goal.k, r.goal.din, 'C')] : [];
+        // önce kendi ayırdığı kapıya, olmazsa boş bir kapıya git; ayrılan kapıyı güncelle
+        const isGate = (s) => { const q = this.net.piece(s.i, s.j, s.k); return q && q.type === 'taxi' && WS.portCount(q.m) === 1 && this.gateFree(s, p); };
+        let g = null;
+        if (isGate(a)) { p.route = [this.net.movement(a.i, a.j, a.k, a.din, 'C')]; g = a.i + ',' + a.j; } // kapı hemen önünde
+        else {
+          const r = this.net.route({ i: a.i, j: a.j, k: a.k, din: a.din }, isGate, (s) => this.planeAt(s, p));
+          p.route = r ? [...r.mvs, this.net.movement(r.goal.i, r.goal.j, r.goal.k, r.goal.din, 'C')] : [];
+          g = r ? r.goal.i + ',' + r.goal.j : null;
+        }
+        if (g !== p.gateKey) { if (p.gateKey && this.claim.get(p.gateKey) === p) this.claim.delete(p.gateKey); p.gateKey = g; if (g) this.claim.set(g, p); }
       }
     }
     clearLanding(p) {
@@ -866,7 +972,7 @@
     spawnPlanes(dt) {
       const net = this.net;
       if (!net.runways.length) return;
-      const target = Math.min(7, 2 + this.density);
+      const target = Math.min(9, 2 + this.density + (this.ws.city ? this.ws.city.connected('taxi') : 0));
       if (this.planes.length >= target) return;
       this.planeT -= dt; if (this.planeT > 0) return;
       this.planeT = 6 + this.rnd() * 4;

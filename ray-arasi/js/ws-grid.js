@@ -10,7 +10,8 @@
   const OPP = { N: 'S', S: 'N', E: 'W', W: 'E' };
   const AXIS = { N: 'NS', S: 'NS', E: 'EW', W: 'EW' };
   const FAMILY = { road: 'road', rail: 'rail', taxi: 'air', runway: 'air' };
-  Object.assign(WS, { DIRS, BIT, DV, OPP, AXIS, FAMILY, COLS: 12, ROWS: 20, S: 2.0 });
+  // SAVE_V: kayıt biçimi; daha eski kayıt açılınca şehir 4 düz yolla baştan başlar (eski çizim ↶ ile geri gelir)
+  Object.assign(WS, { DIRS, BIT, DV, OPP, AXIS, FAMILY, COLS: 12, ROWS: 20, S: 2.0, SAVE_V: 2 });
 
   const ports = (m) => DIRS.filter((d) => m & BIT[d]);
   const count = (m) => ports(m).length;
@@ -30,7 +31,7 @@
     serialize() {
       const out = [];
       this.each((c, i, j) => c.pieces.forEach((p) => out.push([i, j, p.type, p.m, p.lv, p.ax || ''])));
-      return { v: 1, cols: this.cols, rows: this.rows, p: out };
+      return { v: WS.SAVE_V, cols: this.cols, rows: this.rows, p: out };
     }
     static load(o) {
       const g = new Grid();
@@ -280,9 +281,31 @@
     ],
   };
   // Ray örneğinde yan yol köprüsü bozulmasın diye sıra önemli; örnek yüklenirken uyarılar yok sayılır
-  WS.template = function (key) {
+  WS.template = function (key, set) {
     const g = new Grid();
-    for (const [type, style, seq] of WS.templates[key] || []) WS.applyStroke(g, seq, type, style);
+    for (const [type, style, seq] of (set || WS.templates)[key] || []) WS.applyStroke(g, seq, type, style);
     return g;
   };
+  // Oyun başlangıcı: sade, düz dört hat. Gerisini oyuncu talepleri karşılayarak kurar.
+  WS.starts = {
+    road: [
+      ['road', 'grade', path([3, -1], [3, 20])],
+      ['road', 'grade', path([8, -1], [8, 20])],
+      ['road', 'grade', path([-1, 6], [12, 6])],
+      ['road', 'grade', path([-1, 13], [12, 13])],
+    ],
+    rail: [
+      ['rail', 'grade', path([3, -1], [3, 20])],
+      ['rail', 'grade', path([8, -1], [8, 20])],
+      ['road', 'grade', path([-1, 6], [12, 6])],
+      ['road', 'grade', path([-1, 13], [12, 13])],
+    ],
+    air: [
+      ['runway', 'grade', path([3, 3], [3, 12])],
+      ['taxi', 'grade', path([3, 8], [7, 8])],
+      ['road', 'grade', path([10, -1], [10, 20])],
+      ['road', 'grade', path([-1, 16], [12, 16])],
+    ],
+  };
+  WS.start = (key) => WS.template(key, WS.starts);
 })();

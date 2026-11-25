@@ -96,20 +96,31 @@
       const g = new T.Group();
       g.position.set(x - DV[d].x * 0.4, 0, z - DV[d].z * 0.4);
       g.rotation.y = Math.atan2(DV[d].x, DV[d].z); // yerel +z yola bakar
+      const place = this.places && this.places.get(i + ',' + j);
+      if (place && WS.placeModel) { g.add(WS.placeModel(place.type, i * 31 + j * 7)); stat.add(g); }
+      else this.garage(g, stat);
+      this.lotDyn(root, dyn, g, i, j, k, d, m, place);
+    }
+    garage(g, stat) {
       const deck = RA.mat(0xd6d1c6, { roughness: 0.85 }), band = RA.mat(0x2f6fd6, { roughness: 0.6 }), pil = RA.mat(0xb3ada1);
       for (const y of [0.52, 0.9, 1.28]) { g.add(mesh(rb(1.86, 0.07, 1.12, 0.02), deck, 0, y, 0)); g.add(mesh(rb(1.88, 0.06, 0.04, 0.01), band, 0, y + 0.01, 0.58, false)); }
       for (const px of [-0.86, 0, 0.86]) for (const pz of [-0.5, 0.5]) g.add(mesh(rb(0.08, 1.28, 0.08, 0.01), pil, px, 0.64, pz));
       g.add(mesh(rb(1.6, 0.012, 0.95, 0.01), RA.mat(0x3a3d44), 0, 0.02, 0, false));
       stat.add(g);
+    }
+    lotDyn(root, dyn, g, i, j, k, d, m, place) {
       // dinamik parçalar (aynı yerel çerçevede)
       const dg = new T.Group(); dg.position.copy(g.position); dg.rotation.copy(g.rotation);
-      // çatıdaki park yerleri: doluluk kadar araba görünür
-      const carG = RA.geo('lotcar', () => { const b = new T.BoxGeometry(0.42, 0.16, 0.24); b.translate(0, 0.08, 0); return b; });
-      const inst = new T.InstancedMesh(carG, new T.MeshStandardMaterial({ roughness: 0.4 }), 6);
-      const o = new T.Object3D(); const rr = RA.rng(i * 37 + j * 101);
-      const cols = [0xd8432f, 0x2f6fd6, 0xeeeeee, 0x2f9e5a, 0xf08a24, 0xf7c21b, 0x8a96a3];
-      for (let n = 0; n < 6; n++) { o.position.set(-0.56 + (n % 3) * 0.56, 1.32, n < 3 ? -0.24 : 0.24); o.rotation.y = Math.PI / 2; o.updateMatrix(); inst.setMatrixAt(n, o.matrix); inst.setColorAt(n, new T.Color(cols[Math.floor(rr() * cols.length)])); }
-      inst.count = 0; inst.castShadow = true; dg.add(inst);
+      // çatıdaki park yerleri: doluluk kadar araba görünür (yerlerde yalnızca sayaç)
+      let inst = { count: 0 };
+      if (!place) {
+        const carG = RA.geo('lotcar', () => { const b = new T.BoxGeometry(0.42, 0.16, 0.24); b.translate(0, 0.08, 0); return b; });
+        inst = new T.InstancedMesh(carG, new T.MeshStandardMaterial({ roughness: 0.4 }), 6);
+        const o = new T.Object3D(); const rr = RA.rng(i * 37 + j * 101);
+        const cols = [0xd8432f, 0x2f6fd6, 0xeeeeee, 0x2f9e5a, 0xf08a24, 0xf7c21b, 0x8a96a3];
+        for (let n = 0; n < 6; n++) { o.position.set(-0.56 + (n % 3) * 0.56, 1.32, n < 3 ? -0.24 : 0.24); o.rotation.y = Math.PI / 2; o.updateMatrix(); inst.setMatrixAt(n, o.matrix); inst.setColorAt(n, new T.Color(cols[Math.floor(rr() * cols.length)])); }
+        inst.count = 0; inst.castShadow = true; dg.add(inst);
+      }
       // giriş bariyeri (iki şeridi birden kapatır)
       const post = mesh(rb(0.08, 0.3, 0.08, 0.02), RA.mat(0xf2f2ec), 0.9, 0.15, 0.78); dg.add(post);
       const arm = new T.Group(); arm.position.set(0.9, 0.28, 0.78);
@@ -119,7 +130,8 @@
       // P levhası ve doluluk lambası
       const sp = new T.Group(); sp.position.set(-0.95, 0, 0.7);
       sp.add(mesh(RA.geo('lotpole', () => new T.CylinderGeometry(0.025, 0.025, 0.9, 6)), m.rail, 0, 0.45, 0));
-      const pm = new T.Mesh(new T.PlaneGeometry(0.42, 0.42), new T.MeshBasicMaterial({ map: lotSignTex(), side: T.DoubleSide })); pm.position.set(0, 0.98, 0); pm.rotation.x = -0.6; sp.add(pm);
+      const pm = place ? new T.Mesh(new T.PlaneGeometry(0.74, 0.28), new T.MeshBasicMaterial({ map: WS.placeSignTex(place.type), side: T.DoubleSide })) : new T.Mesh(new T.PlaneGeometry(0.42, 0.42), new T.MeshBasicMaterial({ map: lotSignTex(), side: T.DoubleSide }));
+      pm.position.set(place ? 0.12 : 0, place ? 1.02 : 0.98, 0); pm.rotation.x = -0.6; sp.add(pm);
       const lm = new T.MeshStandardMaterial({ color: 0x111111, emissive: 0x2bff6a, emissiveIntensity: 2.2 });
       const lamp = new T.Mesh(RA.geo('lamp', () => new T.SphereGeometry(0.055, 12, 8)), lm); lamp.position.set(0, 1.24, 0); sp.add(lamp);
       dg.add(sp);
@@ -173,7 +185,7 @@
           }
         }
         // boş karelere süs
-        if (!c.pieces.length) {
+        if (!c.pieces.length && !(this.reserved && this.reserved.has(i + ',' + j))) {
           const r = RA.rng(i * 131 + j * 977 + 7)();
           const r2 = RA.rng(i * 71 + j * 53 + 3);
           if (r < 0.5) { const n = 1 + Math.floor(r2() * 3); for (let a = 0; a < n; a++) { const t = M.tree(r2, r2() < 0.6 ? 'round' : 'cone', 0.6 + r2() * 0.3); t.position.set(x + (r2() - 0.5) * 1.3, 0, z + (r2() - 0.5) * 1.3); stat.add(t); } }
@@ -266,6 +278,12 @@
             const pl = mesh(rb(Math.abs(side.x) > 0 ? 0.45 : 1.4, 0.2, Math.abs(side.z) > 0 ? 0.45 : 1.4, 0.03), m.platform, x + side.x * 0.62, 0.1, z + side.z * 0.62); stat.add(pl);
             const roof = mesh(rb(Math.abs(side.x) > 0 ? 0.42 : 1.0, 0.05, Math.abs(side.z) > 0 ? 0.42 : 1.0, 0.02), RA.mat(0xb5482f), x + side.x * 0.7, 0.62, z + side.z * 0.7); stat.add(roof);
             stat.add(mesh(rb(0.05, 0.42, 0.05, 0.01), m.rail, x + side.x * 0.75, 0.41, z + side.z * 0.75));
+            const place = this.places && this.places.get(i + ',' + j);
+            if (place && place.type === 'istasyon') { const h = WS.placeModel('istasyon', i * 31 + j * 7); h.position.set(x - side.x * 0.74, 0, z - side.z * 0.74); h.rotation.y = Math.atan2(-side.x, -side.z); stat.add(h); }
+          }
+          if (p.type === 'taxi' && ps.length === 1) {
+            const place = this.places && this.places.get(i + ',' + j);
+            if (place && place.type === 'kapi') { const d = ps[0]; const side = { x: -DV[d].z, z: DV[d].x }; const h = WS.placeModel('kapi', i * 31 + j * 7); h.position.set(x + side.x * 0.82, 0, z + side.z * 0.82); h.rotation.y = Math.atan2(-side.x, -side.z); stat.add(h); }
           }
           if (p.type === 'runway') {
             // eşik çizgileri (şerit uçlarında)
