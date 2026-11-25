@@ -59,14 +59,27 @@
       this.renderer.setSize(w, vh, false);
       this.canvas.style.width = w + 'px'; this.canvas.style.height = vh + 'px';
       if (this.ws) this.ws.resize(w, vh);
+      if (this.lv) this.lv.resize(w, vh);
       this.menu.resize(w, vh);
     }
 
-    showScreen(name) { ['menu', 'ws'].forEach((s) => { $(s).hidden = s !== name; }); }
+    showScreen(name) { ['menu', 'ws', 'lv'].forEach((s) => { $(s).hidden = s !== name; }); }
     showMenu() {
       this.state = 'menu';
       this.showScreen('menu');
       this.stage.dataset.mode = '';
+      if (this.menu) this.menu.refresh();
+    }
+    openLevel(id) {
+      RA.audio.unlock();
+      if (!this.lv) this.lv = new RA.LV.Game(this);
+      this.state = 'level';
+      this.stage.dataset.mode = 'lv';
+      this.showScreen('lv');
+      this.lv.resize(this.w, this.h);
+      this.lv.open(id);
+      this.lv.resize(this.w, this.h);
+      this.acc = 0; this.last = performance.now();
     }
     openWorkshop(domain) {
       RA.audio.unlock();
@@ -82,10 +95,11 @@
 
     // testler için zamanı ileri sar
     advance(seconds) {
-      if (this.state !== 'workshop') return;
+      const scr = this.state === 'workshop' ? this.ws : this.state === 'level' ? this.lv : null;
+      if (!scr) return;
       const n = Math.round(seconds / STEP);
-      for (let i = 0; i < n; i++) this.ws.update(STEP);
-      this.ws.frame(0);
+      for (let i = 0; i < n; i++) scr.update(STEP);
+      scr.frame(0);
     }
 
     loop(now) {
@@ -93,12 +107,13 @@
       let dt = (now - this.last) / 1000; this.last = now;
       if (dt > 0.1) dt = 0.1;
       if (this.state === 'menu') { this.menu.render(dt); return; }
-      if (this.state === 'workshop') {
-        if (!this.manual) { this.acc += dt; let n = 0; while (this.acc >= STEP && n < 6) { this.ws.update(STEP); this.acc -= STEP; n++; } if (n >= 6) this.acc = 0; }
-        this.ws.frame(dt);
+      const scr = this.state === 'workshop' ? this.ws : this.state === 'level' ? this.lv : null;
+      if (scr) {
+        if (!this.manual) { this.acc += dt; let n = 0; while (this.acc >= STEP && n < 6) { scr.update(STEP); this.acc -= STEP; n++; } if (n >= 6) this.acc = 0; }
+        scr.frame(dt);
         this.renderer.setScissorTest(false);
         this.renderer.setViewport(0, 0, this.w, this.h);
-        this.renderer.render(this.ws.scene, this.ws.camera);
+        this.renderer.render(scr.scene, scr.camera);
       }
     }
   }

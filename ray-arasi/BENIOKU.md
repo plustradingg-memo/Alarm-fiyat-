@@ -1,10 +1,80 @@
 # RAY ARASI
 
-Masanın üzerindeki maket tahtasında sade bir şehirle başlayıp yolunu, demiryolunu ve havalimanını kendin
-büyüttüğün Türkçe, dikey ekranlı bir oyun. Şehir yeni yerler ister, trafik büyür ve sıkışır; sen düzenleyerek
-çözersin. Süre yok: kur, izle, dene. Işıkları yapay zekâya bırakabilir ya da elle yönetebilirsin.
+Masanın üzerindeki maket tahtasında oynanan, Türkçe, dikey ekranlı bir trafik bulmacası. Renkli evlerdeki insanları
+aynı renkteki iş yerlerine ulaştırmak için yolları **parmağınla serbestçe çizersin**. Yollar kesiştiği yerde kavşak,
+köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm bölüm zorlaşır, yıldız toplarsın.
 
-Ana ekranda üç kart vardır. Her kart sade, düz dört hatla açılır ve çizdiğin her şey o kart için ayrı kaydedilir:
+## Nasıl oynanır?
+
+1. Ana ekrandan bir **bölüm** seç. Açılan kartta hedef yazar (ör. *30 araç ulaştır*) ve elindeki malzeme: asfalt
+   (metre), köprü ve alt geçit hakkı.
+2. **Yol çiz** seçiliyken parmağını bir evin önündeki kesik çizgili halkadan başlatıp aynı renkteki iş yerinin önüne
+   kadar sürükle. Çizgi kare kare değil, istediğin eğriyle çizilir ve yumuşatılır. Uçları binanın girişine ya da
+   yakındaki bir yola kendiliğinden yapışır: bir yolu başka bir yolun ortasına bağlarsan orada kavşak olur.
+3. **▶ Başlat**'a bas. Evlerden aynı renkte araçlar çıkar, iş yerine girip kaybolur. Üstteki çubuk kaç aracın
+   ulaştığını gösterir.
+4. Bir evin üstündeki noktalar bekleyen kişileri gösterir. **Bir ev 8 kişiyi bekletirse kaybedersin.** Trafik
+   akarken de çizmeye, silmeye, kesişim değiştirmeye devam edebilirsin; ⏸ ile durdurup rahatça düzenleyebilir,
+   **1×/2×** ile hızlandırabilirsin.
+
+### Kesişimler: kavşak, köprü, alt geçit
+
+- Alttaki **Kavşak / Köprü / Alt geçit** seçimi, yeni çizdiğin yol başka bir yolu kestiğinde ne olacağını belirler.
+  **Köprü**: yeni yol öbürünün üstünden geçer. **Alt geçit**: yeni yol öbürünün altından geçer (öbür yol yükselir).
+- Çizdikten sonra da her kesişimin üstünde bir işaret durur. **İşarete dokundukça** tür değişir:
+  kavşak → köprü → alt geçit (demiryolunda hemzemin geçit → köprü → alt geçit).
+- Köprü ve alt geçit haklarının sayısı düğmelerin üstünde yazar. Nehri kesen yol kendiliğinden köprü olur ve bir
+  köprü hakkı kullanır.
+- Demiryolunu aynı seviyede kesen yol **bariyerli hemzemin geçit** olur: tren gelince bariyer iner, araçlar bekler.
+
+### Trafik nasıl işler?
+
+- **4 ve daha fazla kollu kavşaklar ışıklıdır.** Işıkları yapay zekâ yönetir: karşılıklı kollar birlikte yeşil
+  yanar; yeşil yönde gelen araç kalmayınca ya da 12 saniye dolunca bekleyen yöne geçer.
+- **3 kollu kavşaklar (T, Y) ışıksızdır:** kavşağa önce gelen önce geçer.
+- Araç, yolunu kesen yönde kavşakta araç varken girmez; çıkışında yer yoksa kavşağı tıkamaz.
+- Araçlar gidecekleri iş yerine en kısa ve az kalabalık yolu seçer. U dönüşü yapmazlar.
+
+### Kurallar (çizim kabul edilmezse nedeni kırmızı notla yazar ve yeri işaretlenir)
+
+- Köprünün ve alt geçidin iki yanında rampa için yer olmalı; rampanın üstünde kavşak olamaz.
+- Bir binaya tek yol bağlanır; ikinci yolu ilk yola bağla.
+- Kavşaklar birbirine çok yakın olamaz, yollar çok dar açıyla birleşemez, yollar üst üste binemez.
+- Yol binaların içinden geçemez, suyun içinde bitemez, tahtanın dışına çıkamaz.
+- Toplam yol uzunluğu asfalt miktarını geçemez.
+
+### Diğer düğmeler
+
+- **Sil**: bir yol parçasına dokun, o parça (iki kavşak arası) silinir.
+- **↶**: son değişikliği geri alır.
+- **İpucu** (ampul): çözüm yolunu birkaç saniye yeşil gösterir.
+
+### Yıldızlar
+
+★ bölümü bitirmek, ★★ asfaltı az kullanmak (sınırı kazanma kartında yazar), ★★★ hiçbir evi 3 kişiden fazla
+bekletmemek. Bir bölümü bitirince sonraki açılır.
+
+### Bölümler
+
+| # | Bölüm | Öğrettiği |
+|---|---|---|
+| 1 | İlk yol | Evden iş yerine yol çizmek |
+| 2 | Kavşak | Kesişen yollar, ışıklı kavşak |
+| 3 | İlk köprü | Yoğun kavşağı köprüyle ayırmak |
+| 4 | Ortak yol | Az asfaltla yolları birleştirmek (Y kavşak) |
+| 5 | Nehir | Suyun üstünden köprüyle geçmek |
+| 6 | Hemzemin geçit | Tren geçen yolu alt geçitten geçirmek |
+| 7 | Üç renk | Hangi kesişim kavşak, hangisi köprü? |
+| 8 | Nehir ve ray | Köprü ve alt geçidi birlikte kullanmak |
+| 9 | Göl | Göl çevresinde yol ve tek köprü |
+| 10 | Büyük kavşak | Dört akış, dört kesişim |
+
+Her bölüm, kontrol betiğinde çözüm yoluyla baştan sona oynanıp kazanıldığı doğrulanmıştır; köprüsüz (hepsi kavşak)
+denemede 3, 4, 9 ve 10. bölümler kaybedilir.
+
+## Serbest atölye (ızgaralı kurma)
+
+Ana ekranın altındaki **Serbest atölye** düğmeleri (Karayolu, Demiryolu, Havalimanı) ızgaralı kurma modunu açar. Her biri sade, düz dört hatla açılır ve çizdiğin her şey o kart için ayrı kaydedilir:
 
 | Kart | Başlangıç (4 düz hat) | Bu kartın özel talebi |
 |---|---|---|
@@ -17,7 +87,7 @@ Hazır, dolu bir düzen görmek istersen sağ üstteki **⋯** menüsünden **Ö
 
 Tahta 12 × 20 karedir. Hepsinde aynı araçlar vardır, yani yolu, rayı ve havalimanını tek tahtada birlikte kurabilirsin.
 
-## Şehir nasıl büyür?
+### Şehir nasıl büyür?
 
 Şehir **Köy** olarak başlar; nüfus arttıkça **Kasaba** (1.500), **İlçe** (4.000), **Şehir** (8.000) ve
 **Büyükşehir** (14.000) olur. Üst şeritteki aşama düğmesi nüfusu ve bir sonraki aşamaya ne kadar kaldığını gösterir.
@@ -44,7 +114,7 @@ Tahta 12 × 20 karedir. Hepsinde aynı araçlar vardır, yani yolu, rayı ve hav
 - Bağlanan yer kendi binasıyla görünür ve **zamanla dolar**: mahallenin nüfusu, iş yerinin çalışanı artar.
 - Aynı anda en çok 2 talep bekler.
 
-## Trafik sıkışınca büyüme durur
+### Trafik sıkışınca büyüme durur
 
 - Trafik zamanla kendiliğinden artmaz; **şehrin büyüklüğünden** gelir. Mahallelerdeki aileler işe, okula,
   alışverişe gider, sonra eve döner. Şehir dışından gelen araç sayısı sınırlıdır ve aşamayla biraz artar.
@@ -58,7 +128,7 @@ Tahta 12 × 20 karedir. Hepsinde aynı araçlar vardır, yani yolu, rayı ve hav
   hemzemin geçitleri alt geçide çevir, havalimanında taksi yolunu çoğalt. Başlangıçtaki 4 yol aşağı yukarı İlçe
   aşamasına kadar yeter; daha sık bir yol ağı aynı şehri çok daha uzun süre akıcı tutar.
 
-## Araçlar nereye gider?
+### Araçlar nereye gider?
 
 Arabalar amaçsızca dolaşmaz. Her araç bir yolculuğa çıkar ve gideceği yeri baştan bilir:
 
@@ -70,7 +140,7 @@ Arabalar amaçsızca dolaşmaz. Her araç bir yolculuğa çıkar ve gideceği ye
 - Araçlar en kısa yolu seçer, U dönüşü yapmaz, bir otoparkın içinden geçip gitmez.
 - Otoparkın caddeye bağlandığı yerde ışık yoktur: otoparktan çıkan araç ana yoldan gelene yol verir.
 
-## Kurmak
+### Kurmak
 
 Alttaki çubuktan bir araç seç (Yol, Ray, Taksi yolu, Pist) ve parmağını kareler üzerinde sürükle. Tahtanın
 kenarından dışarı doğru çizersen araçlar ve trenler oradan girip çıkar (şehir dışı).
@@ -93,7 +163,7 @@ içinde biten her yol ucu da otomatik olarak otopark olur.
 - **Sil** aracı üzerinden geçtiğin kareleri temizler, **↶** son değişikliği geri alır.
 - Sağ üstteki **⋯** menüsünden örnek düzen yüklenir ya da tahta temizlenir. **−/+** trafik yoğunluğunu ayarlar.
 
-## Görünüm
+### Görünüm
 
 - Açılışta tahtanın tamamı görünür.
 - **İki parmakla** açıp kapatarak yakınlaşıp uzaklaşırsın; iki parmağı birlikte sürükleyince harita kayar.
@@ -102,7 +172,7 @@ içinde biten her yol ucu da otomatik olarak otopark olur.
 - Masaüstünde fare tekerleği yakınlaştırır, sağ tuşla sürükleme kaydırır. Ok tuşları kaydırır, `+` `−` `0`
   yakınlaştırır, `Ctrl+Z` geri alır.
 
-## Yapay zekâ
+### Yapay zekâ
 
 **YZ düğmesi açıkken:**
 - Kavşak ışıkları her yöndeki bekleyen araç sayısına ve bekleme süresine bakarak kendiliğinden değişir.
@@ -151,12 +221,17 @@ ray-arasi/
 ├── js/ws-build.js          Maket tahtası, köprü/alt geçit yapıları, katlı otoparklar, ışıklar, bariyerler, sinyaller
 ├── js/ws-sim.js            Araç yolculukları ve otoparklar, trenler, uçaklar, yapay zekâ denetleyicileri
 ├── js/ws-city.js           Şehir: talepler, bina modelleri, memnuniyet, nüfus, sıkışma ölçümü
-├── js/workshop.js          Atölye ekranı: araç çubuğu, parmakla çizim, yakınlaştırma/kaydırma, geri al
-├── js/menu.js              Ana ekrandaki üç canlı sahne
+├── js/lv-data.js           Bölümler: 10 bölümün evleri, iş yerleri, nehirleri, demiryolları, hedefleri, çözüm yolları
+├── js/lv-net.js            Bölümler: serbest çizilen yollardan ağ (kesişim, köprü/alt geçit yükseklikleri, şeritler, rota)
+├── js/lv-sim.js            Bölümler: araçlar, ışıklı ve ışıksız kavşaklar, trenler ve hemzemin geçitler, evler, kazanma/kaybetme
+├── js/lv-view.js           Bölümler: 3B maket, yollar, köprüler, ışıklar, bariyerler, kesişim işaretleri, önizleme
+├── js/lv-game.js           Bölümler: oyun ekranı, parmakla çizim ve yapışma, sil, geri al, ipucu, kartlar, yıldızlar
+├── js/workshop.js          Serbest atölye ekranı: araç çubuğu, ızgarada çizim, yakınlaştırma/kaydırma, geri al
+├── js/menu.js              Ana ekran: bölüm kartları, yıldızlar, canlı maket sahnesi
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran, 4 düz yollu başlangıç, talep, büyüyüp sıkışan şehir, demiryolu, havalimanı, masaüstü
+├── ekran-goruntuleri/      Ana ekran, bölüm kartı, serbest çizim, köprü, nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```
@@ -165,13 +240,17 @@ Bütün görseller kodla üretilir (üç boyutlu modeller, dokular, sesler); dı
 
 ## Kontrol betiği (isteğe bağlı)
 
-Gerçek dokunuş ve sürüklemelerle şunları dener: ana ekran, 4 düz yolla başlayan şehir, parmakla yol çizme, kavşak,
-köprü, alt geçit, hatalı çizimin reddi, silme, geri alma, Otopark aracı, talebin gelmesi ve işareti, talep
-düğmesinin kamerayı götürmesi, talebin gerekçesi ve yol kenarındaki yeri, talebi yolla bağlama ve binanın oluşması, evden işe giden yolculuklar, aşama atlama, trafik sıkışınca büyümenin durması, araçların binaya girip kaybolması ve
-oradan yeni araçların çıkması, U dönüşü ve kalıcı kilitlenme olmaması, trafiğin şehirle büyümesi, sıkışma halkası,
-memnuniyet ve nüfus, + / − / tümü düğmeleri, kaydırma ve iki parmakla yakınlaştırma, yapay zekâ ışıkları, elle
-yönetim, kaydın korunması, Yeni şehir, eski kaydın taşınması, trenler ve istasyon talebi, hemzemin geçit, uçak
-iniş-kalkışları ve kapı talebi:
+Gerçek dokunuş ve sürüklemelerle şunları dener:
+
+- **Bölümler:** bölüm kartları ve kilitler, hedef kartı, fareyle eğri yol çizip uçların eve ve iş yerine yapışması,
+  trafiği başlatıp kazanmak ve yıldızlar, sonraki bölümün açılması, kesişen yolların ışıklı kavşak olması, kesişim
+  işaretine dokunup köprüye ve geri kavşağa çevirmek, asfalt sınırı, sil ve geri al, ipucu, köprülü düzenle bölüm 3'ü
+  kazanmak, yolu olmayan evin taşıp bölümün kaybedilmesi ve "yollarımla tekrar dene".
+- **Serbest atölye:** 4 düz yolla başlayan şehir, ızgarada yol çizme, kavşak, köprü, alt geçit, hatalı çizimin
+  reddi, silme, geri alma, Otopark aracı, talepler ve gerekçeleri, talebi yolla bağlama, evden işe giden yolculuklar,
+  aşama atlama, trafik sıkışınca büyümenin durması, U dönüşü ve kalıcı kilitlenme olmaması, sıkışma halkası,
+  memnuniyet ve nüfus, yakınlaştırma ve kaydırma, yapay zekâ ışıkları, elle yönetim, kayıt, trenler, istasyon ve
+  kapı talepleri, uçak iniş-kalkışları.
 
 ```bash
 npm i -D playwright
@@ -193,4 +272,7 @@ Ekran görüntüleri `test/cikti/` klasörüne yazılır.
 - Uçaklar taksi yolunda gidecekleri yolun tamamını (kapıya ya da piste kadar) tek seferde ayırır; tek şeritli
   taksi yollarında karşılıklı kilitlenmez. Kule kalkışları sıraya göre verir, uzun bekleyen kalkış varken iniş
   izni vermez. Kapısı kalmayan uçak yeni kapı arar, yoksa tekrar kalkar.
+- Bölümlerde çizilen yol yumuşatılır (Ramer–Douglas–Peucker sadeleştirme + Chaikin yumuşatma) ve her değişiklikte
+  bütün ağ çizgilerden yeniden kurulur: kesişimler bulunur, kavşaklar bölünür, köprü yükseklikleri (rampalı) hesaplanır,
+  şeritler ve kavşak içi dönüş eğrileri üretilir. Kurala uymayan çizim uygulanmaz.
 - Gereksinim: WebGL destekleyen güncel bir tarayıcı (Chrome, Safari, Firefox, Edge).

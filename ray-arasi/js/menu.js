@@ -140,10 +140,26 @@
     constructor(app) {
       this.app = app;
       this.t = 0;
-      this.cards = Array.from(document.querySelectorAll('#menu .card'));
-      this.cards.forEach((c) => { c.addEventListener('click', () => app.openWorkshop(c.dataset.mode)); });
       this.scenes = { rail: railScene(), road: roadScene(), air: airScene() };
+      this.views = Array.from(document.querySelectorAll('#menu [data-scene]'));
+      document.querySelectorAll('#menu .free-btn').forEach((b) => b.addEventListener('click', () => app.openWorkshop(b.dataset.mode)));
+      this.grid = document.getElementById('lv-grid');
+      this.grid.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-lv]'); if (!b) return;
+        if (b.classList.contains('locked')) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); RA.audio.play('denied'); return; }
+        app.openLevel(+b.dataset.lv);
+      });
       this.bg = new T.Color(0x1a242b);
+      this.refresh();
+    }
+    // bölüm kartları: numara, ad, yıldızlar, kilit
+    refresh() {
+      const LV = RA.LV; if (!LV || !this.grid) return;
+      this.grid.innerHTML = LV.LEVELS.map((L) => {
+        const st = LV.progress.stars(L.id), open = LV.progress.unlocked(L.id);
+        return '<button type="button" role="listitem" class="lv-btn' + (open ? '' : ' locked') + (st ? ' done' : '') + '" data-lv="' + L.id + '" aria-label="Bölüm ' + L.id + ': ' + L.name + (open ? ', ' + st + ' yıldız' : ', kilitli') + '">' +
+          '<span class="n">' + L.id + '</span><span class="t">' + L.name + '</span><span class="s">' + (open ? [1, 2, 3].map((k) => '<i class="' + (k <= st ? 'on' : '') + '">★</i>').join('') : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>') + '</span></button>';
+      }).join('');
     }
     resize() { }
     render(dt) {
@@ -154,11 +170,11 @@
       r.setViewport(0, 0, this.app.w, this.app.h);
       r.setClearColor(this.bg, 1); r.clear();
       r.setScissorTest(true);
-      this.cards.forEach((c) => {
-        const v = c.querySelector('.card-view').getBoundingClientRect();
+      this.views.forEach((el) => {
+        const v = el.getBoundingClientRect();
         const x = v.left - sr.left, y = v.top - sr.top, w = v.width, h = v.height;
         if (w < 4 || h < 4) return;
-        const ms = this.scenes[c.dataset.mode];
+        const ms = this.scenes[el.dataset.scene];
         ms.frame(this.t);
         ms.camera.aspect = w / h; ms.camera.updateProjectionMatrix();
         const yb = this.app.h - (y + h);

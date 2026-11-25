@@ -41,12 +41,101 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
 
   console.log('ANA EKRAN');
   ok(await page.locator('#menu').isVisible(), 'ana ekran görünür');
-  ok((await page.locator('#menu .card').count()) === 3, 'üç atölye kartı var: Demiryolu, Karayolu, Havalimanı');
-  ok((await page.locator('#hud, #result, .seg').count()) === 0, '45 saniyelik görev modu yok (gösterge, sonuç ekranı, seçici yok)');
+  ok((await page.locator('#lv-grid .lv-btn').count()) === 10, 'ana ekranda 10 bölüm var');
+  ok(!(await page.locator('.lv-btn[data-lv="1"]').getAttribute('class')).includes('locked') && (await page.locator('.lv-btn[data-lv="2"]').getAttribute('class')).includes('locked'), 'ilk bölüm açık, sonrakiler kilitli');
+  ok((await page.locator('#menu .free-btn').count()) === 3, 'serbest atölye düğmeleri duruyor: Karayolu, Demiryolu, Havalimanı');
   await page.waitForTimeout(600); await shot('00-ana-ekran');
+  await page.locator('.lv-btn[data-lv="2"]').tap();
+  ok((await state()) === 'menu', 'kilitli bölüme dokununca açılmıyor');
+
+  console.log('\nBÖLÜM 1 — SERBEST ÇİZİM');
+  const W = (x, z, y) => page.evaluate(([x, z, y]) => { const g = RA.app.lv; const q = RA.project(new THREE.Vector3(x, y || 0, z), g.camera, RA.app.w, RA.app.h); const r = RA.app.stage.getBoundingClientRect(); return { x: q.x + r.left, y: q.y + r.top }; }, [x, z, y]);
+  const draw = async (pts) => { const sc = []; for (const [x, z] of pts) sc.push(await W(x, z)); await page.mouse.move(sc[0].x, sc[0].y); await page.mouse.down(); for (let k = 1; k < sc.length; k++) await page.mouse.move(sc[k].x, sc[k].y, { steps: 12 }); await page.mouse.up(); await page.waitForTimeout(80); };
+  const lvToast = () => page.evaluate(() => { const t = document.getElementById('lv-toast'); return { txt: t.textContent, err: t.classList.contains('err') }; });
+  await page.locator('.lv-btn[data-lv="1"]').tap();
+  ok((await state()) === 'level' && (await page.locator('#lv-card').isVisible()), 'bölüm 1 açıldı; hedefi anlatan kart görünüyor');
+  ok(/8 araç ulaştır/.test(await page.locator('#lv-card').textContent()), 'kartta hedef yazıyor: 8 araç ulaştır');
+  await page.locator('#lv-card [data-act="start"]').tap();
+  await page.evaluate(() => { RA.app.manual = true; });
+  const b1 = await page.evaluate(() => RA.app.lv.level.blds.map((b) => [b.ex, b.ez]));
+  // ev girişinin biraz yanından başla, eğri çiz, fabrika girişinin yanında bırak (uçlar yapışmalı)
+  await draw([[b1[0][0] + 0.7, b1[0][1] - 0.4], [-4, 2], [1, -2], [4, -5], [b1[1][0] - 0.6, b1[1][1] + 0.5]]);
+  const c1 = await page.evaluate(() => { const g = RA.app.lv; return { n: g.strokes.length, conn: g.net.bNodes.map((n) => n.deg), len: g.net.usage.len, pts: g.strokes[0] && g.strokes[0].pts.length }; });
+  ok(c1.n === 1 && c1.conn.every((d) => d === 1), 'parmakla çizilen eğri yol evin ve fabrikanın girişine yapıştı (' + Math.round(c1.len) + ' m, ' + c1.pts + ' noktalı yumuşak eğri)');
+  ok(/bağlandı/.test((await lvToast()).txt), 'not: "' + (await lvToast()).txt + '"');
+  await page.waitForTimeout(150); await shot('10-bolum1-cizim');
+  await page.locator('#lv-play').tap();
+  ok(await page.evaluate(() => RA.app.lv.running), '▶ Başlat ile trafik başladı');
+  const w1 = await page.evaluate(() => { const g = RA.app.lv; let t = 0; for (; t < 120 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, t, del: g.sim.stats.delivered }; });
+  ok(w1.ended === 'win', 'turuncu araçlar fabrikaya ulaştı, bölüm kazanıldı (' + w1.del + ' araç, ' + w1.t + ' sn)');
+  await page.waitForTimeout(800);
+  ok(/Harika/.test(await page.locator('#lv-card').textContent()) && (await page.locator('#lv-card .lv-stars i.on').count()) >= 1, 'kazanma kartı ve yıldızlar (' + (await page.locator('#lv-card .lv-stars i.on').count()) + ' yıldız)');
+  await shot('11-bolum1-kazandi');
+  await page.locator('#lv-card [data-act="menu"]').tap();
+  ok(!(await page.locator('.lv-btn[data-lv="2"]').getAttribute('class')).includes('locked'), 'bölüm 2 açıldı, yıldızlar ana ekranda görünüyor');
+
+  console.log('\nBÖLÜM 3 — KESİŞİM: KAVŞAK, KÖPRÜ, ALT GEÇİT');
+  await page.evaluate(() => { RA.LV.progress.set(2, 1); RA.app.showMenu(); });
+  await page.locator('.lv-btn[data-lv="3"]').tap();
+  await page.locator('#lv-card [data-act="start"]').tap();
+  await page.evaluate(() => { RA.app.manual = true; });
+  const b3 = await page.evaluate(() => RA.app.lv.level.blds.map((b) => [b.ex, b.ez]));
+  await draw([b3[0], [0, 0], b3[2]]);
+  await draw([b3[1], [0, 0.2], b3[3]]);
+  let x3 = await page.evaluate(() => RA.app.lv.net.crossings.map((c) => ({ type: c.type, x: c.x, z: c.z })));
+  ok(x3.length === 1 && x3[0].type === 'junction' && (await page.evaluate(() => RA.app.lv.net.nodes.some((n) => n.kind === 'j' && n.deg === 4))), 'iki yol kesişince ışıklı dört kollu kavşak oldu');
+  await page.waitForTimeout(150); await shot('12-bolum3-kavsak');
+  const mk = await W(x3[0].x, x3[0].z, 2.0);
+  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
+  x3 = await page.evaluate(() => ({ type: RA.app.lv.net.crossings[0].type, br: RA.app.lv.net.usage.bridges, nb: document.getElementById('lv-nb').textContent, up: RA.app.lv.net.edges.some((e) => e.y((e.s0 + e.s1) / 2) > 1) }));
+  ok(x3.type === 'bridge' && x3.br === 1 && x3.nb === '0' && x3.up, 'kesişim işaretine dokununca köprü oldu: bir yol öbürünün üstünden geçiyor, köprü hakkı 0 kaldı');
+  await page.waitForTimeout(150); await shot('13-bolum3-kopru');
+  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
+  ok((await page.evaluate(() => RA.app.lv.net.crossings[0].type)) === 'junction', 'yeniden dokununca (alt geçit hakkı olmadığından) kavşağa döndü');
+  // asfalt sınırı
+  await draw([[-8.6, 7], [-8.6, -7], [-7.4, -7.6], [-7.4, 7]]);
+  ok((await lvToast()).err && /Asfalt yetmiyor/.test((await lvToast()).txt), 'asfalt yetmeyince çizim reddedildi: "' + (await lvToast()).txt + '"');
+  // sil ve geri al
+  await page.locator('#lv [data-lvtool="erase"]').tap();
+  const e3 = await page.evaluate(() => { const g = RA.app.lv; const st = g.net.S.find((q) => Math.hypot(q.pts[0].x - g.level.blds[1].ex, q.pts[0].z - g.level.blds[1].ez) < 0.5); const p = RA.LV.geo.at(st, st.len * 0.25); return [p.x, p.z]; });
+  const ep = await W(e3[0], e3[1]); await page.mouse.click(ep.x, ep.y); await page.waitForTimeout(80);
+  const d3 = await page.evaluate(() => RA.app.lv.net.bNodes.map((n) => n.deg).join(','));
+  ok(/Yol silindi/.test((await lvToast()).txt) && d3.split(',').filter((v) => v === '0').length === 1, 'Sil: dokunulan yol parçası silindi, mavi ev bağlantısız kaldı (' + (await lvToast()).txt + ' · ' + d3 + ')');
+  await page.locator('#lv-undo').tap();
+  ok((await page.evaluate(() => RA.app.lv.net.bNodes.every((n) => n.deg === 1))), 'Geri al: silinen yol geri geldi');
+  await page.locator('#lv [data-lvtool="road"]').tap();
+  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80); // yeniden köprü
+  await page.locator('#lv-hint').tap();
+  ok(await page.evaluate(() => !!RA.app.lv.view.hintG), 'İpucu: çözüm yolu tahtada yeşil gösterildi');
+  const w3 = await page.evaluate(() => { const g = RA.app.lv; g.togglePlay(); let t = 0; for (; t < 200 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, del: g.sim.stats.delivered, peak: g.sim.stats.peak }; });
+  ok(w3.ended === 'win', 'köprülü düzenle bölüm 3 kazanıldı (' + w3.del + ' araç, evde en çok ' + w3.peak + ' kişi bekledi)');
+
+  console.log('\nKAYBETME');
+  await page.evaluate(() => { RA.app.openLevel(2); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); const b = g.level.blds; g.addStroke([{ x: b[0].ex, z: b[0].ez }, { x: b[2].ex, z: b[2].ez }], 'junction', true); });
+  const l2 = await page.evaluate(() => { const g = RA.app.lv; g.togglePlay(); let t = 0; for (; t < 120 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, t }; });
+  await page.waitForTimeout(800);
+  ok(l2.ended === 'lose' && /Trafik tıkandı/.test(await page.locator('#lv-card').textContent()) && /yol yok/.test(await page.locator('#lv-card').textContent()), 'mavi evin yolu yokken bekleyenler 8 olunca bölüm kaybedildi ve nedeni yazdı');
+  await shot('14-kaybetti');
+  await page.locator('#lv-card [data-act="retry"]').tap();
+  ok(await page.evaluate(() => RA.app.lv.strokes.length === 1 && !RA.app.lv.started), '"Yollarımla tekrar dene": çizilen yol duruyor, trafik baştan');
+
+  console.log('\nBÜTÜN BÖLÜMLER ÇÖZÜLEBİLİR');
+  const all = await page.evaluate(() => RA.LV.LEVELS.map((L) => {
+    const run = (naive) => {
+      RA.app.openLevel(L.id); RA.app.manual = true; const g = RA.app.lv; g.hideCard();
+      let n = 0; for (const [tool, raw] of L.solution) if (g.addStroke(raw.map(([x, z]) => ({ x, z })), naive || tool === 'road' ? 'junction' : tool, true)) n++;
+      g.togglePlay(); let t = 0; for (; t < 400 && !g.ended; t += 0.5) RA.app.advance(0.5);
+      return { n, ended: g.ended, del: g.sim.stats.delivered, peak: g.sim.stats.peak, len: Math.round(g.net.usage.len) };
+    };
+    const sol = run(false), naive = [3, 4, 9, 10].includes(L.id) ? run(true) : null;
+    return { id: L.id, name: L.name, goal: L.goal, sol, naive };
+  }));
+  for (const r of all) ok(r.sol.n > 0 && r.sol.ended === 'win', 'Bölüm ' + r.id + ' (' + r.name + '): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ' araç, ' + r.sol.len + ' m asfalt, evde en çok ' + r.sol.peak + ' kişi)');
+  for (const r of all) if (r.naive) ok(r.naive.ended === 'lose', 'Bölüm ' + r.id + ': köprüsüz (hepsi kavşak) denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
+  await page.evaluate(() => RA.app.showMenu());
 
   console.log('\nKARAYOLU — ŞEHİR 4 DÜZ YOLLA BAŞLAR');
-  await page.locator('.card[data-mode="road"]').tap();
+  await page.locator('.free-btn[data-mode="road"]').tap();
   ok((await state()) === 'workshop', 'karta dokununca atölye açıldı');
   await page.evaluate(() => { RA.app.manual = true; });
   const start = await page.evaluate(() => { const ws = RA.app.ws; let n = 0, other = 0; ws.grid.each((c) => c.pieces.forEach((q) => (q.type === 'road' ? n++ : other++))); return { size: [ws.grid.cols, ws.grid.rows], n, other, jc: ws.sim.jc.size, lots: ws.sim.lots.size, places: ws.city.places.length }; });
@@ -215,20 +304,20 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   console.log('\nKAYIT');
   const saved = await page.evaluate(() => JSON.stringify([RA.app.ws.grid.serialize(), RA.app.ws.city.places.map((p) => [p.type, p.i, p.j, p.conn])]));
   await page.reload(); await page.waitForFunction(() => window.RA && RA.app);
-  await page.locator('.card[data-mode="road"]').tap();
+  await page.locator('.free-btn[data-mode="road"]').tap();
   ok((await page.evaluate(() => JSON.stringify([RA.app.ws.grid.serialize(), RA.app.ws.city.places.map((p) => [p.type, p.i, p.j, p.conn])]))) === saved, 'çizim ve talepler kaydedildi: sayfa yenilenince aynı şehir geldi');
   await page.locator('#ws-menu').tap(); await page.locator('#ws-new').tap();
   const fresh = await page.evaluate(() => { const ws = RA.app.ws; let n = 0; ws.grid.each((c) => (n += c.pieces.length)); return { n, places: ws.city.places.length, undo: !document.getElementById('ws-undo').disabled }; });
   ok(fresh.n === start.n && fresh.places === 0 && fresh.undo, '⋯ › Yeni şehir: 4 düz yola döndü, talepler sıfırlandı, eski şehir ↶ ile geri alınabilir');
   // önceki sürümün kaydı: şehir 4 düz yolla başlar, eski çizim geri alınabilir
   await page.evaluate(() => { RA.app.showMenu(); const g = RA.WS.template('road').serialize(); g.v = 1; RA.store.set('ws.road', g); });
-  await page.locator('.card[data-mode="road"]').tap();
+  await page.locator('.free-btn[data-mode="road"]').tap();
   const mig = await page.evaluate(() => { const ws = RA.app.ws; let n = 0; ws.grid.each((c) => (n += c.pieces.length)); return { n, undo: !document.getElementById('ws-undo').disabled, toast: document.getElementById('ws-toast').textContent }; });
   ok(mig.n === start.n && mig.undo && /baştan başladı/.test(mig.toast), 'önceki sürümün kaydı varsa şehir 4 düz yolla başlar, eski çizim ↶ ile gelir');
 
   console.log('\nDEMİRYOLU VE HAVALİMANI');
   await page.evaluate(() => RA.app.showMenu());
-  await page.locator('.card[data-mode="rail"]').tap();
+  await page.locator('.free-btn[data-mode="rail"]').tap();
   await page.evaluate(CONNECT);
   const rail = await page.evaluate(() => { RA.app.manual = true; let closed = false; for (let k = 0; k < 360; k++) { RA.app.advance(0.5); if (k % 8 === 0) window.__connect(); for (const X of RA.app.ws.sim.xc.values()) if (X.state === 'closed') closed = true; } const s = RA.app.ws.sim; let rails = 0; RA.app.ws.grid.each((c) => c.pieces.forEach((q) => q.type === 'rail' && rails++)); return { trains: s.trains.length, trips: s.stats.trains, closed, rails, places: RA.app.ws.city.places.map((p) => p.type) }; });
   ok(rail.rails >= 40 && rail.trains > 0 && rail.trips > 0, 'demiryolu iki düz hatla başlar; trenler sefer yaptı (' + rail.trains + ' tren, ' + rail.trips + ' sefer)');
@@ -236,7 +325,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   ok(rail.places.includes('istasyon'), 'nüfus artınca demiryolunda istasyon talebi geldi (' + rail.places.join(', ') + ')');
   await page.waitForTimeout(150); await shot('06-demiryolu');
   await page.evaluate(() => RA.app.showMenu());
-  await page.locator('.card[data-mode="air"]').tap();
+  await page.locator('.free-btn[data-mode="air"]').tap();
   await page.evaluate(CONNECT);
   const air = await page.evaluate(() => { RA.app.manual = true; for (let k = 0; k < 180; k++) { RA.app.advance(1); if (k % 4 === 0) window.__connect(); } return Object.assign({ places: RA.app.ws.city.places.map((p) => p.type) }, RA.app.ws.sim.stats); });
   ok(air.land >= 2 && air.takeoff >= 1, 'havalimanı tek pist ve bir kapıyla başlar; kule iniş ve kalkışları sıraladı (' + air.land + ' iniş, ' + air.takeoff + ' kalkış)');

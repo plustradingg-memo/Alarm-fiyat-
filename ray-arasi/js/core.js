@@ -162,7 +162,7 @@
       const n = this.n;
       if (s <= 0) { const t = this.tan(0); out.x = this.xs[0] + t.x * s; out.z = this.zs[0] + t.z * s; return out; }
       if (s >= this.length) { const t = this.tan(this.length); const e = s - this.length; out.x = this.xs[n - 1] + t.x * e; out.z = this.zs[n - 1] + t.z * e; return out; }
-      const f = s / this.ds; const i = Math.floor(f); const t = f - i;
+      const f = s / this.ds; const i = Math.min(Math.floor(f), n - 2); const t = Math.min(1, f - i); // kayan nokta: son noktayı aşma
       out.x = this.xs[i] + (this.xs[i + 1] - this.xs[i]) * t;
       out.z = this.zs[i] + (this.zs[i + 1] - this.zs[i]) * t;
       return out;
