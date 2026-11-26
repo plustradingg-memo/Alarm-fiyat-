@@ -4,8 +4,9 @@
   const RA = window.RA;
   const LV = (RA.LV = RA.LV || {});
   // H_UP: köprü yüksekliği, RAMP: bir yandaki rampa boyu, FLAT: kesişimde düz kısım (yarısı),
+  // H_W / RAMP_W: yalnızca suyun üstünden geçen alçak köprünün yüksekliği ve rampası,
   // JR: kavşak yarıçapı (şeritler buradan başlar), LO: şerit ofseti, SP: çizgi örnek aralığı
-  const C = (LV.C = { H_UP: 1.2, RAMP: 2.4, FLAT: 0.9, JR: 1.05, JJ: 0.45, LO: 0.36, ROAD_W: 1.5, SP: 0.3, BX: 9.5, BZ: 15.5 });
+  const C = (LV.C = { H_UP: 1.2, RAMP: 2.4, H_W: 0.55, RAMP_W: 1.4, FLAT: 0.9, JR: 1.05, JJ: 0.45, LO: 0.36, ROAD_W: 1.5, SP: 0.3, BX: 9.5, BZ: 15.5 });
 
   /* ================= çizgi yardımcıları ================= */
   function stroke(id, pts) {
@@ -82,7 +83,7 @@
     return c;
   }
   const posKey = (x, z) => Math.round(x * 3) + ',' + Math.round(z * 3);
-  LV.geo = { stroke, at, tan, nearest, slicePts, intersections, inPoly, posKey };
+  LV.geo = { stroke, at, tan, nearest, slicePts, intersections, inPoly, posKey, segX };
 
   /* ================= parmak izini yola çevir ================= */
   // ham noktalar → seyrekleştir, sadeleştir (RDP), yumuşat (Chaikin), eşit aralıkla örnekle
@@ -142,7 +143,9 @@
       const avail = Math.min(share(i - 1, 'b'), share(i, 'a'));
       const tt = Math.tan(th / 2);
       let R = Math.min(R_PREF, avail / tt);
-      if (R < R_MIN) { sharp = true; R = Math.max(0.6, R); }
+      // yay sığmıyorsa: sığdığı kadar küçük yay (bacaktan taşmaz; U dönüşünde de patlamaz)
+      if (R < R_MIN) sharp = true;
+      if (!(R > 0.05)) { out.push(V[i]); continue; }
       const t = R * tt;
       const A = { x: V[i].x - d1x * t, z: V[i].z - d1z * t };
       const sg = cr > 0 ? 1 : -1;
@@ -155,13 +158,15 @@
     out.push(V[n - 1]);
     return { pts: out, sharp };
   }
-  LV.smoothStroke = function (raw, headDir, tailDir) {
+  // firm: ara noktalar (ör. binanın köşesinden dolaşma) korunur; düz yol yedeğine düşülmez
+  LV.smoothStroke = function (raw, headDir, tailDir, firm) {
     const thin = [raw[0]];
     for (const p of raw) if (Math.hypot(p.x - thin[thin.length - 1].x, p.z - thin[thin.length - 1].z) > 0.25) thin.push(p);
     if (thin.length < 2 || thin[thin.length - 1] !== raw[raw.length - 1]) thin.push(raw[raw.length - 1]);
     let best = null;
     // önce az sadeleştir; köşeler sığmazsa daha çok sadeleştir (parmak titremesi ve gereksiz kıvrım gider)
-    for (const eps of [0.35, 0.6, 0.9, 1.3]) {
+    // son çare: iki uç arasında düz yol (yalnızca binadan çıkış kavisleri kalır)
+    for (const eps of firm ? [0.35, 0.6, 0.9] : [0.35, 0.6, 0.9, 1.3, 1e9]) {
       let V = rdp(thin, eps);
       // binadan çıkış düzlüğü: sonraki köşeye dönüş için gerektiği kadar uzun (1,2–3,5 m)
       const stubLen = (E, dir, P) => { const vx = P.x - E.x, vz = P.z - E.z, l = Math.hypot(vx, vz) || 1; const th = Math.acos(RA.clamp((vx * dir.x + vz * dir.z) / l, -1, 1)); return RA.clamp(R_MIN * Math.tan(th / 2) * 1.15 + 0.2, STUB, 3.5); };
@@ -271,8 +276,9 @@
         const sa = x.sa, sb = x.sb;
         if (sa < 0.2 || sa > A.len - 0.2 || sb < 0.2 || sb > B.len - 0.2) continue; // uç değmesi yukarıda ele alındı
         const key = posKey(x.x, x.z);
-        const type = choices[key] || 'junction';
-        crossings.push({ key, x: x.x, z: x.z, type, kind: 'road' });
+        const type = choices[key] || 'pending';
+        crossings.push({ key, x: x.x, z: x.z, type, kind: 'road', ta: tan(A, sa), tb: tan(B, sb) });
+        if (type === 'pending') continue; // oyuncu henüz seçmedi: yollar bağlanmaz, köprü de olmaz
         if (type === 'junction') {
           const node = findNode(x.x, x.z, 0.35) || newNode(x.x, x.z, 'p');
           addSplit(A, sa, node, 'x'); addSplit(B, sb, node, 'x');
@@ -303,8 +309,9 @@
     for (const st of S) for (const r of rails) {
       for (const x of intersections(st, r)) {
         const key = posKey(x.x, x.z);
-        const type = choices[key] || 'level';
+        const type = choices[key] || 'pending';
         crossings.push({ key, x: x.x, z: x.z, type, kind: 'rail' });
+        if (type === 'pending') continue;
         if (type === 'bridge') { humps.get(st.id).push({ a: x.sa - C.FLAT, b: x.sa + C.FLAT, x: x.x, z: x.z }); bridges++; }
         else if (type === 'tunnel') { railHumps[r.k].push({ a: x.sb - C.FLAT, b: x.sb + C.FLAT, x: x.x, z: x.z }); tunnels++; }
         else gates.push({ key, st, s: x.sa, rail: r.k, sr: x.sb, x: x.x, z: x.z });
@@ -316,6 +323,8 @@
       list.sort((p, q) => p.a - q.a);
       const out = [];
       for (const h of list) { const last = out[out.length - 1]; if (last && h.a - last.b < 2 * C.RAMP + 0.6) { last.b = Math.max(last.b, h.b); last.items.push(h); } else out.push({ a: h.a, b: h.b, items: [h] }); }
+      // yalnızca su geçen köprü alçak ve kısa rampalı olur (kıyıya yakın yoldan da çıkabilsin)
+      for (const g of out) { const w = g.items.every((h) => h.water); g.H = w ? C.H_W : C.H_UP; g.r = w ? C.RAMP_W : C.RAMP; }
       return out;
     };
     const elev = (pr) => (s) => {
@@ -323,24 +332,25 @@
       for (const h of pr) {
         let v = 0;
         if (s >= h.a && s <= h.b) v = 1;
-        else if (s > h.a - C.RAMP && s < h.a) v = RA.smooth((s - (h.a - C.RAMP)) / C.RAMP);
-        else if (s > h.b && s < h.b + C.RAMP) v = RA.smooth(1 - (s - h.b) / C.RAMP);
+        else if (s > h.a - h.r && s < h.a) v = RA.smooth((s - (h.a - h.r)) / h.r);
+        else if (s > h.b && s < h.b + h.r) v = RA.smooth(1 - (s - h.b) / h.r);
+        v *= h.H;
         if (v > y) y = v;
       }
-      return y * C.H_UP;
+      return y;
     };
     const strokeY = new Map(), strokeProf = new Map();
     for (const st of S) {
       const pr = prof(humps.get(st.id));
       strokeProf.set(st.id, pr); strokeY.set(st.id, elev(pr));
       for (const h of pr) {
-        if (h.a - C.RAMP < -0.01 || h.b + C.RAMP > st.len + 0.01) { const p = at(st, RA.clamp(h.a, 0, st.len)); return fail('Köprünün iki yanında rampa için yer yok: yolu biraz uzat.', p.x, p.z); }
-        for (const sp of splits.get(st.id)) if (sp.s > h.a - C.RAMP - 0.4 && sp.s < h.b + C.RAMP + 0.4) { const p = at(st, sp.s); return fail('Köprü rampasının üstünde kavşak olamaz.', p.x, p.z); }
+        if (h.a - h.r < -0.01 || h.b + h.r > st.len + 0.01) { const p = at(st, RA.clamp(h.a, 0, st.len)); return fail('Köprünün iki yanında rampa için yer yok: yolu biraz uzat.', p.x, p.z); }
+        for (const sp of splits.get(st.id)) if (sp.s > h.a - h.r - 0.4 && sp.s < h.b + h.r + 0.4) { const p = at(st, sp.s); return fail('Köprü rampasının üstünde kavşak olamaz.', p.x, p.z); }
       }
     }
     const railY = rails.map((r, k) => {
       const pr = prof(railHumps[k]);
-      for (const h of pr) for (const g of gates) if (g.rail === k && g.sr > h.a - C.RAMP - 0.5 && g.sr < h.b + C.RAMP + 0.5) return null;
+      for (const h of pr) for (const g of gates) if (g.rail === k && g.sr > h.a - h.r - 0.5 && g.sr < h.b + h.r + 0.5) return null;
       return elev(pr);
     });
     if (railY.some((f) => !f)) return fail('Demiryolu köprüsünün rampasında hemzemin geçit olamaz.');
@@ -359,10 +369,11 @@
     }
 
     // --- üst üste binen yollar ---
+    const chk = opts.check == null ? null : new Set([].concat(opts.check));
     for (let i = 0; i < S.length; i++) for (let j = 0; j < S.length; j++) {
       if (i === j) continue;
       const A = S[i], B = S[j];
-      if (opts.check != null && A.id !== opts.check && B.id !== opts.check) continue; // eski yollar zaten denetlendi
+      if (chk && !chk.has(A.id) && !chk.has(B.id)) continue; // eski yollar zaten denetlendi
       if (A.bb[2] + 2 < B.bb[0] || B.bb[2] + 2 < A.bb[0] || A.bb[3] + 2 < B.bb[1] || B.bb[3] + 2 < A.bb[1]) continue;
       const near = splits.get(A.id).map((sp) => at(A, sp.s));
       for (const c of crossings) near.push(c);
@@ -388,6 +399,14 @@
         q.node.arms.push({ e, end: 'b', ang: Math.atan2(-tb.z, -tb.x) });
       }
     }
+    // kavşağın hemen ötesinde kalan kısa boş uç (ör. yol birleşme noktasını biraz aşmış): kavşağın parçası sayılır
+    for (const e of edges) {
+      for (const [n, o] of [[e.a, e.b], [e.b, e.a]]) {
+        if (n.kind !== 'b' && o.kind !== 'b' && n.arms.length === 1 && o.arms.length >= 3 && e.len < C.JR + 0.9) {
+          e.stub = true; n.arms = []; o.arms = o.arms.filter((r) => r.e !== e);
+        }
+      }
+    }
     for (const n of nodes) {
       n.deg = n.arms.length;
       if (n.kind === 'b') { if (n.deg > 1) return fail('Bir binaya tek yol bağlanır; ikinci yolu ilk yola bağla.', n.x, n.z); continue; }
@@ -401,6 +420,7 @@
     const trim = (n) => (n.kind === 'j' ? C.JR : n.kind === 'joint' ? C.JJ : 0);
     for (const e of edges) {
       e.ta = trim(e.a); e.tb = trim(e.b);
+      if (e.stub) { e.ta = 0; e.tb = 0; continue; }
       if (e.len < e.ta + e.tb + 0.6) { const p = at(e.st, (e.s0 + e.s1) / 2); return fail('Kavşaklar birbirine çok yakın.', p.x, p.z); }
     }
     let len = 0; for (const st of S) len += st.len;
@@ -414,6 +434,7 @@
     // --- şeritler (sağdan gidilir) ---
     const lanes = [];
     for (const e of edges) {
+      if (e.stub) continue; // kısa boş uca şerit yok
       const s0 = e.s0 + e.ta, s1 = e.s1 - e.tb;
       const center = new RA.Path(slicePts(e.st, s0, s1));
       for (const dir of [1, -1]) {
@@ -474,7 +495,8 @@
       bn.out = lanes.find((l) => l.from === bn) || null;
       bn.in = lanes.find((l) => l.to === bn) || null;
     }
-    return { ok: true, S, byId, nodes, bNodes, edges, lanes, turns, crossings, gates, rails, railY, strokeY, strokeProf, usage, blds };
+    const pending = crossings.filter((c) => c.type === 'pending').length;
+    return { ok: true, pending, S, byId, nodes, bNodes, edges, lanes, turns, crossings, gates, rails, railY, strokeY, strokeProf, usage, blds };
   };
 
   /* ================= rota (Dijkstra): binadan binaya şerit ve dönüş dizisi ================= */

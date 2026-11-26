@@ -20,6 +20,7 @@
       parapet: RA.mat(0xe8e4da, { roughness: 0.8 }),
       pillar: RA.mat(0xa9a59b, { roughness: 0.85 }),
       rail: RA.mat(0xf2f2ec, { roughness: 0.6 }),
+      line: RA.mat(0xf4f4ee, { roughness: 0.7 }),
       dash: new T.MeshBasicMaterial({ map: RA.tex.dash(), transparent: true, depthWrite: false }),
       water: new T.MeshStandardMaterial({ color: 0x3f8fd0, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }),
       bank: RA.mat(0xc8b98f, { roughness: 1 }),
@@ -83,11 +84,12 @@
   // kesişim işareti: kavşak (artı), köprü (kemer), alt geçit (tünel), hemzemin (bariyer)
   function markTex(type) {
     return canvasTex('mk' + type, 128, 128, (g) => {
-      const col = { junction: '#ffc531', level: '#ffc531', bridge: '#3d8bff', tunnel: '#a061f0' }[type];
+      const col = { junction: '#ffc531', level: '#ffc531', bridge: '#3d8bff', tunnel: '#a061f0', pending: '#ff7a1a' }[type];
       g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.arc(64, 68, 54, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#ffffff'; g.beginPath(); g.arc(64, 62, 54, 0, Math.PI * 2); g.fill();
       g.fillStyle = col; g.beginPath(); g.arc(64, 62, 46, 0, Math.PI * 2); g.fill();
       g.strokeStyle = '#ffffff'; g.lineWidth = 10; g.lineCap = 'round';
+      if (type === 'pending') { g.fillStyle = '#ffffff'; g.font = '900 68px Overpass, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', 64, 68); return; }
       g.beginPath();
       if (type === 'junction') { g.moveTo(64, 34); g.lineTo(64, 90); g.moveTo(36, 62); g.lineTo(92, 62); }
       else if (type === 'level') { g.moveTo(36, 46); g.lineTo(92, 78); g.moveTo(36, 78); g.lineTo(92, 46); }
@@ -120,10 +122,54 @@
       for (let k = 0; k < cap; k++) { g.fillStyle = k < n ? col : 'rgba(255,255,255,0.22)'; g.beginPath(); g.arc(30 + k * 28, 32, 10, 0, Math.PI * 2); g.fill(); }
     });
   }
-  LV.tex = { markTex, signTex, pendTex };
+  function heartTex() {
+    return canvasTex('heart', 128, 128, (g) => {
+      g.fillStyle = '#ff4d7a'; g.strokeStyle = '#ffffff'; g.lineWidth = 9;
+      g.beginPath(); g.moveTo(64, 108); g.bezierCurveTo(10, 72, 12, 26, 42, 22); g.bezierCurveTo(56, 20, 62, 30, 64, 40); g.bezierCurveTo(66, 30, 72, 20, 86, 22); g.bezierCurveTo(116, 26, 118, 72, 64, 108); g.closePath();
+      g.stroke(); g.fill();
+      g.fillStyle = 'rgba(255,255,255,0.55)'; g.beginPath(); g.ellipse(44, 44, 9, 6, -0.6, 0, Math.PI * 2); g.fill();
+    });
+  }
+  LV.tex = { markTex, signTex, pendTex, heartTex };
 
   class LvView {
-    constructor(scene) { this.scene = scene; this.base = null; this.roads = null; this.prev = null; }
+    constructor(scene) { this.scene = scene; this.base = null; this.roads = null; this.prev = null; this.anims = []; this.lastNow = 0; }
+
+    /* ---------- animasyonlar: yolun serilmesi ve yolların öpüşmesi ---------- */
+    sweep(pts) {
+      const path = new RA.Path(pts); if (path.length < 0.5) return;
+      const g = ribbonY(path, -0.85, 0.85, () => 0, 0.32, 0.15);
+      const n = g.index.count;
+      const m = new T.Mesh(g, new T.MeshBasicMaterial({ color: 0xfff1a8, transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending }));
+      m.renderOrder = 21; g.setDrawRange(0, 0); this.scene.add(m);
+      const dur = RA.clamp(path.length / 40, 0.25, 0.6);
+      this.anims.push({ t: 0, step: (a, dt) => {
+        a.t += dt;
+        g.setDrawRange(0, Math.min(n, Math.floor((a.t / dur) * n / 6) * 6));
+        if (a.t > dur) m.material.opacity = Math.max(0, 0.85 * (1 - (a.t - dur) / 0.35));
+        if (a.t > dur + 0.35) { this.scene.remove(m); g.dispose(); m.material.dispose(); return false; }
+        return true;
+      } });
+    }
+    kiss(x, z, y) {
+      y = y || 0.12;
+      const grp = new T.Group(); grp.position.set(x, y, z); this.scene.add(grp);
+      const ring = (col, r0) => { const r = new T.Mesh(RA.geo('kring', () => { const q = new T.RingGeometry(0.55, 0.75, 40); q.rotateX(-Math.PI / 2); return q; }), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 1, depthWrite: false, depthTest: false })); r.renderOrder = 22; r.scale.setScalar(r0); grp.add(r); return r; };
+      const r1 = ring(0xffffff, 0.6), r2 = ring(0xff6f9a, 0.3);
+      const sparks = [];
+      for (let k = 0; k < 9; k++) { const sp = RA.glowSprite(k % 2 ? 0xffe27a : 0xff8fb0, 0.5, 1); sp.renderOrder = 23; grp.add(sp); const a = (k / 9) * Math.PI * 2; sparks.push({ sp, vx: Math.cos(a) * 3.2, vz: Math.sin(a) * 3.2, vy: 2 + (k % 3) }); }
+      const heart = new T.Sprite(new T.SpriteMaterial({ map: heartTex(), transparent: true, depthTest: false })); heart.renderOrder = 24; heart.scale.set(0.2, 0.2, 1); grp.add(heart);
+      this.anims.push({ t: 0, step: (a, dt) => {
+        a.t += dt; const t = a.t;
+        r1.scale.setScalar(0.6 + t * 4.5); r1.material.opacity = Math.max(0, 1 - t / 0.55);
+        const t2 = Math.max(0, t - 0.1); r2.scale.setScalar(0.3 + t2 * 3.5); r2.material.opacity = t < 0.1 ? 0 : Math.max(0, 1 - t2 / 0.6);
+        for (const s of sparks) { s.sp.position.set(s.vx * t, s.vy * t - 4 * t * t, s.vz * t); s.sp.material.opacity = Math.max(0, 1 - t / 0.6); }
+        const hs = t < 0.25 ? RA.smooth(t / 0.25) * 1.25 : 1.25 - Math.min(0.15, (t - 0.25) * 0.4);
+        heart.scale.set(hs, hs, 1); heart.position.y = 0.8 + t * 1.6; heart.material.opacity = t < 0.7 ? 1 : Math.max(0, 1 - (t - 0.7) / 0.35);
+        if (t > 1.05) { this.scene.remove(grp); r1.material.dispose(); r2.material.dispose(); heart.material.dispose(); sparks.forEach((s) => s.sp.material.dispose()); return false; }
+        return true;
+      } });
+    }
     dispose(g) { if (!g) return; this.scene.remove(g); g.traverse((o) => { if (o.isMesh && o.geometry && !o.geometry.userData.cached && !o.geometry.parameters) o.geometry.dispose(); }); }
 
     /* ---------- bölüm sahnesi (değişmeyen kısım) ---------- */
@@ -248,11 +294,23 @@
         stat.add(new T.Mesh(ribbonY(path, -0.78, 0.78, yf, 0.045, 0.2), m.asphalt));
         // kaldırım kavşağın içine girmez
         const c0 = e.ta, c1 = path.length - e.tb;
-        if (c1 - c0 > 0.2) { const cp = path.slice(c0, c1), cy = (s) => yf(c0 + s); for (const x of [-0.86, 0.86]) stat.add(new T.Mesh(ribbonY(cp, x - 0.09, x + 0.09, cy, 0.06, 0.25), m.curb)); }
+        if (c1 - c0 > 0.2) {
+          const cp = path.slice(c0, c1), cy = (s) => yf(c0 + s);
+          for (const x of [-0.86, 0.86]) stat.add(new T.Mesh(ribbonY(cp, x - 0.09, x + 0.09, cy, 0.06, 0.25), m.curb));
+          for (const x of [-0.64, 0.64]) stat.add(new T.Mesh(ribbonY(cp, x - 0.03, x + 0.03, cy, 0.05, 0.25), m.line)); // kenar çizgisi
+        }
         // orta çizgi (kavşak ağızlarında kesik)
         const s0 = e.ta > 0 ? e.ta : 0.3, s1 = path.length - (e.tb > 0 ? e.tb : 0.3);
         if (s1 - s0 > 0.6) { const dm = new T.Mesh(ribbonY(path.slice(s0, s1), -0.045, 0.045, (s) => yf(s0 + s), 0.052, 0.2, 1 / 0.9), m.dash); dm.renderOrder = 3; root.add(dm); }
         this.elevated(stat, path, yf, 0.86);
+      }
+      // türü seçilmemiş kesişim: iki yolun üst üste binen çizgi ve kaldırımları yerine temiz bir asfalt yüzey
+      for (const c of net.crossings) {
+        if (c.type !== 'pending' || c.kind !== 'road' || !c.ta) continue;
+        const k = 0.97 / Math.max(0.45, Math.abs(c.ta.x * c.tb.z - c.ta.z * c.tb.x));
+        const P = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([i, j]) => new T.Vector2(c.x + (c.ta.x * i + c.tb.x * j) * k, -(c.z + (c.ta.z * i + c.tb.z * j) * k)));
+        const geo = new T.ShapeGeometry(new T.Shape(P)); geo.rotateX(-Math.PI / 2);
+        const pad = new T.Mesh(geo, m.asphalt); pad.position.y = 0.068; pad.receiveShadow = true; stat.add(pad);
       }
       // kavşak ve birleşme yerleri
       for (const n of net.nodes) {
@@ -273,12 +331,14 @@
           }
         }
         if (n.kind === 'j') {
-          // her kolda dur çizgisi
+          // her kolda yaya geçidi (zebra)
           for (const arm of n.arms) {
-            const ang = arm.ang, cx = n.x + Math.cos(ang) * 1.12, cz = n.z + Math.sin(ang) * 1.12;
-            const rx = -Math.sin(ang), rz = Math.cos(ang);
-            const bar = mesh(RA.geo('stopb', () => new T.BoxGeometry(0.62, 0.01, 0.1)), RA.mat(0xf2f2ec), cx - rx * 0.36, 0.062, cz - rz * 0.36, false);
-            bar.rotation.y = -Math.atan2(rz, rx); stat.add(bar);
+            const ang = arm.ang, dx = Math.cos(ang), dz = Math.sin(ang), rx = -dz, rz = dx;
+            const cx = n.x + dx * (LV.C.JR + 0.32), cz = n.z + dz * (LV.C.JR + 0.32);
+            for (let k = -2; k <= 2; k++) {
+              const zb = mesh(RA.geo('zebra', () => new T.BoxGeometry(0.42, 0.012, 0.15)), m.line, cx + rx * k * 0.27, 0.058, cz + rz * k * 0.27, false);
+              zb.rotation.y = -ang; stat.add(zb);
+            }
           }
         }
       }
@@ -362,6 +422,8 @@
 
     /* ---------- her kare: ışıklar, bariyerler, bekleyen sayıları ---------- */
     frame(sim, now, running) {
+      const dt = this.lastNow ? Math.min(0.05, Math.max(0, now - this.lastNow)) : 0.016; this.lastNow = now;
+      if (this.anims.length) this.anims = this.anims.filter((a) => a.step(a, dt));
       if (this.lamps) for (const L of this.lamps) {
         const ctl = L.n.ctl; if (!ctl) continue;
         const ph = ctl.n.phases.findIndex((p) => p.includes(L.e));
@@ -379,7 +441,10 @@
         if (n !== b.pendN) { b.pendN = n; b.pend.material.map = pendTex(n, LV.Sim.PENDING_CAP); b.pend.material.needsUpdate = true; }
         b.pend.visible = running || n > 0;
       }
-      if (this.marks) for (const mk of this.marks) { mk.sp.material.opacity = running ? 0.6 : 1; const sc = running ? 0.9 : 1.25; mk.sp.scale.set(sc, sc, 1); }
+      if (this.marks) for (const mk of this.marks) {
+        if (mk.c.type === 'pending') { const sc = 1.35 + Math.sin(now * 5) * 0.15; mk.sp.scale.set(sc, sc, 1); mk.sp.material.opacity = 1; continue; } // seçilmeyi bekliyor
+        mk.sp.material.opacity = running ? 0.6 : 1; const sc = running ? 0.9 : 1.25; mk.sp.scale.set(sc, sc, 1);
+      }
       if (sim.level) for (const b of sim.level.blds) {
         if (b.pulse > 0) { b.pulse = Math.max(0, b.pulse - 0.04); b.sign.scale.set(2.6 * (1 + b.pulse * 0.25), 0.98 * (1 + b.pulse * 0.25), 1); }
         if (b.anchor && b.anchor.visible) b.anchor.material.opacity = 0.65 + Math.sin(now * 4) * 0.35;

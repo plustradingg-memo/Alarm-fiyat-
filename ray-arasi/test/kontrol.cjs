@@ -94,15 +94,24 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await draw([b3[0], [0, 0], b3[2]]);
   await draw([b3[1], [0, 0.2], b3[3]]);
   let x3 = await page.evaluate(() => RA.app.lv.net.crossings.map((c) => ({ type: c.type, x: c.x, z: c.z })));
-  ok(x3.length === 1 && x3[0].type === 'junction' && (await page.evaluate(() => RA.app.lv.net.nodes.some((n) => n.kind === 'j' && n.deg === 4))), 'iki yol kesişince ışıklı dört kollu kavşak oldu');
+  ok(x3.length === 1 && x3[0].type === 'pending' && !(await page.evaluate(() => RA.app.lv.net.nodes.some((n) => n.kind === 'j'))), 'iki yol kesişince kendiliğinden kavşak olmadı: kesişim belirsiz (turuncu ? işareti)');
+  ok(/\? işaretine dokun/.test((await lvToast()).txt), 'not: "' + (await lvToast()).txt + '"');
+  await page.locator('#lv-play').tap(); await page.waitForTimeout(60);
+  ok(!(await page.evaluate(() => RA.app.lv.started)) && /Önce kesişimleri belirle/.test((await lvToast()).txt) && (await page.locator('#lv-pick').isVisible()), 'belirsiz kesişim varken trafik başlamadı; seçim kutusu açıldı');
+  await page.waitForTimeout(150); await shot('12-bolum3-secim');
+  await page.locator('#lv-pick [data-pick="junction"]').tap(); await page.waitForTimeout(60);
+  ok((await page.evaluate(() => RA.app.lv.net.crossings[0].type === 'junction' && RA.app.lv.net.nodes.some((n) => n.kind === 'j' && n.deg === 4))) && !(await page.locator('#lv-pick').isVisible()), 'seçim kutusundan Kavşak: ışıklı dört kollu kavşak oldu');
   await page.waitForTimeout(150); await shot('12-bolum3-kavsak');
   const mk = await W(x3[0].x, x3[0].z, 2.0);
   await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
+  ok(await page.locator('#lv-pick').isVisible() && (await page.locator('#lv-pick [data-pick="tunnel"]').isDisabled()), 'işarete dokununca seçim kutusu açıldı; hakkı olmayan Alt geçit kapalı');
+  await page.locator('#lv-pick [data-pick="bridge"]').tap(); await page.waitForTimeout(60);
   x3 = await page.evaluate(() => ({ type: RA.app.lv.net.crossings[0].type, br: RA.app.lv.net.usage.bridges, nb: document.getElementById('lv-nb').textContent, up: RA.app.lv.net.edges.some((e) => e.y((e.s0 + e.s1) / 2) > 1) }));
-  ok(x3.type === 'bridge' && x3.br === 1 && x3.nb === '0' && x3.up, 'kesişim işaretine dokununca köprü oldu: bir yol öbürünün üstünden geçiyor, köprü hakkı 0 kaldı');
+  ok(x3.type === 'bridge' && x3.br === 1 && x3.nb === '0' && x3.up, 'Köprü seçildi: bir yol öbürünün üstünden geçiyor, köprü hakkı 0 kaldı');
   await page.waitForTimeout(150); await shot('13-bolum3-kopru');
   await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
-  ok((await page.evaluate(() => RA.app.lv.net.crossings[0].type)) === 'junction', 'yeniden dokununca (alt geçit hakkı olmadığından) kavşağa döndü');
+  await page.locator('#lv-pick [data-pick="junction"]').tap(); await page.waitForTimeout(60);
+  ok((await page.evaluate(() => RA.app.lv.net.crossings[0].type)) === 'junction', 'yeniden dokunup Kavşak seçince kavşağa döndü');
   // asfalt sınırı
   await page.evaluate(() => { RA.app.lv.level.budget = 50; });
   await draw([[-8.6, 7], [-8.6, -5]]);
@@ -117,11 +126,26 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.locator('#lv-undo').tap();
   ok((await page.evaluate(() => RA.app.lv.net.bNodes.every((n) => n.deg === 1))), 'Geri al: silinen yol geri geldi');
   await page.locator('#lv [data-lvtool="road"]').tap();
-  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80); // yeniden köprü
+  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80); await page.locator('#lv-pick [data-pick="bridge"]').tap(); // yeniden köprü
   await page.locator('#lv-hint').tap();
   ok(await page.evaluate(() => !!RA.app.lv.view.hintG), 'İpucu: çözüm yolu tahtada yeşil gösterildi');
   const w3 = await page.evaluate(() => { const g = RA.app.lv; g.togglePlay(); let t = 0; for (; t < 200 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, del: g.sim.stats.delivered, peak: g.sim.stats.peak }; });
   ok(w3.ended === 'win', 'köprülü düzenle bölüm 3 kazanıldı (' + w3.del + ' araç, evde en çok ' + w3.peak + ' kişi bekledi)');
+
+  console.log('\nTAŞAN UÇ VE AKAN TRAFİKTE KESİŞİM');
+  await page.evaluate(() => { RA.app.openLevel(4); RA.app.manual = true; RA.app.lv.hideCard(); });
+  const b4 = await page.evaluate(() => RA.app.lv.level.blds.map((q) => [q.ex, q.ez]));
+  await draw([b4[3], [0, -2], [0, 7.5]]); // fabrikadan aşağı ana yol
+  await draw([b4[0], [-3, 7.2], [1.5, 5.4]]); // turuncu ev → ana yolu 1,5 m aşıp boşta biter
+  const t4 = await page.evaluate(() => { const g = RA.app.lv; const st = g.net.S.find((q) => q.id !== g.net.S[0].id); const e = st.pts[st.pts.length - 1]; return { pend: g.net.pending, conn: g.net.bNodes[0].deg, n: g.strokes.length, endX: e.x }; });
+  ok(t4.n === 2 && t4.pend === 0 && t4.conn === 1 && Math.abs(t4.endX) < 0.05, 'ana yolu az farkla aşan uç kesildi: yol tam ana yolun üstünde bitip ona birleşti, kesişim sorusu çıkmadı');
+  await page.evaluate(() => { const g = RA.app.lv; g.togglePlay(); RA.app.advance(3); });
+  await draw([b4[2], [0, 1.4], [6.1, 1]]); // mavi yol ana yolu keser (trafik akarken)
+  const r4 = await page.evaluate(() => ({ running: RA.app.lv.running, pend: RA.app.lv.net.pending, pick: !document.getElementById('lv-pick').hidden, toast: document.getElementById('lv-toast').textContent }));
+  ok(!r4.running && r4.pend === 1 && r4.pick && /Trafik durdu/.test(r4.toast), 'trafik akarken çizilen kesişim için trafik durdu ve seçim kutusu açıldı');
+  await page.locator('#lv-pick [data-pick="bridge"]').tap(); await page.waitForTimeout(60);
+  await page.locator('#lv-play').tap();
+  ok(await page.evaluate(() => RA.app.lv.running && RA.app.lv.net.pending === 0 && RA.app.lv.net.usage.bridges === 1), 'köprü seçilince trafik ▶ ile devam etti');
 
   console.log('\nYOL KALİTESİ');
   await page.evaluate(() => { RA.app.openLevel(2); RA.app.manual = true; RA.app.lv.hideCard(); });
@@ -132,12 +156,40 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await draw(wob);
   const q1 = await page.evaluate(() => { const st = RA.app.lv.net.S[0]; if (!st) return null; let m = 0; for (let i = 1; i < st.pts.length - 1; i++) { const a = Math.atan2(st.pts[i].z - st.pts[i - 1].z, st.pts[i].x - st.pts[i - 1].x), b = Math.atan2(st.pts[i + 1].z - st.pts[i].z, st.pts[i + 1].x - st.pts[i].x); m = Math.max(m, Math.abs(RA.wrapAngle(b - a))); } const t0 = RA.LV.geo.tan(st, 0.3), t1 = RA.LV.geo.tan(st, st.len - 0.3); return { r: 0.3 / m, exit: -t0.z, enter: -t1.z }; });
   ok(q1 && q1.r > 1.6 && q1.exit > 0.99 && q1.enter > 0.99, 'titrek el çizimi düzgün yola dönüştü: en dar viraj ' + (q1 ? q1.r.toFixed(1) : '?') + ' m yarıçaplı, yol binadan dümdüz çıkıp binaya dümdüz giriyor');
+  // dağınık çizimler reddedilmez: oyun yolu kendisi düzeltir (hata kutusu çıkmaz)
+  await page.evaluate(() => { const g = RA.app.lv; window.__errs = []; if (!g.__errWrap) { g.__errWrap = true; const ot = g.toast.bind(g); g.toast = (m, e) => { if (e) window.__errs.push(m); ot(m, e); }; } });
   await draw([b2[1], [4, 5], [2, 2], [-2, 1], [-2, -3], [2, -3], [2, 1], [-1, 4], [-5, -4], b2[3]]);
-  ok(/kendi üstünden geçemez/.test((await lvToast()).txt) && (await page.evaluate(() => RA.app.lv.strokes.length)) === 1, 'kendini kesen ilmekli çizim reddedildi: "' + (await lvToast()).txt + '"');
+  const lp = await page.evaluate(() => { const g = RA.app.lv, st = g.net.S[g.net.S.length - 1]; let self = false; for (let i = 0; i < st.pts.length - 1; i++) for (let j = i + 2; j < st.pts.length - 1; j++) if (RA.LV.geo.segX(st.pts[i].x, st.pts[i].z, st.pts[i + 1].x, st.pts[i + 1].z, st.pts[j].x, st.pts[j].z, st.pts[j + 1].x, st.pts[j + 1].z)) self = true; return { n: g.strokes.length, self, errs: window.__errs.slice() }; });
+  ok(lp.n === 2 && !lp.self && !lp.errs.length, 'kendini kesen ilmekli çizim reddedilmedi: ilmek atılıp yol düzgün kuruldu ("' + (await lvToast()).txt + '")');
+  const kissN = await page.evaluate(() => new Promise((res) => setTimeout(() => res(RA.app.lv.view.anims.length), 330)));
+  ok(kissN > 0, 'yol binaya / yola kavuşunca öpüşme animasyonu oynadı (' + kissN + ' canlandırma)');
+  await shot('11b-ilmek-duzeldi');
   await draw([b2[1], [6, 4], [5.6, 2], [5.2, 4.5], [-6, -9.1]]);
-  ok(/Viraj çok keskin/.test((await lvToast()).txt), 'saç tokası gibi keskin viraj reddedildi: "' + (await lvToast()).txt + '"');
+  ok(!(await page.evaluate(() => window.__errs.length)), 'saç tokası gibi keskin viraj hata vermeden düzeltildi: "' + (await lvToast()).txt + '"');
   await draw([[-3.72, 3.44], [0, 0.1], [3.72, -3.24]]); // turuncu yolu 15° ile kesen çizgi
-  ok(/dar açıyla|çok yakın/.test((await lvToast()).txt) && (await page.evaluate(() => RA.app.lv.strokes.length)) === 1, 'öbür yolu çok yatık kesen çizim reddedildi: "' + (await lvToast()).txt + '"');
+  const sx = await page.evaluate(() => { const g = RA.app.lv, G = RA.LV.geo; let min = 9; for (let i = 0; i < g.net.S.length; i++) for (let j = i + 1; j < g.net.S.length; j++) for (const x of G.intersections(g.net.S[i], g.net.S[j])) { const a = G.tan(g.net.S[i], x.sa), b = G.tan(g.net.S[j], x.sb); min = Math.min(min, Math.abs(a.x * b.z - a.z * b.x)); } return { errs: window.__errs.length, min }; });
+  ok(!sx.errs && sx.min > 0.5, 'öbür yolu çok yatık kesen çizim hata vermeden dikleştirildi (en yatık kesişim ' + Math.round(Math.asin(Math.min(1, sx.min)) * 180 / Math.PI) + '°)');
+  // rastgele karman çorman 40 çizim: hiçbirinde kırmızı hata yok
+  const fz = await page.evaluate(() => {
+    let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const g = RA.app.lv; let errs = 0, added = 0, slow = 0;
+    for (let round = 0; round < 5; round++) {
+      RA.app.openLevel(7 + (round % 3)); RA.app.manual = true; g.hideCard(); g.level.budget = 9999; g.level.bridges = 20; g.level.tunnels = 20;
+      const B = g.level.blds; window.__errs = [];
+      for (let k = 0; k < 8; k++) {
+        const pick = () => { const r = rnd(); if (r < 0.55) { const b = B[Math.floor(rnd() * B.length)]; return { x: b.ex + (rnd() - 0.5) * 1.2, z: b.ez + (rnd() - 0.5) * 1.2 }; } if (r < 0.75 && g.net.S.length) { const st = g.net.S[Math.floor(rnd() * g.net.S.length)]; const q = RA.LV.geo.at(st, rnd() * st.len); return { x: q.x + (rnd() - 0.5) * 1.5, z: q.z + (rnd() - 0.5) * 1.5 }; } return { x: (rnd() - 0.5) * 18, z: (rnd() - 0.5) * 30 }; };
+        const A = pick(), Z = pick(), wp = [A]; const nw = Math.floor(rnd() * 3);
+        for (let i = 1; i <= nw; i++) { const t = i / (nw + 1); wp.push({ x: A.x + (Z.x - A.x) * t + (rnd() - 0.5) * 8, z: A.z + (Z.z - A.z) * t + (rnd() - 0.5) * 8 }); }
+        wp.push(Z);
+        const raw = []; for (let i = 0; i < wp.length - 1; i++) { const a = wp[i], b = wp[i + 1], n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.35)); for (let j = 0; j < n; j++) raw.push({ x: a.x + (b.x - a.x) * j / n + (rnd() - 0.5) * 0.25, z: a.z + (b.z - a.z) * j / n + (rnd() - 0.5) * 0.25 }); }
+        raw.push(Z);
+        const t0 = performance.now(); if (g.addStroke(raw)) added++; if (performance.now() - t0 > 1500) slow++;
+      }
+      errs += window.__errs.length;
+    }
+    return { errs, added, slow };
+  });
+  ok(fz.errs === 0 && fz.added >= 25 && fz.slow === 0, '40 rastgele karman çorman çizimin ' + fz.added + ' tanesi yol oldu, hiçbirinde kırmızı hata çıkmadı, hiçbiri 1,5 sn sürmedi');
 
   console.log('\nKAYBETME');
   await page.evaluate(() => { RA.app.openLevel(2); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); const b = g.level.blds; g.addStroke([{ x: b[0].ex, z: b[0].ez }, { x: b[2].ex, z: b[2].ez }], 'junction', true); });

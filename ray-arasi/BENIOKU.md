@@ -1,8 +1,9 @@
 # RAY ARASI
 
 Masanın üzerindeki maket tahtasında oynanan, Türkçe, dikey ekranlı bir trafik bulmacası. Renkli evlerdeki insanları
-aynı renkteki iş yerlerine ulaştırmak için yolları **parmağınla serbestçe çizersin**. Yollar kesiştiği yerde kavşak,
-köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm bölüm zorlaşır, yıldız toplarsın.
+aynı renkteki iş yerlerine ulaştırmak için yolları **parmağınla serbestçe çizersin**. Ne kadar dağınık çizersen çiz
+oyun yolu kendisi toparlar; yollar birbirine kavuşurken küçük bir "öpüşme" animasyonu oynar. Yollar kesiştiği yerde
+kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar verirsin**. Bölüm bölüm zorlaşır, yıldız toplarsın.
 
 ## Nasıl oynanır?
 
@@ -12,7 +13,8 @@ köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm b
    kadar sürükle. Çizgi kare kare değil, istediğin eğriyle çizilir; gerçek yol tasarımı gibi düz parçalara ve en az
    1,8 m yarıçaplı virajlara dönüştürülür (parmak titremesi silinir). Yol binadan dümdüz çıkar, binaya dümdüz girer.
    Uçları binanın girişine ya da yakındaki bir yola kendiliğinden yapışır: bir yolu başka bir yolun ortasına
-   bağlarsan orada kavşak olur.
+   bağlarsan orada kavşak olur. Yollar birbirine kavuştuğu yerde kalp çıkaran bir "öpüşme" animasyonu oynar,
+   yeni yol çizildiği yönde parlayarak belirir.
 3. **▶ Başlat**'a bas. Evlerden aynı renkte araçlar çıkar, iş yerine girip kaybolur. Üstteki çubuk kaç aracın
    ulaştığını gösterir.
 4. Bir evin üstündeki noktalar bekleyen kişileri gösterir. **Bir ev 8 kişiyi bekletirse kaybedersin.** Trafik
@@ -21,11 +23,15 @@ köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm b
 
 ### Kesişimler: kavşak, köprü, alt geçit
 
-- Alttaki **Kavşak / Köprü / Alt geçit** seçimi, yeni çizdiğin yol başka bir yolu kestiğinde ne olacağını belirler.
-  **Köprü**: yeni yol öbürünün üstünden geçer. **Alt geçit**: yeni yol öbürünün altından geçer (öbür yol yükselir).
-- Çizdikten sonra da her kesişimin üstünde bir işaret durur. **İşarete dokundukça** tür değişir:
-  kavşak → köprü → alt geçit (demiryolunda hemzemin geçit → köprü → alt geçit).
-- Köprü ve alt geçit haklarının sayısı düğmelerin üstünde yazar. Nehri kesen yol kendiliğinden köprü olur ve bir
+- Yeni çizdiğin yol başka bir yolu ya da rayı kestiğinde orası **kendiliğinden kavşak olmaz**: yollar birbirinin
+  üstünden geçer gibi durur ve üstünde turuncu, yanıp sönen bir **?** işareti çıkar.
+- **?** işaretine dokun; açılan kutudan **Kavşak**, **Köprü** (yeni yol üstten geçer) ya da **Alt geçit** (yeni yol
+  alttan geçer, öbür yol yükselir) seç. Demiryolunda seçenekler **Hemzemin / Köprü / Alt geçit**'tir. Seçtikten
+  sonra da işarete dokunup türü değiştirebilirsin.
+- Kutuda o noktaya sığmayan seçenek (ör. rampa için yer yoksa köprü) ve hakkın bitmişse köprü / alt geçit baştan
+  kapalı görünür, yanında nedeni yazar; böylece hata almazsın.
+- Belirlenmemiş **?** varken trafik başlamaz; trafik akarken yeni bir kesişim oluşursa oyun durur ve seçim kutusu açılır.
+- Köprü ve alt geçit hakların alttaki rozetlerde yazar. Nehri kesen yol kendiliğinden alçak bir köprü olur ve bir
   köprü hakkı kullanır.
 - Demiryolunu aynı seviyede kesen yol **bariyerli hemzemin geçit** olur: tren gelince bariyer iner, araçlar bekler.
 
@@ -37,15 +43,24 @@ köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm b
 - Araç, yolunu kesen yönde kavşakta araç varken girmez; çıkışında yer yoksa kavşağı tıkamaz.
 - Araçlar gidecekleri iş yerine en kısa ve az kalabalık yolu seçer. U dönüşü yapmazlar.
 
-### Kurallar (çizim kabul edilmezse nedeni kırmızı notla yazar ve yeri işaretlenir)
+### Çizimi oyun düzeltir (hata kutusu yok)
 
-- Köprünün ve alt geçidin iki yanında rampa için yer olmalı; rampanın üstünde kavşak olamaz.
-- Bir binaya tek yol bağlanır; ikinci yolu ilk yola bağla.
-- Yol kendi üstünden geçemez (ilmek yapamaz); saç tokası gibi keskin virajlar olmaz.
-- Yollar birbirini ya da rayı çok yatık (30°'den dar) kesemez, çok dar açıyla birleşemez.
-- Kavşaklar birbirine çok yakın olamaz; yollar birbirine çok yakın (yan yana) gidemez.
-- Yol binaların içinden geçemez, suyun içinde bitemez, tahtanın dışına çıkamaz.
-- Toplam yol uzunluğu asfalt miktarını geçemez.
+Çizdiğin yol bir kurala uymuyorsa oyun seni uyarmaz, yolu kendisi düzeltir:
+
+- **İlmek** atılır, **saç tokası** gibi keskin dönüşler genişletilir ya da düzleştirilir.
+- **Binanın üstünden** geçen kısım binanın köşesinden dolaşır; binaya bağlanan uçta binanın üstüne taşan çizim atılır.
+- **Binanın zaten yolu varsa** yeni yol o yola bağlanır (bir binaya tek yol girer).
+- Var olan bir yolun **yanından (paralel) giden** kısım o yolla birleşir; yeni yol eskisine kavuşur.
+- Yola ya da kavşağa **yatık bağlanan** uç, yola dik ya da kavşağın kolları arasındaki boşluktan girer; kavşağın
+  dibinden geçen yol kavşağın içinden geçirilir (yan yana iki kavşak olmaz). Dolu (4 kollu) kavşağa ve **?**
+  işaretinin dibine bağlanmaz, biraz öteye kayar.
+- Başka bir yolu ya da rayı **çok yatık kesen** yol kesişim yerinde dikleştirilir.
+- Başka bir yola **çok yaklaşan** kısım yumuşakça uzaklaştırılır.
+- Bağlanmadan biraz taşan uç kesilir; **suyun içinde biten** ya da kıyıya çok yakın biten uç karşı kıyıya uzatılır
+  ya da sudan önce bitirilir; tahtanın dışına taşan kısım içeri alınır.
+- Bunların hiçbiri yetmezse yol en sade hâline (iki ucu düz bağlayan yol) getirilir.
+
+Yalnızca kaynak sınırları uyarı verir: **asfalt** yetmiyorsa ya da **köprü / alt geçit hakkın** bittiyse.
 
 ### Diğer düğmeler
 
@@ -235,7 +250,7 @@ ray-arasi/
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran, bölüm kartı, serbest çizim, köprü, nehir, alt geçit, büyük kavşak, kazanma, masaüstü
+├── ekran-goruntuleri/      Ana ekran, bölüm kartı, serbest çizim, kesişim seçimi, köprü, nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```
