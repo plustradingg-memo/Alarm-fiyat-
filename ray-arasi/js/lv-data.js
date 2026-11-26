@@ -27,7 +27,7 @@
     },
     {
       id: 2, name: 'Kavşak', goal: 16, spawn: 2.8, budget: 60, star2: 48, bridges: 0, tunnels: 0,
-      intro: 'İki renk, iki yol. Yollar kesişince ışıklı kavşak olur; ışıkları yapay zekâ yönetir.',
+      intro: 'İki renk, iki yol. Yollar kesişince turuncu ? çıkar: dokunup Kavşak seç. Işıklı kavşağı yapay zekâ yönetir.',
       tip: 'Her evi kendi rengindeki binaya bağla. Yollar ortada kesişebilir.',
       houses: [{ x: -6, z: 11, dir: 'N', color: 'or' }, { x: 6, z: 11, dir: 'N', color: 'bl' }],
       dests: [{ x: 6, z: -11, dir: 'S', color: 'or', type: 'fabrika' }, { x: -6, z: -11, dir: 'S', color: 'bl', type: 'okul' }],
@@ -36,7 +36,7 @@
     {
       id: 3, name: 'İlk köprü', goal: 30, spawn: 1.6, budget: 60, star2: 48, bridges: 1, tunnels: 0,
       intro: 'Trafik arttı. Kavşakta ışık beklemek yerine yollardan birini köprüyle öbürünün üstünden geçir.',
-      tip: 'Alttan "Köprü"yü seçip ikinci yolu çiz ya da çizdikten sonra kesişme işaretine dokun: kavşak → köprü → alt geçit.',
+      tip: 'İki yolu çiz. Sonra alttaki "Köprü" düğmesine bas: köprü yapabileceğin yerler parlar, kesişime dokun. (Turuncu ? işaretine dokunup Köprü de seçebilirsin.)',
       houses: [{ x: -6, z: 11, dir: 'N', color: 'or' }, { x: 6, z: 11, dir: 'N', color: 'bl' }],
       dests: [{ x: 6, z: -11, dir: 'S', color: 'or', type: 'fabrika' }, { x: -6, z: -11, dir: 'S', color: 'bl', type: 'okul' }],
       solution: [['road', [[-6, 9.3], [6, -9.1]]], ['bridge', [[6, 9.3], [-6, -9.1]]]],
@@ -61,7 +61,7 @@
     {
       id: 6, name: 'Hemzemin geçit', goal: 30, spawn: 2.0, budget: 52, star2: 44, bridges: 0, tunnels: 1,
       intro: 'Demiryolundan sık sık tren geçiyor. Hemzemin geçitte bariyer inince araçlar bekler.',
-      tip: 'Bir yolu "Alt geçit"le çiz: tren rayı yükselir, araçlar altından durmadan geçer.',
+      tip: 'Rayı kesen yolu çiz, sonra alttaki "Alt geçit"e basıp parlayan yere dokun: tren rayı yükselir, araçlar altından durmadan geçer.',
       rails: [{ pts: [[-10.8, -1], [10.8, -1]], every: 11, cars: 3, first: 2 }],
       houses: [{ x: -5, z: 12, dir: 'N', color: 'or' }, { x: 5, z: 12, dir: 'N', color: 'gr' }],
       dests: [{ x: -5, z: -11, dir: 'S', color: 'or', type: 'fabrika' }, { x: 5, z: -11, dir: 'S', color: 'gr', type: 'avm' }],
@@ -97,7 +97,7 @@
     {
       id: 10, name: 'Büyük kavşak', goal: 48, spawn: 2.3, budget: 84, star2: 76, bridges: 2, tunnels: 2,
       intro: 'Dört renk, dört kesişim ve yoğun trafik. Şimdiye kadar öğrendiğin her şeyi kullan.',
-      tip: 'Yatay yollardan birini köprüyle, öbürünü alt geçitle çiz: dikey yolların üstünden ve altından geçsinler.',
+      tip: 'Bütün yolları çiz. Sonra "Köprü"ye basıp bir yatay yolun kesişimlerine, "Alt geçit"e basıp öbürününkilere dokun: dikey yolların üstünden ve altından geçsinler.',
       houses: [{ x: -2.6, z: 13, dir: 'N', color: 'or' }, { x: 2.6, z: 13, dir: 'N', color: 'bl' }, { x: -8.6, z: -5, dir: 'E', color: 'gr' }, { x: 8.6, z: 5, dir: 'W', color: 'pu' }],
       dests: [{ x: -2.6, z: -12.5, dir: 'S', color: 'or', type: 'fabrika' }, { x: 2.6, z: -12.5, dir: 'S', color: 'bl', type: 'ofis' }, { x: 8.6, z: -5, dir: 'W', color: 'gr', type: 'okul' }, { x: -8.6, z: 5, dir: 'E', color: 'pu', type: 'avm' }],
       solution: [['road', [[-2.6, 11.3], [-2.6, -10.6]]], ['road', [[2.6, 11.3], [2.6, -10.6]]], ['bridge', [[-6.9, -5], [6.7, -5]]], ['tunnel', [[6.9, 5], [-6.7, 5]]]],

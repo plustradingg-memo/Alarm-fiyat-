@@ -271,10 +271,12 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 
 /* kalan köprü / alt geçit hakları */
 .lv-toks { flex: 1; min-width: 0; display: flex; gap: 5px; justify-content: center; }
-.lv-tok { display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 9px; border-radius: 11px; background: #eef1f3; font-weight: 800; font-size: 12px; white-space: nowrap; }
+.lv-tok { display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 9px; border-radius: 12px; background: #eef1f3; border: 2px solid #dfe4e7; font-weight: 800; font-size: 12px; white-space: nowrap; font-family: inherit; cursor: pointer; }
 .lv-tok svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .lv-tok b { font-size: 14px; }
 #lv-tok-b { color: #2a6ad0; } #lv-tok-t { color: #7d43c9; }
+#lv-tok-b.on { background: #2a6ad0; border-color: #2a6ad0; color: #fff; box-shadow: 0 0 0 3px rgba(42,106,208,0.25); }
+#lv-tok-t.on { background: #7d43c9; border-color: #7d43c9; color: #fff; box-shadow: 0 0 0 3px rgba(125,67,201,0.25); }
 .lv-tok.none { opacity: 0.35; }
 /* kesişim seçim kutusu */
 .lv-pick { position: absolute; z-index: 4; background: var(--paper); color: var(--ink); border-radius: 16px; padding: 9px 9px 8px; box-shadow: 0 6px 0 rgba(0,0,0,0.28), 0 0 0 3px #ff7a1a; animation: toastin 0.18s ease-out; }

@@ -283,7 +283,9 @@
           const node = findNode(x.x, x.z, 0.35) || newNode(x.x, x.z, 'p');
           addSplit(A, sa, node, 'x'); addSplit(B, sb, node, 'x');
         } else {
-          const up = type === 'bridge' ? newer : older, dn = up === newer ? older : newer;
+          // köprüde yeni yol, alt geçitte eski yol üstten geçer; choices[key + '^'] bunu tersine çevirir (öbür yolun rampasına yer varsa)
+          const flip = !!choices[key + '^'];
+          const up = (type === 'bridge') !== flip ? newer : older, dn = up === newer ? older : newer;
           const sUp = up === A ? sa : sb, sDn = dn === A ? sa : sb;
           humps.get(up.id).push({ a: sUp - C.FLAT, b: sUp + C.FLAT, x: x.x, z: x.z, low: { st: dn, s: sDn } });
           if (type === 'bridge') bridges++; else tunnels++;

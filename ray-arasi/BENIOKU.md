@@ -3,7 +3,8 @@
 Masanın üzerindeki maket tahtasında oynanan, Türkçe, dikey ekranlı bir trafik bulmacası. Renkli evlerdeki insanları
 aynı renkteki iş yerlerine ulaştırmak için yolları **parmağınla serbestçe çizersin**. Ne kadar dağınık çizersen çiz
 oyun yolu kendisi toparlar; yollar birbirine kavuşurken küçük bir "öpüşme" animasyonu oynar. Yollar kesiştiği yerde
-kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar verirsin**. Bölüm bölüm zorlaşır, yıldız toplarsın.
+kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar verirsin**; **Köprü** düğmesine basınca
+köprü yapabileceğin yerler parlar, istediğine elle köprü koyarsın. Bölüm bölüm zorlaşır, yıldız toplarsın.
 
 ## Nasıl oynanır?
 
@@ -31,8 +32,15 @@ kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar 
 - Kutuda o noktaya sığmayan seçenek (ör. rampa için yer yoksa köprü) ve hakkın bitmişse köprü / alt geçit baştan
   kapalı görünür, yanında nedeni yazar; böylece hata almazsın.
 - Belirlenmemiş **?** varken trafik başlamaz; trafik akarken yeni bir kesişim oluşursa oyun durur ve seçim kutusu açılır.
-- Köprü ve alt geçit hakların alttaki rozetlerde yazar. Nehri kesen yol kendiliğinden alçak bir köprü olur ve bir
-  köprü hakkı kullanır.
+- **Köprüyü elle istediğin yere koy:** alttaki **Köprü** düğmesine bas. Köprü yapılabilecek bütün yerler mavi
+  ışıkla parlar: belirsiz (?) kesişimler, kavşak yaptığın kesişimler, hatta iki yolun bir ana yola karşılıklı
+  bağlandığı dört kollu kavşaklar (bu iki yol tek yol olup ana yolun üstünden geçer). İstediğine dokun, köprü olur.
+  Hakkın kaldıkça parlayan yerler yenilenir; hak bitince ya da düğmeye yeniden basınca Yol çiz'e dönülür.
+  **Alt geçit** düğmesi aynısını alt geçit için (mor ışıkla) yapar. Bu modda var olan köprünün işaretinde × rozeti
+  olur; ona dokunursan köprü kaldırılır, orası kavşak olur. Modda uzun sürüklersen yol çizmeye geçilir.
+- Yer parlamıyorsa nedeni yazar (hak bitti, bu bölümde hak yok, rampalar için kesişimin iki yanında düz yol yok…).
+- Köprü ve alt geçit hakların bu düğmelerin üstünde yazar. Nehri kesen yol kendiliğinden alçak bir köprü olur ve
+  bir köprü hakkı kullanır.
 - Demiryolunu aynı seviyede kesen yol **bariyerli hemzemin geçit** olur: tren gelince bariyer iner, araçlar bekler.
 
 ### Trafik nasıl işler?
@@ -250,7 +258,7 @@ ray-arasi/
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran, bölüm kartı, serbest çizim, kesişim seçimi, köprü, nehir, alt geçit, büyük kavşak, kazanma, masaüstü
+├── ekran-goruntuleri/      Ana ekran, bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, köprü, nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```

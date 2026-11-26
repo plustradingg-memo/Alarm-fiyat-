@@ -112,6 +112,20 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
   await page.locator('#lv-pick [data-pick="junction"]').tap(); await page.waitForTimeout(60);
   ok((await page.evaluate(() => RA.app.lv.net.crossings[0].type)) === 'junction', 'yeniden dokunup Kavşak seçince kavşağa döndü');
+  // Köprü düğmesi: köprü yapılabilecek yerler parlar, oyuncu istediğine dokunur (kavşak olan kesişim de olur)
+  await page.locator('#lv-tok-b').tap(); await page.waitForTimeout(80);
+  const bm = await page.evaluate(() => { const g = RA.app.lv; return { tool: g.tool, spots: (g.spotList || []).filter((q) => q.act === 'set').length, on: document.getElementById('lv-tok-b').classList.contains('on'), marks: g.view.marks.every((m) => !m.sp.visible) }; });
+  ok(bm.tool === 'bridge' && bm.spots === 1 && bm.on && bm.marks && /1 yer parlıyor/.test((await lvToast()).txt), '"Köprü"ye basınca köprü yapılabilecek yer parladı (kavşak olan kesişim): "' + (await lvToast()).txt + '"');
+  await page.waitForTimeout(150); await shot('13a-kopru-yerleri');
+  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
+  const bd = await page.evaluate(() => { const g = RA.app.lv; return { type: g.net.crossings[0].type, br: g.net.usage.bridges, tool: g.tool }; });
+  ok(bd.type === 'bridge' && bd.br === 1 && bd.tool === 'road', 'parlayan yere dokununca köprü oldu; hak bitince Yol çiz\'e dönüldü (' + (await lvToast()).txt + ')');
+  await page.locator('#lv-tok-b').tap(); await page.waitForTimeout(60);
+  ok((await page.evaluate(() => RA.app.lv.tool)) === 'road' && /hakkın bitti/.test((await lvToast()).txt), 'hak bitmişken Köprü\'ye basınca nedeni yazdı: "' + (await lvToast()).txt + '"');
+  await page.locator('#lv-tok-t').tap(); await page.waitForTimeout(60);
+  ok(/alt geçit hakkın yok/.test((await lvToast()).txt), 'bu bölümde alt geçit yok: "' + (await lvToast()).txt + '"');
+  await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
+  await page.locator('#lv-pick [data-pick="junction"]').tap(); await page.waitForTimeout(60);
   // asfalt sınırı
   await page.evaluate(() => { RA.app.lv.level.budget = 50; });
   await draw([[-8.6, 7], [-8.6, -5]]);
@@ -169,6 +183,16 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await draw([[-3.72, 3.44], [0, 0.1], [3.72, -3.24]]); // turuncu yolu 15° ile kesen çizgi
   const sx = await page.evaluate(() => { const g = RA.app.lv, G = RA.LV.geo; let min = 9; for (let i = 0; i < g.net.S.length; i++) for (let j = i + 1; j < g.net.S.length; j++) for (const x of G.intersections(g.net.S[i], g.net.S[j])) { const a = G.tan(g.net.S[i], x.sa), b = G.tan(g.net.S[j], x.sb); min = Math.min(min, Math.abs(a.x * b.z - a.z * b.x)); } return { errs: window.__errs.length, min }; });
   ok(!sx.errs && sx.min > 0.5, 'öbür yolu çok yatık kesen çizim hata vermeden dikleştirildi (en yatık kesişim ' + Math.round(Math.asin(Math.min(1, sx.min)) * 180 / Math.PI) + '°)');
+  // karşılıklı bağlanmış iki yol (dört kollu kavşak) da köprü yeri olur: iki yol birleşip öbürünün üstünden geçer
+  const mg = await page.evaluate(() => {
+    RA.app.openLevel(3); RA.app.manual = true; const g = RA.app.lv; g.hideCard();
+    g.tryCommit([{ id: 1, pts: [{ x: -6, z: 0 }, { x: 6, z: 0 }] }, { id: 2, pts: [{ x: 0, z: -7 }, { x: 0, z: 0 }] }, { id: 3, pts: [{ x: 0, z: 0 }, { x: 0, z: 7 }] }], {}, null, null, true); g.nextId = 4;
+    const deg = (g.net.nodes.find((q) => q.kind === 'j') || {}).deg;
+    g.setTool('bridge');
+    const s = (g.spotList || []).find((q) => q.act === 'merge'); if (s) g.useSpot(s);
+    return { deg, merge: !!s, n: g.strokes.length, br: g.net.usage.bridges, j: g.net.nodes.filter((q) => q.kind === 'j').length };
+  });
+  ok(mg.deg === 4 && mg.merge && mg.n === 2 && mg.br === 1 && mg.j === 0, 'yolu kavşaklı çizsen de köprü olur: karşılıklı bağlanan iki yol birleşip ana yolun üstünden geçti');
   // rastgele karman çorman 40 çizim: hiçbirinde kırmızı hata yok
   const fz = await page.evaluate(() => {
     let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
@@ -194,7 +218,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   console.log('\nKAYBETME');
   await page.evaluate(() => { RA.app.openLevel(2); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); const b = g.level.blds; g.addStroke([{ x: b[0].ex, z: b[0].ez }, { x: b[2].ex, z: b[2].ez }], 'junction', true); });
   const l2 = await page.evaluate(() => { const g = RA.app.lv; g.togglePlay(); let t = 0; for (; t < 120 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, t }; });
-  await page.waitForTimeout(800);
+  await page.waitForFunction(() => /Trafik tıkandı/.test(document.getElementById('lv-card').textContent) && !document.getElementById('lv-card').hidden, null, { timeout: 5000 }).catch(() => {});
   ok(l2.ended === 'lose' && /Trafik tıkandı/.test(await page.locator('#lv-card').textContent()) && /yol yok/.test(await page.locator('#lv-card').textContent()), 'mavi evin yolu yokken bekleyenler 8 olunca bölüm kaybedildi ve nedeni yazdı');
   await shot('14-kaybetti');
   await page.locator('#lv-card [data-act="retry"]').tap();

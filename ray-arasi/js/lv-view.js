@@ -82,6 +82,15 @@
   }
   function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
   // kesişim işareti: kavşak (artı), köprü (kemer), alt geçit (tünel), hemzemin (bariyer)
+  // köprü / alt geçit modunda var olanın işaretinde kaldırma rozeti (×) olur
+  function removeTex(type) {
+    return canvasTex('mkx' + type, 128, 128, (g) => {
+      g.drawImage(markTex(type).image, 0, 0);
+      g.fillStyle = '#ffffff'; g.beginPath(); g.arc(100, 26, 22, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#e8453c'; g.beginPath(); g.arc(100, 26, 17, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#ffffff'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(92, 18); g.lineTo(108, 34); g.moveTo(108, 18); g.lineTo(92, 34); g.stroke();
+    });
+  }
   function markTex(type) {
     return canvasTex('mk' + type, 128, 128, (g) => {
       const col = { junction: '#ffc531', level: '#ffc531', bridge: '#3d8bff', tunnel: '#a061f0', pending: '#ff7a1a' }[type];
@@ -285,6 +294,7 @@
 
     /* ---------- yollar (her çizimde yeniden kurulur) ---------- */
     buildRoads(level, net) {
+      this.spots(null);
       this.dispose(this.roads);
       const m = mats();
       const root = new T.Group(), stat = new T.Group();
@@ -399,6 +409,27 @@
       this.roads = root;
     }
 
+    /* ---------- köprü / alt geçit yapılabilecek yerler (parlayan işaretler) ---------- */
+    spots(list, kind) {
+      if (this.spotG) { this.scene.remove(this.spotG); this.spotG.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } else if (o.isSprite) o.material.dispose(); }); this.spotG = null; }
+      this.spotL = list || null;
+      if (this.marks) for (const mk of this.marks) mk.sp.visible = !list;
+      if (!list) return;
+      const g = new T.Group(), col = kind === 'bridge' ? 0x3d8bff : 0xa061f0;
+      for (const s of list) {
+        const add = s.act !== 'unset';
+        const sp = new T.Sprite(new T.SpriteMaterial({ map: add ? markTex(kind) : removeTex(kind), depthTest: false, transparent: true }));
+        sp.position.set(s.x, 2.0, s.z); sp.renderOrder = 19; sp.scale.set(1.25, 1.25, 1); g.add(sp); s.sp = sp;
+        if (add) {
+          const ring = new T.Mesh(new T.RingGeometry(0.95, 1.35, 40), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.6, depthWrite: false, blending: T.AdditiveBlending }));
+          ring.rotation.x = -Math.PI / 2; ring.position.set(s.x, 0.14, s.z); ring.renderOrder = 6; g.add(ring); s.ring = ring;
+          const beam = new T.Mesh(new T.CylinderGeometry(0.08, 0.3, 1.7, 12, 1, true), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.35, depthWrite: false, blending: T.AdditiveBlending }));
+          beam.position.set(s.x, 1.0, s.z); g.add(beam);
+        }
+      }
+      this.scene.add(g); this.spotG = g;
+    }
+
     /* ---------- çizim önizlemesi ---------- */
     preview(pts, ok) {
       if (this.prev) { this.scene.remove(this.prev); this.prev.geometry.dispose(); this.prev = null; }
@@ -441,7 +472,12 @@
         if (n !== b.pendN) { b.pendN = n; b.pend.material.map = pendTex(n, LV.Sim.PENDING_CAP); b.pend.material.needsUpdate = true; }
         b.pend.visible = running || n > 0;
       }
-      if (this.marks) for (const mk of this.marks) {
+      if (this.spotL) for (const s of this.spotL) {
+        if (s.act === 'unset') continue;
+        const k = 0.5 + 0.5 * Math.sin(now * 6), sc = 1.3 + k * 0.3;
+        s.sp.scale.set(sc, sc, 1); s.ring.scale.setScalar(1 + k * 0.35); s.ring.material.opacity = 0.35 + 0.4 * k;
+      }
+      if (this.marks && !this.spotL) for (const mk of this.marks) {
         if (mk.c.type === 'pending') { const sc = 1.35 + Math.sin(now * 5) * 0.15; mk.sp.scale.set(sc, sc, 1); mk.sp.material.opacity = 1; continue; } // seçilmeyi bekliyor
         mk.sp.material.opacity = running ? 0.6 : 1; const sc = running ? 0.9 : 1.25; mk.sp.scale.set(sc, sc, 1);
       }

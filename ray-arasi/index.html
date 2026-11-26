@@ -112,9 +112,9 @@
             <button type="button" data-lvtool="road" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 20c4-1 5-6 8-8s7-2 8-8"/><path d="M15 19l5-5" /></svg>Yol çiz</button>
             <button type="button" data-lvtool="erase" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 16l9-9 7 7-6 6H8z"/><path d="M9 20h11"/></svg>Sil</button>
           </div>
-          <div class="lv-toks" aria-label="Kalan haklar">
-            <span id="lv-tok-b" class="lv-tok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8h20"/><path d="M5 21v-7a7 7 0 0 1 14 0v7"/></svg>Köprü <b id="lv-nb">0</b></span>
-            <span id="lv-tok-t" class="lv-tok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 21h20"/><path d="M6 21v-6a6 6 0 0 1 12 0v6"/></svg>Alt geçit <b id="lv-nt">0</b></span>
+          <div class="lv-toks" role="toolbar" aria-label="Köprü ve alt geçit">
+            <button type="button" id="lv-tok-b" class="lv-tok" data-lvtool="bridge" aria-pressed="false" aria-label="Köprü: yapılabilecek yerleri göster"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 8h20"/><path d="M5 21v-7a7 7 0 0 1 14 0v7"/></svg>Köprü <b id="lv-nb">0</b></button>
+            <button type="button" id="lv-tok-t" class="lv-tok" data-lvtool="tunnel" aria-pressed="false" aria-label="Alt geçit: yapılabilecek yerleri göster"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 21h20"/><path d="M6 21v-6a6 6 0 0 1 12 0v6"/></svg>Alt geçit <b id="lv-nt">0</b></button>
           </div>
           <button id="lv-undo" class="ws-icon" type="button" aria-label="Geri al" disabled><svg viewBox="0 0 24 24"><path d="M9 7H4V2"/><path d="M4.5 7.5A8 8 0 1 1 6 18"/></svg></button>
         </div>
