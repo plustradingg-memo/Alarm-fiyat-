@@ -239,6 +239,55 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   for (const r of all) if (r.naive) ok(r.naive.ended === 'lose', 'Bölüm ' + r.id + ': köprüsüz (hepsi kavşak) denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
   await page.evaluate(() => RA.app.showMenu());
 
+  console.log('\nDEMİRYOLU VE HAVALİMANI BÖLÜMLERİ');
+  const tabs = await page.evaluate(() => Array.from(document.querySelectorAll('#menu .lv-tabs [data-set]')).map((b) => b.textContent));
+  ok(tabs.join(',') === 'Karayolu,Demiryolu,Havalimanı', 'ana ekranda üç bölüm sekmesi: ' + tabs.join(', '));
+  const tabInfo = () => page.evaluate(() => ({ n: document.querySelectorAll('#lv-grid .lv-btn').length, locked: document.querySelectorAll('#lv-grid .lv-btn.locked').length, t: document.getElementById('menu-set-t').textContent, scene: document.querySelector('.menu-banner [data-scene]').dataset.scene }));
+  await page.locator('#menu .lv-tabs [data-set="rail"]').tap(); await page.waitForTimeout(150);
+  const rt = await tabInfo();
+  ok(rt.n === 6 && rt.locked === 5 && /Demiryolu/.test(rt.t) && rt.scene === 'rail', 'Demiryolu sekmesi: 6 bölüm, ilki açık, üstteki sahne treni gösteriyor');
+  await shot('20-demiryolu-sekmesi');
+  await page.locator('#menu .lv-tabs [data-set="air"]').tap(); await page.waitForTimeout(150);
+  const at = await tabInfo();
+  ok(at.n === 6 && at.locked === 5 && /Havalimanı/.test(at.t) && at.scene === 'air', 'Havalimanı sekmesi: 6 bölüm, ilki açık, sahne uçağı gösteriyor');
+  await page.locator('#menu .lv-tabs [data-set="rail"]').tap();
+  await page.locator('#lv-grid .lv-btn[data-lv="101"]').tap(); await page.waitForTimeout(200);
+  const r1 = await page.evaluate(() => ({ title: document.getElementById('lv-title').textContent, draw: document.getElementById('lv-drawlbl').textContent, mat: document.getElementById('lv-matlbl').textContent, tun: document.getElementById('lv-tunlbl').textContent, card: document.getElementById('lv-card').textContent }));
+  ok(/Demiryolu 1/.test(r1.title) && r1.draw === 'Ray döşe' && r1.mat === 'Ray' && r1.tun === 'Tünel' && /tren seferi/.test(r1.card), 'demiryolu bölümü açıldı: "' + r1.title + '", araç "' + r1.draw + '", malzeme "' + r1.mat + '", hedef tren seferi');
+  await page.locator('#lv-card [data-act="start"]').tap();
+  await page.evaluate(() => { RA.app.manual = true; });
+  const b101 = await page.evaluate(() => RA.app.lv.level.blds.map((b) => [b.ex, b.ez]));
+  await draw([b101[0], [0.6, 2], b101[1]]);
+  ok(/istasyon ve turuncu liman bağlandı/.test((await lvToast()).txt), 'parmakla döşenen ray istasyonu limana bağladı: "' + (await lvToast()).txt + '"');
+  const w101 = await page.evaluate(() => { const g = RA.app.lv; g.togglePlay(); let t = 0, trains = 0; for (; t < 120 && !g.ended; t += 0.5) { RA.app.advance(0.5); trains = Math.max(trains, g.sim.cars.filter((c) => c.units && c.units.length === 3).length); } return { ended: g.ended, t, trains, del: g.sim.stats.delivered }; });
+  ok(w101.ended === 'win' && w101.trains >= 1, 'trenler (lokomotif + 2 vagon) limana ulaştı, bölüm kazanıldı (' + w101.del + ' sefer, ' + w101.t + ' sn)');
+  await page.waitForFunction(() => !document.getElementById('lv-card').hidden, null, { timeout: 5000 }).catch(() => {});
+  ok(/Sonraki bölüm/.test(await page.locator('#lv-card').textContent()) && /sefer tamamlandı/.test(await page.locator('#lv-card').textContent()), 'kazanma kartı demiryolu sözcükleriyle; sonraki demiryolu bölümü var');
+  await page.locator('#lv-card [data-act="next"]').tap(); await page.waitForTimeout(100);
+  ok((await page.evaluate(() => RA.app.lv.level.id)) === 102, '"Sonraki bölüm" Demiryolu 2\'yi açtı');
+  // bütün demiryolu ve havalimanı bölümleri çözüm yoluyla kazanılır; köprüsüz denemede bazıları kaybedilir
+  const all2 = await page.evaluate(() => [].concat(RA.LV.RAIL, RA.LV.AIR).map((L) => {
+    const run = (naive) => {
+      RA.app.openLevel(L.id); RA.app.manual = true; const g = RA.app.lv; g.hideCard();
+      g.playSolution(naive);
+      const info = { tun: g.net.usage.tunnels, runwayHold: g.net.gates.filter((q) => q.runway).length, hillTun: [].concat(...Array.from(g.net.strokeTun.values())).length };
+      g.togglePlay(); let t = 0; for (; t < 500 && !g.ended; t += 0.5) RA.app.advance(0.5);
+      return Object.assign(info, { ended: g.ended, del: g.sim.stats.delivered, launched: g.sim.stats.launched, peak: g.sim.stats.peak, len: Math.round(g.net.usage.len) });
+    };
+    const sol = run(false), naive = [104, 106, 204].includes(L.id) ? run(true) : null;
+    return { id: L.id, n: L.n, mode: L.mode, name: L.name, goal: L.goal, sol, naive };
+  }));
+  for (const r of all2) ok(r.sol.ended === 'win', (r.mode === 'rail' ? 'Demiryolu ' : 'Havalimanı ') + r.n + ' (' + r.name + '): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ', ' + r.sol.len + ' m, en çok ' + r.sol.peak + ' bekleyen)');
+  for (const r of all2) if (r.naive) ok(r.naive.ended === 'lose', (r.mode === 'rail' ? 'Demiryolu ' : 'Havalimanı ') + r.n + ': köprüsüz denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
+  const r103 = all2.find((r) => r.id === 103), r203 = all2.find((r) => r.id === 203), r201 = all2.find((r) => r.id === 201);
+  ok(r103.sol.hillTun === 1 && r103.sol.tun === 1, 'Demiryolu 3: dağın içinden geçen hat tünel oldu ve bir tünel hakkı kullandı');
+  ok(r203.sol.runwayHold === 2, 'Havalimanı 3: pisti kesen iki taksi yolu bekleme çizgisi oldu');
+  ok(r201.sol.launched >= 2 * r201.goal, 'Havalimanı 1: her uçak önce inip kapıya yanaştı, sonra kapıdan kalkışa gitti (' + r201.sol.launched + ' hareket, ' + r201.goal + ' kalkış)');
+  await page.evaluate(() => { RA.app.openLevel(204); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); g.playSolution(); g.togglePlay(); RA.app.advance(26); document.getElementById('lv-toast').hidden = true; });
+  await page.waitForTimeout(1500); await page.evaluate(() => { const v = RA.app.lv.view; v.anims.forEach((a) => a.step(a, 10)); v.anims = []; }); await page.waitForTimeout(300);
+  await shot('21-havalimani-kopru');
+  await page.evaluate(() => { RA.store.set('lv.set', 'road'); RA.app.showMenu(); });
+
   console.log('\nKARAYOLU — ŞEHİR 4 DÜZ YOLLA BAŞLAR');
   await page.locator('.free-btn[data-mode="road"]').tap();
   ok((await state()) === 'workshop', 'karta dokununca atölye açıldı');

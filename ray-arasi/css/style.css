@@ -68,6 +68,9 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 .menu-banner-txt { position: absolute; left: 10px; bottom: 10px; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); border-radius: 12px; padding: 7px 12px 5px; box-shadow: 0 4px 0 rgba(0,0,0,0.25); }
 .menu-banner-txt strong { font-weight: 900; font-size: 19px; line-height: 1.1; }
 .menu-banner-txt em { font-style: normal; font-weight: 700; font-size: 12.5px; color: #4b5a63; }
+.lv-tabs { flex: none; display: flex; gap: 6px; padding: 0 2px; }
+.lv-tabs button { flex: 1; min-width: 0; height: 40px; border: 0; border-radius: 12px; background: rgba(255,255,255,0.12); color: var(--paper); font-family: inherit; font-weight: 900; font-size: 13.5px; cursor: pointer; white-space: nowrap; }
+.lv-tabs button[aria-selected="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(0,0,0,0.28); }
 .lv-grid { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 9px; align-content: start; padding: 2px; }
 .lv-btn { position: relative; display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 9px; align-items: center; text-align: left; border: 0; border-radius: 14px; background: var(--paper); color: var(--ink); padding: 9px 10px 8px; cursor: pointer; font-family: inherit; box-shadow: 0 4px 0 rgba(0,0,0,0.28); min-height: 62px; }
 .lv-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.28); }

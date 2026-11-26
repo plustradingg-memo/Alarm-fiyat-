@@ -27,7 +27,8 @@
   LV.progress = {
     get() { return RA.store.get('lv.stars', {}) || {}; },
     stars(id) { return this.get()[id] || 0; },
-    unlocked(id) { return id === 1 || this.stars(id - 1) > 0; },
+    // her setin ilk bölümü açık; sonrakiler bir öncekini bitirince açılır
+    unlocked(id) { const set = LV.setOf(id), k = set.levels.findIndex((l) => l.id === id); return k <= 0 || this.stars(set.levels[k - 1].id) > 0; },
     set(id, n) { const p = this.get(); if ((p[id] || 0) < n) { p[id] = n; RA.store.set('lv.stars', p); } },
   };
 
@@ -46,7 +47,10 @@
 
     /* ---------- bölüm aç ---------- */
     open(id) {
-      const def = LV.LEVELS.find((l) => l.id === id) || LV.LEVELS[0];
+      const def = LV.find(id) || LV.LEVELS[0];
+      LV.setMode(def.mode || 'road');
+      this.mode = def.mode || 'road'; this.tx = LV.TXT[this.mode];
+      RA.store.set('lv.set', this.mode); if (this.app.menu) this.app.menu.set = this.mode; // menüye dönünce bu sekme açık olsun
       clearTimeout(this.endT); clearTimeout(this.hintT); // önceki bölümden bekleyen kart / ipucu yeni bölüme düşmesin
       this.level = LV.prep(def);
       this.strokes = []; this.choices = {}; this.nextId = 1; this.undoStack = [];
@@ -57,7 +61,10 @@
       this.view.buildRoads(this.level, this.net);
       this.view.hint(null);
       this.sim.setup(this.level, this.net);
-      $('lv-title').textContent = 'Bölüm ' + def.id + ' · ' + def.name;
+      $('lv-title').textContent = this.levelTag(def) + ' · ' + def.name;
+      $('lv-drawlbl').textContent = this.tx.draw; $('lv-matlbl').textContent = this.tx.Mat;
+      $('lv-tunlbl').textContent = this.tunName(true);
+      $('lv').dataset.mode = this.mode;
       this.setTool('road'); this.closePick();
       this.updPlay(); this.hud(true);
       this.showCard('intro');
@@ -290,7 +297,7 @@
 
       // 4) son rötuş: tahtada kal, ilmek yapma, başka yola yapışık gitme, yola/raya yatık girme
       const BXm = LV.C.BX - 0.05, BZm = LV.C.BZ - 0.05;
-      const water = this.level.water || [];
+      const water = (this.level.water || []).concat(this.level.hills || []); // su ve dağ: içinde hat bitemez
       const inWater = (p) => water.some((poly) => G.inPoly(poly, p.x, p.z));
       const inBld = (p, m) => this.level.blds.some((b) => { const dx = p.x - b.x, dz = p.z - b.z; return Math.abs(dx * b.ux + dz * b.uz) < b.d / 2 + m && Math.abs(-dx * b.uz + dz * b.ux) < b.w / 2 + m; });
       const onRoad = (p) => { let best = null; for (const st of net.S) { const q = G.nearest(st, p.x, p.z); if (q.d < 0.15 && (!best || q.d < best.d)) best = { st, s: q.s, d: q.d }; } return best; };
@@ -474,9 +481,9 @@
       for (const np of used) this.view.sweep(np.pts);
       if (!quiet) {
         const conn = [a.b, b.b].filter(Boolean), nb = this.net.crossings.length - before, partsMsg = [];
-        if (conn.length) partsMsg.push(conn.map((x) => LV.COLORS[x.color].name.toLowerCase() + ' ' + (x.kind === 'house' ? 'ev' : 'iş yeri')).join(' ve ') + ' bağlandı');
+        if (conn.length) partsMsg.push(conn.map((x) => this.bldName(x)).join(' ve ') + ' bağlandı');
         if (nb > 0) partsMsg.push(nb + ' kesişim: türünü seçmek için turuncu ? işaretine dokun');
-        const msg = partsMsg.length ? partsMsg.join(' · ') + '.' : 'Yol eklendi.';
+        const msg = partsMsg.length ? partsMsg.join(' · ') + '.' : this.tx.Way + ' eklendi.';
         this.toast(msg.charAt(0).toLocaleUpperCase('tr-TR') + msg.slice(1));
       }
       // trafik akarken belirsiz kesişim oluştu: durdur ve seçtir
@@ -494,13 +501,14 @@
     }
     openPick(c) {
       if (!c) return;
+      if (c.kind === 'runway') { this.toast('Pist geçişi: uçaklar pistte trafik varken bekleme çizgisinde durur. Pist köprü ya da tünel olamaz.'); return; }
       this.pickC = c;
       const el = $('lv-pick'), L = this.level, u = this.net.usage;
       const order = CYCLE[c.kind];
       const left = { bridge: (L.bridges || 0) - u.bridges + (c.type === 'bridge' ? 1 : 0), tunnel: (L.tunnels || 0) - u.tunnels + (c.type === 'tunnel' ? 1 : 0) };
       el.querySelectorAll('[data-pick]').forEach((b, k) => {
         const t = order[k]; b.dataset.pick = t;
-        b.querySelector('span').textContent = t === 'level' ? 'Hemzemin' : t === 'junction' ? 'Kavşak' : t === 'bridge' ? 'Köprü' : 'Alt geçit';
+        b.querySelector('span').textContent = t === 'level' ? 'Hemzemin' : t === 'junction' ? this.tx.Jn : t === 'bridge' ? 'Köprü' : this.tunName(true);
         const n = t === 'bridge' || t === 'tunnel' ? left[t] : null;
         // bu seçenek burada olur mu? (rampa yeri, yakın kavşak…) olmayan seçenek baştan kapalı
         const fits = t === c.type || !!this.fitChoice(c, t);
@@ -522,7 +530,7 @@
     choose(t) {
       const c = this.pickC; if (!c) return;
       const choices = this.fitChoice(c, t) || Object.assign({}, this.choices, { [c.key]: t });
-      if (this.tryCommit(this.strokes, choices, 'Kesişim: ' + TNAME[t] + '.')) { this.closePick(); if (t !== 'junction' && t !== 'level') this.view.kiss(c.x, c.z, 1.4); }
+      if (this.tryCommit(this.strokes, choices, 'Kesişim: ' + this.tname(t) + '.')) { this.closePick(); if (t !== 'junction' && t !== 'level') this.view.kiss(c.x, c.z, 1.4); }
     }
     eraseAt(p) {
       let best = null, bd = 1.0;
@@ -539,7 +547,7 @@
       if (S.len - best.s1 > 1.2) parts.push(G.slicePts(S, best.s1, S.len));
       const strokes = this.strokes.filter((s) => s !== st);
       for (const pts of parts) strokes.push({ id: this.nextId++, pts });
-      this.tryCommit(strokes, this.choices, 'Yol silindi.');
+      this.tryCommit(strokes, this.choices, this.tx.Way + ' silindi.');
     }
 
     /* ---------- arayüz ---------- */
@@ -555,7 +563,7 @@
         const b = e.target.closest('[data-act]'); if (!b) return;
         const act = b.dataset.act;
         if (act === 'start') this.hideCard();
-        else if (act === 'next') { const nx = LV.LEVELS.find((l) => l.id === this.level.id + 1); if (nx) this.open(nx.id); else this.app.showMenu(); }
+        else if (act === 'next') { const nx = this.nextLevel(); if (nx) this.open(nx.id); else this.app.showMenu(); }
         else if (act === 'retry') this.restart(true);
         else if (act === 'reset') this.restart(false);
         else if (act === 'menu') this.app.showMenu();
@@ -580,10 +588,10 @@
       const L = this.level, u = this.net.usage;
       const left = ((kind === 'bridge' ? L.bridges : L.tunnels) || 0) - (kind === 'bridge' ? u.bridges : u.tunnels);
       const out = [];
-      for (const c of this.net.crossings) if (c.type === kind) out.push({ x: c.x, z: c.z, c, act: 'unset' });
+      for (const c of this.net.crossings) if (c.type === kind && c.kind !== 'runway') out.push({ x: c.x, z: c.z, c, act: 'unset' });
       if (left > 0) {
         for (const c of this.net.crossings) {
-          if (c.type === kind) continue;
+          if (c.type === kind || c.kind === 'runway') continue;
           const ch = this.fitChoice(c, kind);
           if (ch) out.push({ x: c.x, z: c.z, c, act: 'set', choices: ch });
         }
@@ -630,7 +638,7 @@
       return out;
     }
     enterSpots(kind) {
-      const L = this.level, name = kind === 'bridge' ? 'köprü' : 'alt geçit', Name = kind === 'bridge' ? 'Köprü' : 'Alt geçit';
+      const L = this.level, name = kind === 'bridge' ? 'köprü' : this.tunName(), Name = kind === 'bridge' ? 'Köprü' : this.tunName(true);
       if (!((kind === 'bridge' ? L.bridges : L.tunnels) || 0)) { this.toast('Bu bölümde ' + name + ' hakkın yok.'); return false; }
       const { out, left } = this.spotsFor(kind);
       const add = out.filter((s) => s.act !== 'unset');
@@ -661,7 +669,7 @@
       return best;
     }
     useSpot(sp) {
-      const kind = this.spotKind, Name = kind === 'bridge' ? 'Köprü' : 'Alt geçit';
+      const kind = this.spotKind, Name = kind === 'bridge' ? 'Köprü' : this.tunName(true);
       if (sp.act === 'set' || sp.act === 'merge') {
         const strokes = sp.act === 'merge' ? sp.strokes : this.strokes;
         if (sp.act === 'merge') this.nextId = Math.max(this.nextId, sp.nextId);
@@ -673,15 +681,15 @@
       }
       // var olanı kaldır: kavşak (rayda hemzemin) olur; sığmazsa türü sorulur (?)
       const back = sp.c.kind === 'rail' ? 'level' : 'junction';
-      for (const t of [back, 'pending']) if (this.tryCommit(this.strokes, ((ch) => { delete ch[sp.c.key + '^']; return ch; })(Object.assign({}, this.choices, { [sp.c.key]: t })), Name + ' kaldırıldı: ' + (t === 'pending' ? 'kesişimin türünü seç (?).' : TNAME[t] + ' oldu.'), null, true)) return;
+      for (const t of [back, 'pending']) if (this.tryCommit(this.strokes, ((ch) => { delete ch[sp.c.key + '^']; return ch; })(Object.assign({}, this.choices, { [sp.c.key]: t })), Name + ' kaldırıldı: ' + (t === 'pending' ? 'kesişimin türünü seç (?).' : this.tname(t) + ' oldu.'), null, true)) return;
     }
     togglePlay() {
       if (this.ended) return;
       if (!this.running && this.net.pending) { this.toast('Önce kesişimleri belirle: turuncu ? işaretine dokun.'); this.openPick(this.net.crossings.find((c) => c.type === 'pending')); return; }
       if (!this.started) {
-        if (!this.net.bNodes.some((n) => n.bld.kind === 'house' && n.deg > 0)) { this.toast('Önce evlerden iş yerlerine yol çiz.', true); return; }
+        if (!this.net.bNodes.some((n) => n.bld.kind === 'house' && n.deg > 0)) { this.toast(this.tx.first, true); return; }
         this.started = true; this.running = true; this.view.hint(null);
-        this.toast('Trafik başladı! Çizmeye devam edebilirsin; sıkışan yeri köprü ya da yeni yolla rahatlat.');
+        this.toast((this.mode === 'rail' ? 'Trenler yola çıktı!' : this.mode === 'air' ? 'Uçuşlar başladı!' : 'Trafik başladı!') + ' Çizmeye devam edebilirsin; sıkışan yeri köprü ya da yeni ' + this.tx.way + 'la rahatlat.');
       } else this.running = !this.running;
       this.updPlay();
     }
@@ -699,39 +707,75 @@
       this.toast(keep ? 'Yolların duruyor. Düzelt ve ▶ ile yeniden başlat.' : 'Bölüm baştan başladı.');
     }
     showHint() {
-      const paths = this.level.solution.map(([, raw]) => { const b0 = this.level.blds.find((b) => Math.hypot(b.ex - raw[0][0], b.ez - raw[0][1]) < 0.4), b1 = this.level.blds.find((b) => Math.hypot(b.ex - raw[raw.length - 1][0], b.ez - raw[raw.length - 1][1]) < 0.4); return LV.smoothStroke(raw.map(([x, z]) => ({ x, z })), b0 && { x: b0.ux, z: b0.uz }, b1 && { x: b1.ux, z: b1.uz }); });
+      const paths = this.level.solution.filter((q) => q[0] !== 'set').map(([, raw]) => { const b0 = this.level.blds.find((b) => Math.hypot(b.ex - raw[0][0], b.ez - raw[0][1]) < 0.4), b1 = this.level.blds.find((b) => Math.hypot(b.ex - raw[raw.length - 1][0], b.ez - raw[raw.length - 1][1]) < 0.4); return LV.smoothStroke(raw.map(([x, z]) => ({ x, z })), b0 && { x: b0.ux, z: b0.uz }, b1 && { x: b1.ux, z: b1.uz }); });
       this.view.hint(paths);
       this.toast('İpucu: ' + this.level.tip);
       clearTimeout(this.hintT); this.hintT = setTimeout(() => this.view.hint(null), 6000);
     }
     // çözüm yollarını sırayla çiz (testler ve ipucu için)
-    playSolution() {
-      for (const [tool, raw] of this.level.solution) this.addStroke(raw.map(([x, z]) => ({ x, z })), tool === 'road' ? 'junction' : tool, true);
+    // ['set', [x, z], tür]: o noktadaki kesişimin türünü sonradan değiştir (köprü / alt geçit düğmesi gibi)
+    playSolution(naive) {
+      for (const step of this.level.solution) {
+        if (step[0] === 'set') {
+          if (naive) continue;
+          const [, [x, z], t] = step, c = this.net.crossings.find((q) => Math.hypot(q.x - x, q.z - z) < 1.2);
+          const ch = c && this.fitChoice(c, t); if (ch) this.tryCommit(this.strokes, ch, null, null, true);
+          continue;
+        }
+        const [tool, raw] = step;
+        this.addStroke(raw.map(([x, z]) => ({ x, z })), naive || tool === 'road' ? 'junction' : tool, true);
+      }
       return this.strokes.length;
+    }
+    tname(t) { return t === 'junction' ? this.tx.jn : t === 'tunnel' ? this.tunName() : TNAME[t]; }
+    levelTag(L) { return (L.mode === 'rail' ? 'Demiryolu ' : L.mode === 'air' ? 'Havalimanı ' : 'Bölüm ') + (L.n || L.id); }
+    nextLevel() { const set = LV.setOf(this.level.id), k = set.levels.findIndex((l) => l.id === this.level.id); return set.levels[k + 1] || null; }
+    tunName(cap) { return this.mode === 'rail' ? (cap ? 'Tünel' : 'tünel') : cap ? 'Alt geçit' : 'alt geçit'; }
+    // hedef ve kaybetme kuralı (moda göre)
+    goalText(n) { return this.mode === 'rail' ? n + ' tren seferi tamamla' : this.mode === 'air' ? n + ' uçağı indir, kapıya yanaştır ve kaldır' : n + ' araç ulaştır'; }
+    doneText(n) { return this.mode === 'rail' ? n + ' sefer tamamlandı' : this.mode === 'air' ? n + ' uçak kalktı' : n + ' araç ulaştı'; }
+    ruleText() { return this.mode === 'rail' ? 'Bir istasyonda ' + LV.Sim.PENDING_CAP + ' sefer birikirse kaybedersin.' : this.mode === 'air' ? 'Havada ya da bir kapıda ' + LV.Sim.PENDING_CAP + ' uçak beklerse kaybedersin.' : 'Bir ev ' + LV.Sim.PENDING_CAP + ' kişiyi bekletirse kaybedersin.'; }
+    // binanın adı (bildirimlerde)
+    bldName(b) {
+      if (b.role === 'arr') return 'iniş noktası';
+      if (b.role === 'dep') return 'kalkış noktası';
+      if (b.role === 'gate') return 'kapı ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[b.color] || '');
+      const cn = (LV.COLORS[b.color] || { name: '' }).name.toLocaleLowerCase('tr-TR');
+      if (this.mode === 'rail') return cn + ' ' + (b.kind === 'house' ? 'istasyon' : ({ liman: 'liman', maden: 'maden' }[b.type] || 'gar'));
+      return cn + ' ' + (b.kind === 'house' ? 'ev' : 'iş yeri');
+    }
+    loseText(h) {
+      const cap = LV.Sim.PENDING_CAP;
+      if (this.mode === 'air') {
+        if (h.b.role === 'gate') return 'Kapı ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[h.b.color] || '') + '\'da ' + cap + ' uçak kalkış bekledi' + (h.noRoute ? ': kapıdan kalkış noktasına taksi yolu yok.' : '; taksi yolları uçakları taşıyamadı.') + ' Kalkışa giden yolu kısalt, kesişimleri köprüyle ayır.';
+        return 'Havada ' + cap + ' uçak iniş bekledi' + (h.noRoute ? ': inen uçağın kapısına taksi yolu yok (her kapıya yol çiz).' : '; pist çıkışı tıkandı.') + ' Kapılara giden yolları ayır, kesişimleri köprüyle rahatlat.';
+      }
+      if (this.mode === 'rail') return LV.COLORS[h.b.color].name + ' istasyonda ' + cap + ' sefer birikti' + (h.noRoute ? ': gidecekleri gara hat yok.' : '; hatlar trenleri taşıyamadı.') + ' Sıkışan yeri köprü, tünel ya da ikinci bir hatla rahatlat.';
+      return LV.COLORS[h.b.color].name + ' evdekiler ' + cap + ' kişi bekledi' + (h.noRoute ? ': gidecekleri iş yerine yol yok.' : '; yollar onları taşıyamadı.') + ' Sıkışan yeri köprü, alt geçit ya da ikinci bir yolla rahatlat.';
     }
     showCard(kind, extra) {
       const L = this.level, c = $('lv-card');
-      const res = (L.budget ? '<li><b>' + L.budget + ' m</b> asfalt</li>' : '') + (L.bridges ? '<li><b>' + L.bridges + '</b> köprü</li>' : '') + (L.tunnels ? '<li><b>' + L.tunnels + '</b> alt geçit</li>' : '');
+      const res = (L.budget ? '<li><b>' + L.budget + ' m</b> ' + this.tx.mat + '</li>' : '') + (L.bridges ? '<li><b>' + L.bridges + '</b> köprü</li>' : '') + (L.tunnels ? '<li><b>' + L.tunnels + '</b> ' + this.tunName() + '</li>' : '');
       let html = '';
       if (kind === 'intro') {
-        html = '<p class="lv-kicker">Bölüm ' + L.id + '</p><h2>' + L.name + '</h2><p>' + L.intro + '</p>' +
-          '<div class="lv-goalbox"><span>Hedef</span><b>' + L.goal + ' araç ulaştır</b><small>Bir ev ' + LV.Sim.PENDING_CAP + ' kişiyi bekletirse kaybedersin.</small></div>' +
+        html = '<p class="lv-kicker">' + this.levelTag(L) + '</p><h2>' + L.name + '</h2><p>' + L.intro + '</p>' +
+          '<div class="lv-goalbox"><span>Hedef</span><b>' + this.goalText(L.goal) + '</b><small>' + this.ruleText() + '</small></div>' +
           '<ul class="lv-res">' + res + '</ul><div class="lv-btns"><button data-act="start" class="primary" type="button">Kurmaya başla</button></div>';
       } else if (kind === 'win') {
         const s = extra;
-        html = '<p class="lv-kicker">Bölüm ' + L.id + ' tamam</p><h2>Harika!</h2><div class="lv-stars">' + [1, 2, 3].map((k) => '<i class="' + (k <= s.stars ? 'on' : '') + '">★</i>').join('') + '</div>' +
-          '<ul class="lv-crit"><li class="ok">' + L.goal + ' araç ulaştı</li><li class="' + (s.c2 ? 'ok' : '') + '">En çok ' + L.star2 + ' m asfalt (' + Math.round(s.len) + ' m)</li><li class="' + (s.c3 ? 'ok' : '') + '">Hiçbir ev 3 kişiden fazla bekletmedi (en çok ' + s.peak + ')</li></ul>' +
-          '<div class="lv-btns">' + (LV.LEVELS.some((l) => l.id === L.id + 1) ? '<button data-act="next" class="primary" type="button">Sonraki bölüm</button>' : '<button data-act="menu" class="primary" type="button">Bütün bölümler bitti!</button>') + '<button data-act="retry" type="button">Daha iyisini dene</button><button data-act="menu" type="button">Bölümler</button></div>';
+        html = '<p class="lv-kicker">' + this.levelTag(L) + ' tamam</p><h2>Harika!</h2><div class="lv-stars">' + [1, 2, 3].map((k) => '<i class="' + (k <= s.stars ? 'on' : '') + '">★</i>').join('') + '</div>' +
+          '<ul class="lv-crit"><li class="ok">' + this.doneText(L.goal) + '</li><li class="' + (s.c2 ? 'ok' : '') + '">En çok ' + L.star2 + ' m ' + this.tx.mat + ' (' + Math.round(s.len) + ' m)</li><li class="' + (s.c3 ? 'ok' : '') + '">' + (this.mode === 'rail' ? 'Hiçbir istasyonda 3 seferden fazla birikmedi' : this.mode === 'air' ? 'Hiçbir yerde 3 uçaktan fazla beklemedi' : 'Hiçbir ev 3 kişiden fazla bekletmedi') + ' (en çok ' + s.peak + ')</li></ul>' +
+          '<div class="lv-btns">' + (this.nextLevel() ? '<button data-act="next" class="primary" type="button">Sonraki bölüm</button>' : '<button data-act="menu" class="primary" type="button">Bütün bölümler bitti!</button>') + '<button data-act="retry" type="button">Daha iyisini dene</button><button data-act="menu" type="button">Bölümler</button></div>';
       } else {
         const h = extra;
-        html = '<p class="lv-kicker">Bölüm ' + L.id + '</p><h2>Trafik tıkandı</h2><p>' + LV.COLORS[h.b.color].name + ' evdekiler ' + LV.Sim.PENDING_CAP + ' kişi bekledi' + (h.noRoute ? ': gidecekleri iş yerine yol yok.' : '; yollar onları taşıyamadı.') + ' Sıkışan yeri köprü, alt geçit ya da ikinci bir yolla rahatlat.</p>' +
-          '<p class="lv-note">' + this.sim.stats.delivered + ' / ' + L.goal + ' araç ulaştı</p>' +
+        html = '<p class="lv-kicker">' + this.levelTag(L) + '</p><h2>' + this.tx.lose + '</h2><p>' + this.loseText(h) + '</p>' +
+          '<p class="lv-note">' + this.sim.stats.delivered + ' / ' + L.goal + ' · ' + this.doneText(this.sim.stats.delivered).replace(/^\d+ /, '') + '</p>' +
           '<div class="lv-btns"><button data-act="retry" class="primary" type="button">Yollarımla tekrar dene</button><button data-act="reset" type="button">Boş tahtayla başla</button><button data-act="menu" type="button">Bölümler</button></div>';
       }
       c.innerHTML = '<div class="lv-cardbox">' + html + '</div>';
       c.hidden = false; c.dataset.kind = kind;
     }
-    hideCard() { $('lv-card').hidden = true; if (!this.started && this.level.id <= 3) this.toast(this.level.tip); }
+    hideCard() { $('lv-card').hidden = true; if (!this.started && (this.level.n || this.level.id) <= 3) this.toast(this.level.tip); }
     onDeliver() { if (this.sim.stats.delivered % 5 === 0) RA.audio.play('tap'); }
     onEnd(kind, h) {
       this.running = false; this.ended = kind; this.updPlay();
@@ -817,7 +861,7 @@
         if (this.spotKind) {
           const sp = this.spotAt(p.x, p.y) || this.spotAt(d.x0, d.y0);
           if (sp) this.useSpot(sp);
-          else this.toast('Parlayan yerlerden birine dokun. Çıkmak için "' + (this.spotKind === 'bridge' ? 'Köprü' : 'Alt geçit') + '" düğmesine yeniden bas.');
+          else this.toast('Parlayan yerlerden birine dokun. Çıkmak için "' + (this.spotKind === 'bridge' ? 'Köprü' : this.tunName(true)) + '" düğmesine yeniden bas.');
           return;
         }
         if (!d.moved) {

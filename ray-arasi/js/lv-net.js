@@ -118,7 +118,11 @@
   }
   // Yol tasarımı gibi: çizgi birkaç düz parçaya indirilir, her köşe çember yayıyla yuvarlanır (yarıçap R_MIN…R_PREF).
   // headDir/tailDir: uç bir binaya bağlıysa yol o uçta binadan dümdüz çıkar. Köşeye yay sığmıyorsa .sharp = true.
-  const R_MIN = 1.8, R_PREF = 3.5, STUB = 1.2;
+  let R_MIN = 1.8, R_PREF = 3.5;
+  const STUB = 1.2;
+  // moda göre ölçüler: trenler geniş viraj ister; uçaklar geniş taksi yolu (şeritler arası) ve kavşak ister
+  const MODE = { road: { R: [1.8, 3.5], LO: 0.36, JR: 1.05 }, rail: { R: [2.6, 5.0], LO: 0.36, JR: 1.05 }, air: { R: [2.0, 4.0], LO: 0.56, JR: 1.3 } };
+  LV.setMode = function (m) { const q = MODE[m] || MODE.road; R_MIN = q.R[0]; R_PREF = q.R[1]; C.LO = q.LO; C.JR = q.JR; LV.mode = m; };
   function fillet(V, fixedEnds) {
     // V: köşe noktaları; dönüş: {pts, sharp}
     const n = V.length;
@@ -305,18 +309,35 @@
         }
       }
     }
-    // --- demiryolu kesişimleri ---
+    // --- dağ: dağın içinden geçen hat tünel olur (bir alt geçit hakkı) ---
+    const hills = level.hills || [];
+    const strokeTun = new Map(S.map((s) => [s.id, []]));
+    for (const st of S) {
+      let inH = false, a0 = 0;
+      for (let s = 0; s <= st.len + 0.001; s += 0.2) {
+        const p = at(st, s); const h = hills.some((poly) => inPoly(poly, p.x, p.z));
+        if (h && !inH) { inH = true; a0 = s; }
+        if ((!h || s + 0.2 > st.len) && inH) {
+          inH = false;
+          if (a0 < 1.0 || s > st.len - 1.0) return fail('Hat dağın içinde bitemez.', p.x, p.z);
+          strokeTun.get(st.id).push({ a: a0, b: s }); tunnels++;
+        }
+      }
+    }
+    for (const c of crossings) if (hills.some((poly) => inPoly(poly, c.x, c.z))) return fail('Dağın içinde hatlar kesişemez.', c.x, c.z);
+    // --- demiryolu (ve pist) kesişimleri ---
     const railHumps = rails.map(() => []);
     const gates = []; // hemzemin geçitler
     for (const st of S) for (const r of rails) {
       for (const x of intersections(st, r)) {
         const key = posKey(x.x, x.z);
-        const type = choices[key] || 'pending';
-        crossings.push({ key, x: x.x, z: x.z, type, kind: 'rail' });
+        // pisti kesen taksi yolu her zaman bekleme çizgisidir (pist ne köprü ne tünel olur)
+        const type = r.def.runway ? 'level' : choices[key] || 'pending';
+        crossings.push({ key, x: x.x, z: x.z, type, kind: r.def.runway ? 'runway' : 'rail' });
         if (type === 'pending') continue;
         if (type === 'bridge') { humps.get(st.id).push({ a: x.sa - C.FLAT, b: x.sa + C.FLAT, x: x.x, z: x.z }); bridges++; }
         else if (type === 'tunnel') { railHumps[r.k].push({ a: x.sb - C.FLAT, b: x.sb + C.FLAT, x: x.x, z: x.z }); tunnels++; }
-        else gates.push({ key, st, s: x.sa, rail: r.k, sr: x.sb, x: x.x, z: x.z });
+        else gates.push({ key, st, s: x.sa, rail: r.k, sr: x.sb, x: x.x, z: x.z, hold: r.def.runway ? 2.1 : 1.0, runway: !!r.def.runway });
       }
     }
 
@@ -350,6 +371,7 @@
         for (const sp of splits.get(st.id)) if (sp.s > h.a - h.r - 0.4 && sp.s < h.b + h.r + 0.4) { const p = at(st, sp.s); return fail('Köprü rampasının üstünde kavşak olamaz.', p.x, p.z); }
       }
     }
+    for (const st of S) for (const t of strokeTun.get(st.id)) for (const sp of splits.get(st.id)) if (sp.s > t.a - 1.2 && sp.s < t.b + 1.2) { const p = at(st, sp.s); return fail('Dağın içinde makas olamaz.', p.x, p.z); }
     const railY = rails.map((r, k) => {
       const pr = prof(railHumps[k]);
       for (const h of pr) for (const g of gates) if (g.rail === k && g.sr > h.a - h.r - 0.5 && g.sr < h.b + h.r + 0.5) return null;
@@ -363,7 +385,7 @@
     }
     for (const g of gates) {
       if (strokeY.get(g.st.id)(g.s) > 0.05) return fail('Hemzemin geçit köprü rampasında olamaz.', g.x, g.z);
-      for (const sp of splits.get(g.st.id)) if (Math.abs(sp.s - g.s) < 1.6) return fail('Hemzemin geçide çok yakın kavşak olamaz.', g.x, g.z);
+      for (const sp of splits.get(g.st.id)) if (Math.abs(sp.s - g.s) < (g.runway ? 3.3 : 1.6)) return fail(g.runway ? 'Pist geçişine çok yakın kavşak olamaz.' : 'Hemzemin geçide çok yakın kavşak olamaz.', g.x, g.z);
     }
     for (const st of S) for (const r of rails) for (const x of intersections(st, r)) {
       const yr = railY[r.k](x.sb), yv = strokeY.get(st.id)(x.sa);
@@ -498,7 +520,7 @@
       bn.in = lanes.find((l) => l.to === bn) || null;
     }
     const pending = crossings.filter((c) => c.type === 'pending').length;
-    return { ok: true, pending, S, byId, nodes, bNodes, edges, lanes, turns, crossings, gates, rails, railY, strokeY, strokeProf, usage, blds };
+    return { ok: true, pending, S, byId, nodes, bNodes, edges, lanes, turns, crossings, gates, rails, railY, strokeY, strokeProf, strokeTun, usage, blds };
   };
 
   /* ================= rota (Dijkstra): binadan binaya şerit ve dönüş dizisi ================= */

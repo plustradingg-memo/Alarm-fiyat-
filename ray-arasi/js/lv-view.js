@@ -30,8 +30,44 @@
       wood: RA.mat(0x9a6b43, { roughness: 0.8 }),
       table: RA.mat(0x3a4a52, { roughness: 1 }),
       drive: RA.mat(0x5a5e66, { roughness: 0.9 }),
+      // demiryolu
+      ballast: new T.MeshStandardMaterial({ map: RA.tex.clone(RA.tex.gravel(), 1, 1), color: 0xcfc6b8, roughness: 1 }),
+      railSteel: RA.mat(0x8d949c, { roughness: 0.3, metalness: 0.7 }),
+      tie: RA.mat(0x6b4e3a, { roughness: 0.9 }),
+      hill: RA.mat(0x6e9b48, { roughness: 1, flatShading: true }),
+      rock: RA.mat(0x8c8579, { roughness: 1, flatShading: true }),
+      portal: RA.mat(0xb7ab96, { roughness: 0.95 }),
+      dark: new T.MeshBasicMaterial({ color: 0x0d0f12 }),
+      // havalimanı
+      concrete: RA.mat(0xbfc0bc, { roughness: 0.9 }),
+      apron: RA.mat(0xa9aba7, { roughness: 0.95 }),
+      runway: RA.mat(0x3a3d44, { roughness: 0.9 }),
+      yline: RA.mat(0xf2c230, { roughness: 0.6 }),
+      blueL: new T.MeshStandardMaterial({ color: 0x0a1630, emissive: 0x3b6dff, emissiveIntensity: 1.6 }),
+      glass: RA.mat(0x8fc3e0, { roughness: 0.15, metalness: 0.3 }),
     };
     return MAT;
+  }
+  // moda göre yol genişliği (yarım): kenar, köprü korkuluğu, belirsiz kesişim yüzeyi
+  const HALF = { road: 0.86, rail: 0.66, air: 1.14 };
+  // çokgenin kenarlarına en kısa uzaklık
+  function polyDist(poly, x, z) {
+    let d = 1e9;
+    for (let i = 0; i < poly.length; i++) {
+      const [ax, az] = poly[i], [bx, bz] = poly[(i + 1) % poly.length];
+      const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz || 1, t = RA.clamp(((x - ax) * vx + (z - az) * vz) / l2, 0, 1);
+      d = Math.min(d, Math.hypot(ax + vx * t - x, az + vz * t - z));
+    }
+    return d;
+  }
+  const HILL_B = 0.9; // dağın eteği: çokgenden bu kadar taşar
+  const clipHill = (poly) => poly.map(([x, z]) => [RA.clamp(x, -9.95 + HILL_B, 9.95 - HILL_B), RA.clamp(z, -15.95 + HILL_B, 15.95 - HILL_B)]);
+  // dağ yüksekliği: kenardan içeri doğru yumuşakça yükselir (eteği çokgenden HILL_B taşar), tepesi hafif engebeli
+  function hillHeight(poly, x, z) {
+    const inside = LV.geo.inPoly(poly, x, z), d = polyDist(poly, x, z), sd = inside ? d : -d;
+    const k = RA.clamp((sd + HILL_B) / 1.6, 0, 1);
+    const n = Math.sin(x * 1.7 + z * 0.6) * 0.5 + Math.sin(z * 1.3 - x * 0.9) * 0.5;
+    return k <= 0 ? -0.05 : (k * k * (3 - 2 * k)) * (1.9 + Math.min(1, Math.max(0, sd) / 2.5) * 0.9) + (inside ? n * 0.18 * Math.min(1, sd) : 0);
   }
 
   // yüksekliği değişen şerit: üst yüzey (sağ vektör = (-tz, tx))
@@ -196,6 +232,13 @@
         const bank = new T.Mesh(new T.ShapeGeometry(shape(1)), m.bank); bank.rotation.x = -Math.PI / 2; bank.position.y = 0.012; bank.receiveShadow = true; root.add(bank);
         const wm = new T.Mesh(new T.ShapeGeometry(shape(0.88)), m.water); wm.rotation.x = -Math.PI / 2; wm.position.y = 0.03; wm.receiveShadow = true; root.add(wm);
       }
+      this.mode = level.mode || 'road';
+      // dağlar (demiryolu): içinden geçen hat tünel olur
+      for (const poly of level.hills || []) root.add(this.hillMesh(poly, level));
+      // havalimanı: kapıların önünde apron
+      if (this.mode === 'air') {
+        for (const b of level.blds) if (b.role === 'gate') { const ap = mesh(new T.BoxGeometry(b.ux ? 4.2 : b.w + 2.2, 0.03, b.uz ? 4.2 : b.d + 2.6), m.apron, b.x + b.ux * 1.2, 0.012, b.z + b.uz * 1.2, false); ap.receiveShadow = true; root.add(ap); }
+      }
       // binalar
       for (const b of level.blds) root.add(this.building(b));
       // süs ağaçları (yolların altında kalanlar gizlenir)
@@ -205,11 +248,13 @@
         const x = -9.4 + rnd() * 18.8, z = -15.4 + rnd() * 30.8;
         if (level.blds.some((b) => Math.hypot(b.x - x, b.z - z) < 2.6 || Math.hypot(b.ex - x, b.ez - z) < 1.4)) continue;
         if ((level.water || []).some((p) => LV.geo.inPoly(p, x, z))) continue;
-        if (net.rails.some((r) => LV.geo.nearest(r, x, z).d < 1.4)) continue;
+        if ((level.hills || []).some((p) => LV.geo.inPoly(p, x, z) || polyDist(p, x, z) < HILL_B + 0.4)) continue;
+        if (net.rails.some((r) => LV.geo.nearest(r, x, z).d < (r.def.runway ? 2.4 : 1.4))) continue;
+        if (this.mode === 'air' && rnd() < 0.55) continue; // havalimanı daha açık
         this.trees.push({ x, z, kind: rnd() < 0.6 ? 'round' : 'cone', s: 0.9 + rnd() * 0.5, seed: Math.floor(rnd() * 1e6), bush: rnd() < 0.25 });
       }
       // demiryolu
-      net.rails.forEach((r, k) => root.add(this.railMesh(r, (s) => net.railY[k](s))));
+      net.rails.forEach((r, k) => root.add(r.def.runway ? this.runwayMesh(r) : this.railMesh(r, (s) => net.railY[k](s))));
       root.add(RA.mergeStatic(stat));
       this.scene.add(root);
       this.base = root;
@@ -217,14 +262,58 @@
     }
     building(b) {
       const g = new T.Group();
-      const col = LV.COLORS[b.color];
+      const mode = this.mode || 'road', m = mats();
+      const col = LV.COLORS[b.color] || { hex: 0x5d6d7e, css: '#3f5163', roof: 0x4a5a6a };
       const ang = Math.atan2(b.ux, b.uz); // yerel +z giriş yönü
       const body = new T.Group(); body.position.set(b.x, 0, b.z); body.rotation.y = ang; g.add(body);
       // renkli taban
       body.add(mesh(rb(b.w + 0.3, 0.06, b.d + 0.3, 0.05), RA.mat(col.hex, { roughness: 0.7 }), 0, 0.03, 0, false));
       body.add(mesh(rb(b.w + 0.05, 0.07, b.d + 0.05, 0.05), RA.mat(0xe9e4d6, { roughness: 0.9 }), 0, 0.045, 0, false));
       const rnd = RA.rng(Math.round(b.x * 31 + b.z * 7));
-      if (b.kind === 'house') {
+      const front = b.d / 2;
+      if (b.role === 'arr' || b.role === 'dep') {
+        // pist çıkışı / kalkış noktası: beton bekleme yeri ve sarı yön levhası
+        body.add(mesh(rb(b.w, 0.05, b.d, 0.03), m.concrete, 0, 0.06, 0, false));
+        for (const x of [-0.6, 0.6]) body.add(mesh(rb(0.06, 0.4, 0.06, 0.01), RA.mat(0x3d4249), x, 0.26, -0.2));
+        body.add(mesh(rb(1.5, 0.34, 0.08, 0.03), m.yline, 0, 0.55, -0.2));
+        body.add(mesh(rb(0.5, 0.06, 0.09, 0.01), RA.mat(0x1d2126), b.role === 'arr' ? -0.2 : 0.2, 0.55, -0.15, false));
+      } else if (b.role === 'gate') {
+        // terminal kapısı: camlı bina, renkli şerit, körük
+        body.add(mesh(rb(b.w, 0.85, 1.1, 0.05), m.glass, 0, 0.5, -0.25));
+        body.add(mesh(rb(b.w + 0.12, 0.1, 1.24, 0.04), RA.mat(0xf2f2ee), 0, 0.97, -0.25));
+        body.add(mesh(rb(b.w + 0.02, 0.12, 0.04, 0.02), RA.mat(col.hex), 0, 0.78, 0.31, false));
+        const jb = mesh(rb(0.26, 0.26, 1.0, 0.04), RA.mat(0xdfe3e6), 0.7, 0.55, 0.75); body.add(jb);
+        body.add(mesh(rb(0.08, 0.42, 0.08, 0.02), RA.mat(0x5a6068), 0.7, 0.22, 1.1));
+        const pk = M.plane(col.hex); pk.userData.gear.visible = true; pk.scale.setScalar(0.46); pk.rotation.y = Math.PI / 2; pk.position.set(0.1, 0.17, 1.45); pk.visible = false; body.add(pk);
+        b.parked = pk;
+      } else if (mode === 'rail' && b.kind === 'house') {
+        // istasyon: peron, sundurma, küçük bina
+        body.add(mesh(rb(b.w * 0.95, 0.2, 0.75, 0.03), RA.mat(0xc9c1b2), 0, 0.1, front - 0.45));
+        body.add(mesh(rb(b.w * 0.95, 0.02, 0.07, 0.01), m.yline, 0, 0.21, front - 0.1, false));
+        const h = M.house(1.5, 0.75, 0.55, 0xf1dfc0, col.roof, rnd, { door: true }); h.position.set(0, 0.07, -0.35); body.add(h);
+        body.add(mesh(rb(b.w * 0.8, 0.05, 0.55, 0.02), RA.mat(col.hex), 0, 0.62, front - 0.45));
+        for (const x of [-0.9, 0, 0.9]) body.add(mesh(RA.geo('cpost', () => new T.CylinderGeometry(0.025, 0.025, 0.42, 6)), RA.mat(0x5a4636), x, 0.41, front - 0.2));
+      } else if (mode === 'rail') {
+        if (b.type === 'liman') {
+          body.add(mesh(rb(b.w + 0.2, 0.06, 0.6, 0.02), RA.mat(0x3f8fd0), 0, 0.04, -b.d / 2 + 0.15, false));
+          const cc = [0xd8432f, 0x2f7fe0, 0x22a45a, 0xf2c230, 0x9050d8];
+          for (let i = 0; i < 6; i++) { const x = -0.95 + (i % 3) * 0.75, y = 0.27 + Math.floor(i / 3) * 0.34; body.add(mesh(rb(0.68, 0.32, 0.36, 0.02), RA.mat(RA.pick(cc, rnd)), x, y, 0.15)); }
+          for (const x of [-1.2, 1.2]) body.add(mesh(rb(0.1, 1.5, 0.1, 0.02), RA.mat(0xf2c230), x, 0.78, -0.45));
+          body.add(mesh(rb(2.6, 0.12, 0.14, 0.02), RA.mat(0xf2c230), 0, 1.52, -0.45));
+          body.add(mesh(rb(0.14, 0.12, 1.2, 0.02), RA.mat(0xf2c230), 0.4, 1.52, -0.3));
+        } else if (b.type === 'maden') {
+          for (const [x, z] of [[-0.4, -0.5], [0.4, -0.5], [-0.4, 0.1], [0.4, 0.1]]) { const l = mesh(rb(0.07, 1.6, 0.07, 0.01), RA.mat(0x5a3f30), x * 0.7 - 0.6, 0.8, z * 0.7 - 0.1); l.rotation.z = x * 0.1; body.add(l); }
+          const wh = mesh(RA.geo('mwheel', () => new T.TorusGeometry(0.26, 0.04, 6, 16)), RA.mat(0x3a3f45), -0.6, 1.6, -0.2); body.add(wh);
+          for (const [x, z, r] of [[0.5, 0, 0.5], [1.05, -0.35, 0.38]]) body.add(mesh(new T.ConeGeometry(r, r * 1.1, 9), RA.mat(0x2d2a28, { flatShading: true }), x, r * 0.55, z));
+          const sh = M.block(1.0, 0.7, 0.55, 0xb9ad98, rnd); sh.position.set(-0.3, 0, 0.2); body.add(sh);
+        } else {
+          const bl = M.block(2.4, 1.1, 0.95, 0xe9dcc5, rnd); bl.position.set(-0.2, 0, -0.15); body.add(bl);
+          body.add(mesh(rb(0.55, 1.7, 0.55, 0.04), RA.mat(0xd9c8a8), 1.15, 0.85, -0.3));
+          body.add(mesh(RA.geo('clock', () => new T.CylinderGeometry(0.18, 0.18, 0.04, 16)), RA.mat(0xffffff), 1.15, 1.4, -0.02).rotateX(Math.PI / 2));
+          body.add(mesh(rb(0.6, 0.12, 0.6, 0.04), RA.mat(col.roof), 1.15, 1.76, -0.3));
+        }
+        body.add(mesh(rb(b.w * 0.9, 0.12, 0.06, 0.02), RA.mat(col.hex), 0, 0.42, b.d / 2 + 0.02, false));
+      } else if (b.kind === 'house') {
         const walls = [0xf2d7b6, 0xe9e3d3, 0xf5e6c4, 0xdfe7ea];
         for (const x of [-0.82, 0, 0.82]) { const h = M.house(0.74, 0.7, 0.5 + rnd() * 0.16, RA.pick(walls, rnd), col.roof, rnd); h.position.set(x, 0.07, -0.2); body.add(h); }
       } else {
@@ -233,9 +322,11 @@
         body.add(mesh(rb(b.w * 0.9, 0.12, 0.06, 0.02), RA.mat(col.hex), 0, 0.5, b.d / 2 + 0.02, false));
       }
       // giriş yolu
-      const drive = mesh(rb(0.9, 0.05, 0.9, 0.02), mats().drive, 0, 0.03, b.d / 2 + 0.45, false); body.add(drive);
+      const drive = mesh(rb(mode === 'air' ? 1.5 : 0.9, 0.05, 0.9, 0.02), mode === 'rail' ? m.ballast : mode === 'air' ? m.concrete : m.drive, 0, 0.03, b.d / 2 + 0.45, false); body.add(drive);
       // tabela ve giriş işareti
-      const label = b.kind === 'house' ? 'EVLER' : ({ fabrika: 'FABRİKA', okul: 'OKUL', avm: 'AVM', ofis: 'OFİS', hastane: 'HASTANE' }[b.type] || 'İŞ YERİ');
+      const label = b.role === 'arr' ? 'İNİŞ' : b.role === 'dep' ? 'KALKIŞ' : b.role === 'gate' ? 'KAPI ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[b.color] || '') :
+        mode === 'rail' ? (b.kind === 'house' ? 'İSTASYON' : ({ gar: 'GAR', liman: 'LİMAN', maden: 'MADEN' }[b.type] || 'GAR')) :
+        b.kind === 'house' ? 'EVLER' : ({ fabrika: 'FABRİKA', okul: 'OKUL', avm: 'AVM', ofis: 'OFİS', hastane: 'HASTANE' }[b.type] || 'İŞ YERİ');
       const sp = new T.Sprite(new T.SpriteMaterial({ map: signTex(label, col.css), depthTest: false, transparent: true }));
       sp.center.set(0.5, 0); sp.scale.set(2.6, 0.98, 1); sp.position.set(b.x - b.ux * 0.6, 2.1, b.z - b.uz * 0.6); sp.renderOrder = 15; g.add(sp);
       const an = new T.Mesh(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({ map: anchorTex(col.css), transparent: true, depthWrite: false }));
@@ -247,6 +338,49 @@
         b.pend = pd; b.pendN = -1;
       }
       return g;
+    }
+    // dağ: yuvarlak tepeli kabarık şekil (eteği çokgenden HILL_B taşar); üstünde kaya ve ağaçlar
+    hillMesh(poly0, level) {
+      const m = mats();
+      const poly = clipHill(poly0);
+      const g = new T.Group();
+      const xs0 = poly.map((p) => p[0]), zs0 = poly.map((p) => p[1]);
+      const x0 = Math.max(-10, Math.min(...xs0) - HILL_B - 0.3), x1 = Math.min(10, Math.max(...xs0) + HILL_B + 0.3), z0 = Math.max(-16, Math.min(...zs0) - HILL_B - 0.3), z1 = Math.min(16, Math.max(...zs0) + HILL_B + 0.3);
+      const nx = Math.max(2, Math.ceil((x1 - x0) / 0.4)), nz = Math.max(2, Math.ceil((z1 - z0) / 0.4));
+      const geo = new T.PlaneGeometry(x1 - x0, z1 - z0, nx, nz); geo.rotateX(-Math.PI / 2); geo.translate((x0 + x1) / 2, 0, (z0 + z1) / 2);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) pos.setY(i, hillHeight(poly, pos.getX(i), pos.getZ(i)));
+      geo.computeVertexNormals();
+      const hm = new T.Mesh(geo, m.hill); hm.castShadow = true; hm.receiveShadow = true; g.add(hm);
+      const rnd = RA.rng(Math.round(poly[0][0] * 7 + poly[0][1] * 13) + 5);
+      const xs = poly.map((p) => p[0]), zs = poly.map((p) => p[1]);
+      for (let k = 0; k < 60; k++) {
+        const x = Math.min(...xs) + rnd() * (Math.max(...xs) - Math.min(...xs)), z = Math.min(...zs) + rnd() * (Math.max(...zs) - Math.min(...zs));
+        if (!LV.geo.inPoly(poly, x, z) || polyDist(poly, x, z) < 0.6) continue;
+        const y = hillHeight(poly, x, z) - 0.05;
+        if (rnd() < 0.35) { const r = mesh(RA.geo('hrock', () => new T.DodecahedronGeometry(0.35, 0)), m.rock, x, y + 0.1, z); r.scale.set(1 + rnd(), 0.6 + rnd() * 0.5, 1 + rnd()); r.rotation.y = rnd() * 3; g.add(r); }
+        else { const t = M.tree(rnd, rnd() < 0.7 ? 'cone' : 'round', 0.8 + rnd() * 0.4); t.position.set(x, y, z); g.add(t); }
+      }
+      return RA.mergeStatic(g);
+    }
+    // pist: koyu asfalt, kenar ve orta çizgiler, kenar ışıkları
+    runwayMesh(r) {
+      const m = mats();
+      const g = new T.Group(), path = new RA.Path(r.pts), y0 = () => 0;
+      g.add(new T.Mesh(ribbonY(path, -1.5, 1.5, y0, 0.02, 0.5), m.concrete));
+      g.add(new T.Mesh(ribbonY(path, -1.2, 1.2, y0, 0.04, 0.5), m.runway));
+      for (const x of [-1.08, 1.08]) g.add(new T.Mesh(ribbonY(path, x - 0.04, x + 0.04, y0, 0.05, 0.5), m.line));
+      for (let s = 0.6; s < path.length - 0.6; s += 1.9) {
+        const P = path.at(s), Tn = path.tan(s);
+        const d = mesh(RA.geo('rwdash', () => new T.BoxGeometry(1.0, 0.012, 0.09)), m.line, P.x, 0.052, P.z, false); d.rotation.y = -Math.atan2(Tn.z, Tn.x); g.add(d);
+        for (const x of [-1.32, 1.32]) { const l = mesh(RA.geo('rwl', () => new T.SphereGeometry(0.05, 8, 6)), RA.glow(0xfff1c8, 1.6), P.x - Tn.z * x, 0.08, P.z + Tn.x * x, false); g.add(l); }
+      }
+      // pist başı işaretleri (piyano tuşları) iki uçta
+      for (const end of [0, 1]) {
+        const s = end ? path.length - 2.2 : 2.2, P = path.at(s), Tn = path.tan(s);
+        for (let k = -3; k <= 3; k++) { if (!k) continue; const b = mesh(RA.geo('rwkey', () => new T.BoxGeometry(1.1, 0.012, 0.12)), m.line, P.x - Tn.z * k * 0.27, 0.052, P.z + Tn.x * k * 0.27, false); b.rotation.y = -Math.atan2(Tn.z, Tn.x); g.add(b); }
+      }
+      return RA.mergeStatic(g);
     }
     railMesh(r, yf) {
       const m = mats();
@@ -298,9 +432,21 @@
       this.dispose(this.roads);
       const m = mats();
       const root = new T.Group(), stat = new T.Group();
+      const mode = this.mode || 'road', HW = HALF[mode];
       for (const e of net.edges) {
         const path = new RA.Path(LV.geo.slicePts(e.st, e.s0, e.s1));
         const yf = (s) => e.y(e.s0 + (s / path.length) * e.len);
+        if (mode === 'rail') { stat.add(new T.Mesh(ribbonY(path, -0.66, 0.66, yf, 0.04, 0.2), m.ballast)); this.elevated(stat, path, yf, HW); continue; }
+        if (mode === 'air') {
+          stat.add(new T.Mesh(ribbonY(path, -1.14, 1.14, yf, 0.045, 0.2), m.concrete));
+          // mavi kenar ışıkları (kavşak ağızlarında yok)
+          for (let s = e.ta + 0.6; s < path.length - e.tb - 0.4; s += 1.5) {
+            const P = path.at(s), Tn = path.tan(s), y = yf(s);
+            for (const x of [-1.18, 1.18]) stat.add(mesh(RA.geo('twl', () => new T.SphereGeometry(0.05, 8, 6)), m.blueL, P.x - Tn.z * x, y + 0.09, P.z + Tn.x * x, false));
+          }
+          this.elevated(stat, path, yf, HW);
+          continue;
+        }
         stat.add(new T.Mesh(ribbonY(path, -0.78, 0.78, yf, 0.045, 0.2), m.asphalt));
         // kaldırım kavşağın içine girmez
         const c0 = e.ta, c1 = path.length - e.tb;
@@ -314,22 +460,51 @@
         if (s1 - s0 > 0.6) { const dm = new T.Mesh(ribbonY(path.slice(s0, s1), -0.045, 0.045, (s) => yf(s0 + s), 0.052, 0.2, 1 / 0.9), m.dash); dm.renderOrder = 3; root.add(dm); }
         this.elevated(stat, path, yf, 0.86);
       }
-      // türü seçilmemiş kesişim: iki yolun üst üste binen çizgi ve kaldırımları yerine temiz bir asfalt yüzey
+      // raylar (her şeridin iki rayı ve traversleri) / taksi yolu sarı rehber çizgileri; kavşak içinde dönüş yolları boyunca
+      if (mode === 'rail' || mode === 'air') {
+        const tracks = net.lanes.map((l) => ({ path: l.path, y: l.y })).concat(net.turns.map((t) => ({ path: t.path, y: () => 0, turn: true })));
+        for (const tr of tracks) {
+          if (tr.path.length < 0.05) continue;
+          if (mode === 'air') { stat.add(new T.Mesh(ribbonY(tr.path, -0.035, 0.035, tr.y, 0.058, 0.15), m.yline)); continue; }
+          for (const x of [-0.12, 0.12]) stat.add(new T.Mesh(ribbonY(tr.path, x - 0.022, x + 0.022, tr.y, 0.125, 0.15), m.railSteel));
+          for (let s = 0.12; s < tr.path.length; s += 0.34) {
+            const P = tr.path.at(s), Tn = tr.path.tan(s);
+            const sl = mesh(RA.geo('lvtie', () => new T.BoxGeometry(0.08, 0.04, 0.36)), m.tie, P.x, tr.y(s) + 0.09, P.z, false); sl.rotation.y = -Math.atan2(Tn.z, Tn.x); stat.add(sl);
+          }
+        }
+        // dağın içinden geçen hattın tünel ağızları
+        if (mode === 'rail' && net.strokeTun) {
+          const hills = (level.hills || []).map(clipHill);
+          const under = (p) => hills.some((q) => hillHeight(q, p.x, p.z) > 0.85);
+          for (const st of net.S) for (const t of net.strokeTun.get(st.id) || []) {
+            for (const [s0, dir] of [[t.a, -1], [t.b, 1]]) {
+              let s = s0; while (s > 0 && s < st.len && under(LV.geo.at(st, s))) s += dir * 0.1;
+              const P = LV.geo.at(st, s), Tn = LV.geo.tan(st, s);
+              const pg = new T.Group(); pg.position.set(P.x, 0, P.z); pg.rotation.y = -Math.atan2(Tn.z, Tn.x);
+              pg.add(mesh(rb(0.3, 1.0, 1.7, 0.05), m.portal, -dir * 0.05, 0.5, 0));
+              pg.add(mesh(rb(0.32, 0.74, 1.3, 0.04), m.dark, -dir * 0.06, 0.37, 0, false));
+              stat.add(pg);
+            }
+          }
+        }
+      }
+      // türü seçilmemiş kesişim: iki yolun üst üste binen çizgi ve kaldırımları yerine temiz bir yüzey
+      const padM = mode === 'rail' ? m.ballast : mode === 'air' ? m.concrete : m.asphalt;
       for (const c of net.crossings) {
         if (c.type !== 'pending' || c.kind !== 'road' || !c.ta) continue;
-        const k = 0.97 / Math.max(0.45, Math.abs(c.ta.x * c.tb.z - c.ta.z * c.tb.x));
+        const k = (HW + 0.11) / Math.max(0.45, Math.abs(c.ta.x * c.tb.z - c.ta.z * c.tb.x));
         const P = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([i, j]) => new T.Vector2(c.x + (c.ta.x * i + c.tb.x * j) * k, -(c.z + (c.ta.z * i + c.tb.z * j) * k)));
         const geo = new T.ShapeGeometry(new T.Shape(P)); geo.rotateX(-Math.PI / 2);
-        const pad = new T.Mesh(geo, m.asphalt); pad.position.y = 0.068; pad.receiveShadow = true; stat.add(pad);
+        const pad = new T.Mesh(geo, padM); pad.position.y = mode === 'road' ? 0.068 : 0.14; pad.receiveShadow = true; stat.add(pad);
       }
       // kavşak ve birleşme yerleri
       for (const n of net.nodes) {
         if (n.kind === 'j' || n.kind === 'joint') {
-          // kavşak zemini: kolların arasını dolduran düz asfalt
-          const r = n.kind === 'j' ? LV.C.JR + 0.02 : 0.9;
-          const pad = mesh(RA.geo('jpad' + r, () => { const c = new T.CircleGeometry(r, 32); c.rotateX(-Math.PI / 2); return c; }), m.asphalt, n.x, 0.05, n.z, false); pad.receiveShadow = true; stat.add(pad);
+          // kavşak zemini: kolların arasını dolduran düz asfalt / balast / beton
+          const r = mode === 'rail' ? (n.kind === 'j' ? LV.C.JR + 0.25 : 0.7) : mode === 'air' ? (n.kind === 'j' ? LV.C.JR + 0.35 : 1.15) : n.kind === 'j' ? LV.C.JR + 0.02 : 0.9;
+          const pad = mesh(RA.geo('jpad' + r, () => { const c = new T.CircleGeometry(r, 32); c.rotateX(-Math.PI / 2); return c; }), padM, n.x, mode === 'road' ? 0.05 : 0.045, n.z, false); pad.receiveShadow = true; stat.add(pad);
           // kolların arasındaki köşeler: kaldırım kavisi
-          if (n.kind === 'j') {
+          if (n.kind === 'j' && mode === 'road') {
             const angs = n.arms.map((a) => a.ang).sort((p, q) => p - q);
             for (let k = 0; k < angs.length; k++) {
               const a0 = angs[k], a1 = k === angs.length - 1 ? angs[0] + Math.PI * 2 : angs[k + 1];
@@ -340,7 +515,7 @@
             }
           }
         }
-        if (n.kind === 'j') {
+        if (n.kind === 'j' && mode === 'road') {
           // her kolda yaya geçidi (zebra)
           for (const arm of n.arms) {
             const ang = arm.ang, dx = Math.cos(ang), dz = Math.sin(ang), rx = -dz, rz = dx;
@@ -371,6 +546,17 @@
       // hemzemin geçit bariyerleri
       this.gates = [];
       for (const gt of net.gates) {
+        if (gt.runway) {
+          // pist bekleme çizgisi: sarı çift çizgi ve kırmızı durma ışıkları (pistte trafik varken yanar)
+          const lm = new T.MeshStandardMaterial({ color: 0x220000, emissive: 0xff2010, emissiveIntensity: 0.1 });
+          for (const sg of [-1, 1]) {
+            const s = gt.s + sg * gt.hold, P = LV.geo.at(gt.st, RA.clamp(s, 0, gt.st.len)), Tn = LV.geo.tan(gt.st, RA.clamp(s, 0, gt.st.len)), ang = -Math.atan2(Tn.z, Tn.x);
+            for (const off of [0, 0.16]) { const bar = mesh(RA.geo('hbar', () => new T.BoxGeometry(0.05, 0.012, 2.2)), m.yline, P.x + Tn.x * sg * off, 0.065, P.z + Tn.z * sg * off, false); bar.rotation.y = ang; root.add(bar); }
+            for (let k = -2; k <= 2; k++) { const l = new T.Mesh(RA.geo('hlamp', () => new T.SphereGeometry(0.07, 10, 8)), lm); l.position.set(P.x - sg * Tn.x * 0.12 - Tn.z * k * 0.5, 0.1, P.z - sg * Tn.z * 0.12 + Tn.x * k * 0.5); root.add(l); }
+          }
+          this.gates.push({ key: gt.key, bar: true, lm });
+          continue;
+        }
         const t = LV.geo.tan(gt.st, gt.s); const nx = -t.z, nz = t.x;
         for (const sgn of [-1, 1]) {
           const bx = gt.x + t.x * 1.15 * sgn + nx * 1.0 * sgn, bz = gt.z + t.z * 1.15 * sgn + nz * 1.0 * sgn;
@@ -463,11 +649,14 @@
       }
       if (this.gates) for (const gt of this.gates) {
         const gs = sim.gateSt && sim.gateSt.get(gt.key); const a = gs ? gs.arm : 0;
+        if (gt.bar) { gt.lm.emissiveIntensity = gs && gs.closed ? 2.6 : 0.1; continue; }
         gt.arm.rotation.z = (Math.PI / 2) * (1 - a) * 0.95;
         gt.lm.emissiveIntensity = gs && gs.closed && Math.floor(now * 3) % 2 === 0 ? 3 : 0;
       }
       for (const h of sim.houses || []) {
-        const b = h.b; if (!b.pend) continue;
+        const b = h.b;
+        if (b.parked) b.parked.visible = h.queue.length + h.pending > 0; // kapıda yanaşmış uçak
+        if (!b.pend) continue;
         const n = Math.min(h.pending, LV.Sim.PENDING_CAP);
         if (n !== b.pendN) { b.pendN = n; b.pend.material.map = pendTex(n, LV.Sim.PENDING_CAP); b.pend.material.needsUpdate = true; }
         b.pend.visible = running || n > 0;

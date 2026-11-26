@@ -144,6 +144,10 @@
       this.views = Array.from(document.querySelectorAll('#menu [data-scene]'));
       document.querySelectorAll('#menu .free-btn').forEach((b) => b.addEventListener('click', () => app.openWorkshop(b.dataset.mode)));
       this.grid = document.getElementById('lv-grid');
+      // sekmeler: karayolu / demiryolu / havalimanı bölümleri
+      this.set = RA.store.get('lv.set', 'road') || 'road';
+      this.tabs = Array.from(document.querySelectorAll('#menu .lv-tabs [data-set]'));
+      this.tabs.forEach((b) => b.addEventListener('click', () => { this.set = b.dataset.set; RA.store.set('lv.set', this.set); RA.audio.play('tap'); this.refresh(); }));
       this.grid.addEventListener('click', (e) => {
         const b = e.target.closest('[data-lv]'); if (!b) return;
         if (b.classList.contains('locked')) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); RA.audio.play('denied'); return; }
@@ -155,10 +159,16 @@
     // bölüm kartları: numara, ad, yıldızlar, kilit
     refresh() {
       const LV = RA.LV; if (!LV || !this.grid) return;
-      this.grid.innerHTML = LV.LEVELS.map((L) => {
+      const set = LV.SETS.find((q) => q.mode === this.set) || LV.SETS[0];
+      const INFO = { road: ['Karayolu bölümleri', 'Evleri iş yerlerine bağla, trafiği tıkatma'], rail: ['Demiryolu bölümleri', 'İstasyonları garlara bağla, trenleri bekletme'], air: ['Havalimanı bölümleri', 'Uçakları kapıya yanaştır, kalkışa yetiştir'] }[set.mode];
+      document.getElementById('menu-set-t').textContent = INFO[0]; document.getElementById('menu-set-d').textContent = INFO[1];
+      this.views.forEach((el) => { if (el.closest('.menu-banner')) el.dataset.scene = set.mode; });
+      this.tabs.forEach((b) => b.setAttribute('aria-selected', b.dataset.set === set.mode));
+      this.grid.dataset.set = set.mode;
+      this.grid.innerHTML = set.levels.map((L) => {
         const st = LV.progress.stars(L.id), open = LV.progress.unlocked(L.id);
-        return '<button type="button" role="listitem" class="lv-btn' + (open ? '' : ' locked') + (st ? ' done' : '') + '" data-lv="' + L.id + '" aria-label="Bölüm ' + L.id + ': ' + L.name + (open ? ', ' + st + ' yıldız' : ', kilitli') + '">' +
-          '<span class="n">' + L.id + '</span><span class="t">' + L.name + '</span><span class="s">' + (open ? [1, 2, 3].map((k) => '<i class="' + (k <= st ? 'on' : '') + '">★</i>').join('') : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>') + '</span></button>';
+        return '<button type="button" role="listitem" class="lv-btn' + (open ? '' : ' locked') + (st ? ' done' : '') + '" data-lv="' + L.id + '" aria-label="' + set.name + ' ' + L.n + ': ' + L.name + (open ? ', ' + st + ' yıldız' : ', kilitli') + '">' +
+          '<span class="n">' + L.n + '</span><span class="t">' + L.name + '</span><span class="s">' + (open ? [1, 2, 3].map((k) => '<i class="' + (k <= st ? 'on' : '') + '">★</i>').join('') : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>') + '</span></button>';
       }).join('');
     }
     resize() { }

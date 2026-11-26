@@ -6,6 +6,10 @@ oyun yolu kendisi toparlar; yollar birbirine kavuşurken küçük bir "öpüşme
 kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar verirsin**; **Köprü** düğmesine basınca
 köprü yapabileceğin yerler parlar, istediğine elle köprü koyarsın. Bölüm bölüm zorlaşır, yıldız toplarsın.
 
+Ana ekranda üç bölüm seti var: **Karayolu** (evler → iş yerleri), **Demiryolu** (istasyonlar → garlar, uzun
+trenler, makaslar, dağdan tünel) ve **Havalimanı** (uçaklar iner, kapıya yanaşır, kalkar; pist geçişleri).
+Hepsi aynı serbest çizim, kesişim seçimi ve köprü / alt geçit düğmeleriyle oynanır.
+
 ## Nasıl oynanır?
 
 1. Ana ekrandan bir **bölüm** seç. Açılan kartta hedef yazar (ör. *30 araç ulaştır*) ve elindeki malzeme: asfalt
@@ -98,6 +102,54 @@ bekletmemek. Bir bölümü bitirince sonraki açılır.
 
 Her bölüm, kontrol betiğinde çözüm yoluyla baştan sona oynanıp kazanıldığı doğrulanmıştır; köprüsüz (hepsi kavşak)
 denemede 3, 4, 9 ve 10. bölümler kaybedilir.
+
+## Demiryolu bölümleri
+
+Ana ekranda **Demiryolu** sekmesine dokun. Renkli **istasyonlardan** aynı renkteki **gara / limana / madene** ray
+hattı döşersin (**Ray döşe**). Her hat çift hatlıdır (gidiş ve dönüş), virajlar trenler için daha geniştir.
+
+- Trenler lokomotif ve iki vagondur (madene giden yük treni). Uzun oldukları için bir makastan (kavşaktan) ancak
+  **kuyrukları da çıkınca** öbür trene yol açılır; bu yüzden yoğun kesişimde köprü daha da değerlidir.
+- İki hat birleşince ya da ayrılınca makas kendiliğinden kurulur; dört kollu makaslar ışıklıdır.
+- **Dağ:** hattı dağın üstünden çizersen dağın içinde kalan kısım **tünel** olur ve bir tünel hakkı kullanır
+  (alttaki "Alt geçit" düğmesi bu modda **Tünel** adını alır). Hat dağın içinde bitemez; dağın içinde makas ve
+  kesişim olmaz (oyun ucu dağın dışına uzatır).
+- Nehri kesen hat kendiliğinden köprü olur.
+- Bir istasyonda 8 sefer birikirse kaybedersin. Malzeme göstergesi **Ray** metresini gösterir.
+
+| # | Bölüm | Öğrettiği |
+|---|---|---|
+| 1 | İlk hat | İstasyondan limana ray döşemek |
+| 2 | Makas | Hatları birleştirip ayırmak (az ray) |
+| 3 | Dağ | Dağı tünelle geçmek |
+| 4 | Köprülü hat | Yoğun makası köprüyle ayırmak |
+| 5 | Nehir ve dağ | Köprü ve tüneli birlikte kullanmak |
+| 6 | Büyük gar | Üç hat: bir kesişim köprü, öbürü tünel |
+
+## Havalimanı bölümleri
+
+Ana ekranda **Havalimanı** sekmesine dokun. Üstteki pistten uçaklar iner, **İNİŞ** noktasından çıkıp taksi
+yolundan kendi renkli **kapısına** (KAPI A, B, C…) gider, yolcu indirip bindirir (kapıda uçak park etmiş görünür),
+sonra **KALKIŞ** noktasına gidip pistte hızlanarak havalanır. Hedef: **kalkan uçak sayısı**.
+
+- **Taksi yolu** aracıyla çizersin; kapının tek bir yolu olur, kalkışa giden yolu o yoldan ayırırsın (oyun yeni
+  yolu kapının yoluna kendisi bağlar).
+- Taksi yolu bir **pisti** keserse orası **bekleme çizgisi** olur (sarı çift çizgi ve kırmızı durma ışıkları):
+  pistte uçak inerken ya da kalkarken uçaklar bekler. Pist köprü ya da tünel olamaz.
+- Taksi yolları kesişirse kavşak, köprü ya da alt geçit seçersin (aynı **?** kutusu ve **Köprü** düğmesi).
+- Havada ya da bir kapıda 8 uçak beklerse kaybedersin. Malzeme göstergesi **Beton** metresini gösterir.
+
+| # | Bölüm | Öğrettiği |
+|---|---|---|
+| 1 | İlk uçuş | İnişten kapıya, kapıdan kalkışa yol |
+| 2 | İki kapı | İki havayolu, ortak ana yol |
+| 3 | Pisti geç | Pist geçişinde bekleme çizgisi |
+| 4 | Taksi köprüsü | Gelen ve giden yolların kesişimini köprüyle ayırmak |
+| 5 | Yoğun saat | Üç kapı, sık iniş |
+| 6 | İki pist | İniş ve kalkış ayrı pistlerde |
+
+Demiryolu ve havalimanı bölümleri de kontrol betiğinde çözüm yoluyla oynanıp kazanılır; Demiryolu 4 ve 6 ile
+Havalimanı 4 köprüsüz denemede kaybedilir. Her setin ilk bölümü açıktır; sonrakiler bir öncekini bitirince açılır.
 
 ## Serbest atölye (ızgaralı kurma)
 
@@ -258,7 +310,7 @@ ray-arasi/
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran, bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, köprü, nehir, alt geçit, büyük kavşak, kazanma, masaüstü
+├── ekran-goruntuleri/      Ana ekran (karayolu ve demiryolu sekmesi), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, köprü, demiryolu (nehir ve dağ, büyük gar), havalimanı (taksi köprüsü), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```
