@@ -35,7 +35,8 @@
       clearTimeout(this.endT); clearTimeout(this.hintT); // önceki bölümden bekleyen kart / ipucu yeni bölüme düşmesin
       this.level = LV.prep(def);
       this.strokes = []; this.choices = {}; this.nextId = 1; this.undoStack = [];
-      this.started = false; this.running = false; this.speed = 1; this.ended = null;
+      this.started = false; this.running = false; this.ended = null;
+      this.setSpeed(1);
       this.net = LV.buildNet(this.level, [], {});
       this.view.buildBase(this.level, this.net);
       this.view.buildRoads(this.level, this.net);
@@ -159,7 +160,7 @@
       $('lv-back').addEventListener('click', () => this.app.showMenu());
       $('lv-undo').addEventListener('click', () => this.undo());
       $('lv-play').addEventListener('click', () => this.togglePlay());
-      $('lv-speed').addEventListener('click', () => { this.speed = this.speed === 1 ? 2 : 1; $('lv-speed').textContent = this.speed + '×'; });
+      $('lv-speed').addEventListener('click', () => { const S = [1, 2, 4, 8]; this.setSpeed(S[(S.indexOf(this.speed) + 1) % S.length]); });
       $('lv-hint').addEventListener('click', () => this.showHint());
       $('lv-card').addEventListener('click', (e) => {
         const b = e.target.closest('[data-act]'); if (!b) return;
@@ -170,6 +171,11 @@
         else if (act === 'reset') this.restart(false);
         else if (act === 'menu') this.app.showMenu();
       });
+    }
+    // hız: 1× 2× 4× 8× (her karede simülasyon adımı o kadar kez çalışır; adım küçük kaldığı için araçlar doğru davranır)
+    setSpeed(v) {
+      this.speed = v;
+      const b = $('lv-speed'); b.textContent = v + '×'; b.dataset.v = v; b.setAttribute('aria-label', 'Hız: ' + v + ' kat (değiştirmek için dokun)');
     }
     setTool(t) {
       this.tool = t;
@@ -336,7 +342,7 @@
     }
 
     /* ---------- döngü ---------- */
-    update(dt) { if (this.running) this.sim.update(dt * this.speed); }
+    update(dt) { for (let k = 0; k < this.speed && this.running; k++) this.sim.update(dt); }
     frame(dt) {
       this.view.frame(this.sim, performance.now() / 1000, this.running);
       const now = performance.now();

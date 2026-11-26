@@ -236,6 +236,7 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 .lv-budget .meter i[data-lv="mid"] { background: var(--amber); }
 .lv-budget .meter i[data-lv="bad"] { background: var(--red); }
 .lv-budget b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lv-speed[data-v="4"], .lv-speed[data-v="8"] { background: var(--sign-yellow); border-color: #d9a300; }
 .lv-speed { height: 46px; width: 46px; border-radius: 12px; border: 2px solid #dfe4e7; background: #f5f7f8; font-weight: 900; font-size: 15px; cursor: pointer; font-family: inherit; color: var(--ink); }
 .lv-play { height: 46px; min-width: 120px; border: 0; border-radius: 14px; background: var(--road); color: var(--paper); display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 900; font-size: 16px; cursor: pointer; font-family: inherit; box-shadow: 0 3px 0 #13724a; padding: 2px 12px 0; }
 .lv-play svg { width: 20px; height: 20px; fill: currentColor; }

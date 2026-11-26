@@ -66,6 +66,17 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.waitForTimeout(150); await shot('10-bolum1-cizim');
   await page.locator('#lv-play').tap();
   ok(await page.evaluate(() => RA.app.lv.running), '▶ Başlat ile trafik başladı');
+  const sp = [];
+  for (let k = 0; k < 4; k++) { await page.locator('#lv-speed').tap(); sp.push(await page.locator('#lv-speed').textContent()); }
+  ok(sp.join(',') === '2×,4×,8×,1×', 'hız düğmesi döngüsü: 1× → ' + sp.join(' → '));
+  const t8 = await page.evaluate(() => { const g = RA.app.lv; g.setSpeed(8); const t0 = g.sim.t; RA.app.advance(1); const d = g.sim.t - t0; g.setSpeed(1); return d; });
+  ok(Math.abs(t8 - 8) < 0.1, '8× hızda 1 saniyede trafik 8 saniye ilerledi (' + t8.toFixed(2) + ' sn)');
+  const same = await page.evaluate(() => {
+    const run = (v) => { RA.app.openLevel(10); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); g.playSolution(); g.togglePlay(); g.setSpeed(v); for (let k = 0; k < 400 && !g.ended; k++) RA.app.advance(1 / v); return { ended: g.ended, t: g.sim.t.toFixed(2), del: g.sim.stats.delivered, peak: g.sim.stats.peak }; };
+    const a = run(1), b = run(8); return { a, b };
+  });
+  ok(JSON.stringify(same.a) === JSON.stringify(same.b) && same.a.ended === 'win', '8× hızda sonuç 1×\'tekiyle birebir aynı (Bölüm 10: ' + same.b.del + ' araç, ' + same.b.t + ' sn, ' + same.b.ended + ')');
+  await page.evaluate(() => { RA.app.openLevel(1); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); const b = g.level.blds; g.addStroke([{ x: b[0].ex, z: b[0].ez }, { x: -4, z: 2 }, { x: 1, z: -2 }, { x: 4, z: -5 }, { x: b[1].ex, z: b[1].ez }], 'junction', true); g.togglePlay(); });
   const w1 = await page.evaluate(() => { const g = RA.app.lv; let t = 0; for (; t < 120 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, t, del: g.sim.stats.delivered }; });
   ok(w1.ended === 'win', 'turuncu araçlar fabrikaya ulaştı, bölüm kazanıldı (' + w1.del + ' araç, ' + w1.t + ' sn)');
   await page.waitForTimeout(800);

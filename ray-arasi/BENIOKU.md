@@ -17,7 +17,7 @@ köprü ya da alt geçit olur; hangisi olacağına sen karar verirsin. Bölüm b
    ulaştığını gösterir.
 4. Bir evin üstündeki noktalar bekleyen kişileri gösterir. **Bir ev 8 kişiyi bekletirse kaybedersin.** Trafik
    akarken de çizmeye, silmeye, kesişim değiştirmeye devam edebilirsin; ⏸ ile durdurup rahatça düzenleyebilir,
-   **1×/2×** ile hızlandırabilirsin.
+   **1× / 2× / 4× / 8×** düğmesine dokundukça hızlandırabilirsin (hız sonucu değiştirmez: 8×'te de araçlar 1×'teki gibi davranır).
 
 ### Kesişimler: kavşak, köprü, alt geçit
 
