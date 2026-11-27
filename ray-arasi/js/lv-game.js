@@ -27,11 +27,11 @@
   LV.progress = {
     get() { return RA.store.get('lv.stars', {}) || {}; },
     stars(id) { return this.get()[id] || 0; },
-    // her setin ilk bölümü açık; sonrakiler bir öncekini bitirince açılır. Karayolunda bölge sonlarında yıldız kapısı var:
+    // her setin ilk bölümü açık; sonrakiler bir öncekini bitirince açılır. Her sette bölge sonlarında yıldız kapısı var:
     // o bölüme girmek için önceki bölümlerden yeterli toplam yıldız gerekir.
     total(mode) { const set = LV.SETS.find((s) => s.mode === (mode || 'road')); return set.levels.reduce((a, l) => a + this.stars(l.id), 0); },
     before(id) { const set = LV.setOf(id), k = set.levels.findIndex((l) => l.id === id); return set.levels.slice(0, Math.max(0, k)).reduce((a, l) => a + this.stars(l.id), 0); },
-    need(id) { const set = LV.setOf(id), L = set.levels.find((l) => l.id === id); return set.mode === 'road' && L ? (LV.GATES[L.n] || 0) : 0; },
+    need(id) { const set = LV.setOf(id), L = set.levels.find((l) => l.id === id); return L ? ((LV.GATES_M[set.mode] || {})[L.n] || 0) : 0; },
     prevDone(id) { const set = LV.setOf(id), k = set.levels.findIndex((l) => l.id === id); return k <= 0 || this.stars(set.levels[k - 1].id) > 0; },
     gateOk(id) { return this.before(id) >= this.need(id); },
     unlocked(id) { return this.prevDone(id) && this.gateOk(id); },
@@ -252,7 +252,7 @@
         for (let s = 0; s <= S0.len + 1e-6; s += 0.3) {
           const p = G.at(S0, s), t = G.tan(S0, s);
           let nr = false;
-          if (!((pt.ha && s < 1.6) || (pt.ta && s > S0.len - 1.6))) for (const o of net.S) { const q = G.nearest(o, p.x, p.z); if (q.d < 2.2) { const to = G.tan(o, q.s); if (Math.abs(t.x * to.x + t.z * to.z) > 0.78) nr = true; } }
+          if (!((pt.ha && s < 1.6) || (pt.ta && s > S0.len - 1.6))) for (const o of net.S) { const q = G.nearest(o, p.x, p.z); if (q.d < 2.2 && q.s > 0.05 && q.s < o.len - 0.05) { const to = G.tan(o, q.s); if (Math.abs(t.x * to.x + t.z * to.z) > 0.78) nr = true; } }
           near.push({ s, nr });
         }
         if (!near.some((q) => q.nr)) return [pt];
@@ -820,7 +820,7 @@
     }
     onRush(on) {
       $('lv').dataset.rush = on ? '1' : '';
-      if (on) { this.toast('Yoğun saat! Evlerden araçlar daha sık çıkıyor.', true); RA.audio.play('denied'); }
+      if (on) { this.toast(this.mode === 'rail' ? 'Yoğun saat! İstasyonlardan seferler sıklaşıyor.' : this.mode === 'air' ? 'Yoğun saat! Uçaklar daha sık iniyor.' : 'Yoğun saat! Evlerden araçlar daha sık çıkıyor.', true); RA.audio.play('denied'); }
       else this.toast('Yoğun saat bitti.');
     }
     levelTag(L) { return (L.mode === 'rail' ? 'Demiryolu ' : L.mode === 'air' ? 'Havalimanı ' : 'Bölüm ') + (L.n || L.id); }
@@ -834,7 +834,7 @@
     bldName(b) {
       if (b.role === 'arr') return 'iniş noktası';
       if (b.role === 'dep') return 'kalkış noktası';
-      if (b.role === 'gate') return 'kapı ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[b.color] || '');
+      if (b.role === 'gate') return 'kapı ' + (LV.GATE_L[b.color] || '');
       const cn = (LV.COLORS[b.color] || { name: '' }).name.toLocaleLowerCase('tr-TR');
       if (this.mode === 'rail') return cn + ' ' + (b.kind === 'house' ? 'istasyon' : ({ liman: 'liman', maden: 'maden' }[b.type] || 'gar'));
       return cn + ' ' + (b.kind === 'house' ? 'ev' : 'iş yeri');
@@ -842,7 +842,7 @@
     loseText(h) {
       const cap = LV.Sim.PENDING_CAP;
       if (this.mode === 'air') {
-        if (h.b.role === 'gate') return 'Kapı ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[h.b.color] || '') + '\'da ' + cap + ' uçak kalkış bekledi' + (h.noRoute ? ': kapıdan kalkış noktasına taksi yolu yok.' : '; taksi yolları uçakları taşıyamadı.') + ' Kalkışa giden yolu kısalt, kesişimleri köprüyle ayır.';
+        if (h.b.role === 'gate') return 'Kapı ' + (LV.GATE_L[h.b.color] || '') + (LV.GATE_L[h.b.color] === 'A' ? '\'da ' : '\'de ') + cap + ' uçak kalkış bekledi' + (h.noRoute ? ': kapıdan kalkış noktasına taksi yolu yok.' : '; taksi yolları uçakları taşıyamadı.') + ' Kalkışa giden yolu kısalt, kesişimleri köprüyle ayır.';
         return 'Havada ' + cap + ' uçak iniş bekledi' + (h.noRoute ? ': inen uçağın kapısına taksi yolu yok (her kapıya yol çiz).' : '; pist çıkışı tıkandı.') + ' Kapılara giden yolları ayır, kesişimleri köprüyle rahatlat.';
       }
       if (this.mode === 'rail') return LV.COLORS[h.b.color].name + ' istasyonda ' + cap + ' sefer birikti' + (h.noRoute ? ': gidecekleri gara hat yok.' : '; hatlar trenleri taşıyamadı.') + ' Sıkışan yeri köprü, tünel ya da ikinci bir hatla rahatlat.';
@@ -877,12 +877,7 @@
       const n = c && c.seg && c.seg.to; if (n) this.view.pop(n.x, n.z, (LV.COLORS[c.color] || { css: '#ffc531' }).css);
     }
     // bölümün bölge rengi (arayüz vurgusu)
-    chColor(L) {
-      if (L.mode === 'rail') return '#f0a020';
-      if (L.mode === 'air') return '#4d7cff';
-      const ch = LV.CHAPTERS.find((c) => (L.n || 1) >= c.from && (L.n || 1) <= c.to) || LV.CHAPTERS[0];
-      return ch.color;
-    }
+    chColor(L) { return LV.chapterOf(L).color; }
     onEnd(kind, h) {
       this.running = false; this.ended = kind; this.updPlay();
       if (kind === 'win') {

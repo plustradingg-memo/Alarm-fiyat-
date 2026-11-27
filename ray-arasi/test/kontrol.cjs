@@ -318,14 +318,20 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   console.log('\nDEMİRYOLU VE HAVALİMANI BÖLÜMLERİ');
   const tabs = await page.evaluate(() => Array.from(document.querySelectorAll('#menu .lv-tabs [data-set]')).map((b) => b.textContent));
   ok(tabs.join(',') === 'Karayolu,Demiryolu,Havalimanı', 'ana ekranda üç bölüm sekmesi: ' + tabs.join(', '));
-  const tabInfo = () => page.evaluate(() => ({ n: document.querySelectorAll('#lv-grid .lv-btn').length, locked: document.querySelectorAll('#lv-grid .lv-btn.locked').length, t: document.getElementById('menu-set-t').textContent, scene: document.querySelector('.menu-banner [data-scene]').dataset.scene }));
+  const tabInfo = () => page.evaluate(() => ({ n: document.querySelectorAll('#lv-grid .lv-btn').length, locked: document.querySelectorAll('#lv-grid .lv-btn.locked').length, t: document.getElementById('menu-set-t').textContent, scene: document.querySelector('.menu-banner [data-scene]').dataset.scene, ch: Array.from(document.querySelectorAll('#lv-grid .lv-ch .cn b')).map((b) => b.textContent).join(', '), gates: Array.from(document.querySelectorAll('#lv-grid .lv-node.gate')).map((b) => b.querySelector('.g').textContent).join(','), icons: document.querySelectorAll('#lv-grid .lv-ch .ci svg').length, stars: document.getElementById('menu-stars').textContent }));
   await page.locator('#menu .lv-tabs [data-set="rail"]').tap(); await page.waitForTimeout(150);
   const rt = await tabInfo();
-  ok(rt.n === 6 && rt.locked === 5 && /Demiryolu/.test(rt.t) && rt.scene === 'rail', 'Demiryolu sekmesi: 6 bölüm, ilki açık, üstteki sahne treni gösteriyor');
+  ok(rt.n === 40 && rt.locked === 39 && /Demiryolu/.test(rt.t) && rt.scene === 'rail', 'Demiryolu sekmesi: 40 bölüm, ilki açık, üstteki sahne treni gösteriyor');
+  ok(rt.ch === 'Banliyö, Bölge hattı, Ana hat, Hızlı tren' && rt.icons === 4 && rt.gates === '20,42,62,80' && /\/ 120/.test(rt.stars), 'Demiryolu haritası: 4 bölge (' + rt.ch + '), bölge simgeleri, yıldız kapıları ' + rt.gates + ', toplam ' + rt.stars.trim());
   await shot('20-demiryolu-sekmesi');
   await page.locator('#menu .lv-tabs [data-set="air"]').tap(); await page.waitForTimeout(150);
   const at = await tabInfo();
-  ok(at.n === 6 && at.locked === 5 && /Havalimanı/.test(at.t) && at.scene === 'air', 'Havalimanı sekmesi: 6 bölüm, ilki açık, sahne uçağı gösteriyor');
+  ok(at.n === 40 && at.locked === 39 && /Havalimanı/.test(at.t) && at.scene === 'air', 'Havalimanı sekmesi: 40 bölüm, ilki açık, sahne uçağı gösteriyor');
+  ok(at.ch === 'Küçük havalimanı, Bölge havalimanı, Uluslararası, Mega havalimanı' && at.icons === 4 && at.gates === '20,42,62,80', 'Havalimanı haritası: 4 bölge (' + at.ch + '), yıldız kapıları ' + at.gates);
+  await shot('20b-havalimani-sekmesi');
+  // haritalar büyür, yoğun saatler ve yıldız kapıları demiryolu ve havalimanında da var
+  const grow = await page.evaluate(() => ['RAIL', 'AIR'].map((k) => { const L = RA.LV[k], sz = L.map((l) => (l.board || [20, 32])[0] * (l.board || [20, 32])[1]); return { k, n: L.length, grows: sz.every((a, i) => !i || a >= sz[i - 1] || i < 10), first: (L[0].board || [20, 32]).join('×'), last: L[39].board.join('×'), rush: L.filter((l) => l.rush).length, need: RA.LV.progress.need(L[9].id) + '/' + RA.LV.progress.need(L[39].id), ids: new Set(L.map((l) => l.id)).size }; }));
+  for (const gq of grow) ok(gq.n === 40 && gq.ids === 40 && gq.grows && gq.first === '20×32' && gq.last === '32×50' && gq.rush >= 15 && gq.need === '20/80', (gq.k === 'RAIL' ? 'Demiryolu' : 'Havalimanı') + ': 40 ayrı bölüm, harita ' + gq.first + ' → ' + gq.last + ' büyüyor, ' + gq.rush + ' bölümde yoğun saat, 10. ve 40. bölüm kapıları ' + gq.need + ' yıldız');
   await page.locator('#menu .lv-tabs [data-set="rail"]').tap();
   await page.locator('#lv-grid .lv-btn[data-lv="101"]').tap(); await page.waitForTimeout(200);
   const r1 = await page.evaluate(() => ({ title: document.getElementById('lv-title').textContent, draw: document.getElementById('lv-drawlbl').textContent, mat: document.getElementById('lv-matlbl').textContent, tun: document.getElementById('lv-tunlbl').textContent, card: document.getElementById('lv-card').textContent }));
@@ -340,9 +346,10 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.waitForFunction(() => !document.getElementById('lv-card').hidden, null, { timeout: 5000 }).catch(() => {});
   ok(/Sonraki bölüm/.test(await page.locator('#lv-card').textContent()) && /sefer tamamlandı/.test(await page.locator('#lv-card').textContent()), 'kazanma kartı demiryolu sözcükleriyle; sonraki demiryolu bölümü var');
   await page.locator('#lv-card [data-act="next"]').tap(); await page.waitForTimeout(100);
-  ok((await page.evaluate(() => RA.app.lv.level.id)) === 102, '"Sonraki bölüm" Demiryolu 2\'yi açtı');
+  ok((await page.evaluate(() => RA.app.lv.level.id)) === 107, '"Sonraki bölüm" Demiryolu 2\'yi (İki hat) açtı');
   // bütün demiryolu ve havalimanı bölümleri çözüm yoluyla kazanılır; köprüsüz denemede bazıları kaybedilir
-  const all2 = await page.evaluate(() => [].concat(RA.LV.RAIL, RA.LV.AIR).map((L) => {
+  const SAMPLE = [101, 102, 103, 104, 105, 106, 107, 113, 115, 124, 137, 140, 201, 202, 203, 204, 205, 206, 207, 211, 216, 220, 226, 230, 238];
+  const all2 = await page.evaluate((SAMPLE) => SAMPLE.map((id) => RA.LV.find(id)).map((L) => {
     const run = (naive) => {
       RA.app.openLevel(L.id); RA.app.manual = true; const g = RA.app.lv; g.hideCard();
       g.playSolution(naive);
@@ -350,15 +357,17 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
       g.togglePlay(); let t = 0; for (; t < 500 && !g.ended; t += 0.5) RA.app.advance(0.5);
       return Object.assign(info, { ended: g.ended, del: g.sim.stats.delivered, launched: g.sim.stats.launched, peak: g.sim.stats.peak, len: Math.round(g.net.usage.len) });
     };
-    const sol = run(false), naive = [104, 106, 204].includes(L.id) ? run(true) : null;
+    const sol = run(false), naive = [104, 106, 204, 115, 137, 211, 238].includes(L.id) ? run(true) : null;
     return { id: L.id, n: L.n, mode: L.mode, name: L.name, goal: L.goal, sol, naive };
-  }));
+  }), SAMPLE);
   for (const r of all2) ok(r.sol.ended === 'win', (r.mode === 'rail' ? 'Demiryolu ' : 'Havalimanı ') + r.n + ' (' + r.name + '): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ', ' + r.sol.len + ' m, en çok ' + r.sol.peak + ' bekleyen)');
   for (const r of all2) if (r.naive) ok(r.naive.ended === 'lose', (r.mode === 'rail' ? 'Demiryolu ' : 'Havalimanı ') + r.n + ': köprüsüz denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
   const r103 = all2.find((r) => r.id === 103), r203 = all2.find((r) => r.id === 203), r201 = all2.find((r) => r.id === 201);
   ok(r103.sol.hillTun === 1 && r103.sol.tun === 1, 'Demiryolu 3: dağın içinden geçen hat tünel oldu ve bir tünel hakkı kullandı');
   ok(r203.sol.runwayHold === 2, 'Havalimanı 3: pisti kesen iki taksi yolu bekleme çizgisi oldu');
   ok(r201.sol.launched >= 2 * r201.goal, 'Havalimanı 1: her uçak önce inip kapıya yanaştı, sonra kapıdan kalkışa gitti (' + r201.sol.launched + ' hareket, ' + r201.goal + ' kalkış)');
+  const gl = await page.evaluate(() => { RA.app.openLevel(230); const g = RA.app.lv; g.hideCard(); return g.level.dests.filter((b) => b.role === 'gate').map((b) => g.bldName(b).replace('kapı ', '')).join(''); });
+  ok(gl === 'ABCDEFG', 'Havalimanı 30: yedi kapı A–G harfleriyle adlandırıldı (' + gl + ')');
   await page.evaluate(() => { RA.app.openLevel(204); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); g.playSolution(); g.togglePlay(); RA.app.advance(26); document.getElementById('lv-toast').hidden = true; });
   await page.waitForTimeout(1500); await page.evaluate(() => { const v = RA.app.lv.view; v.anims.forEach((a) => a.step(a, 10)); v.anims = []; }); await page.waitForTimeout(300);
   await shot('21-havalimani-kopru');

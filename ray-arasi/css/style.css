@@ -318,6 +318,8 @@ svg.star { width: 20px; height: 20px; fill: #ffc531; stroke: #d99a00; stroke-wid
 .lv-ch-head { display: flex; align-items: center; gap: 10px; padding: 9px 12px 8px; background: var(--ch); color: #fff; }
 .lv-ch-head .ci { width: 36px; height: 36px; border-radius: 12px; background: rgba(255,255,255,0.28); display: grid; place-items: center; flex: none; }
 .lv-ch-head .ci svg { width: 22px; height: 22px; fill: #fff; stroke: #fff; stroke-width: 0.5; stroke-linejoin: round; }
+.lv-ch-head .ci svg .h { fill: var(--ch); stroke: none; }
+.lv-ch-head .ci svg .l { fill: none; stroke-width: 1.8; stroke-linecap: round; }
 .lv-ch-head .cn { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .lv-ch-head .cn b { font-size: 19px; font-weight: 900; line-height: 1.1; text-shadow: 0 2px 0 rgba(0,0,0,0.15); }
 .lv-ch-head .cn em { font-style: normal; font-size: 12px; font-weight: 800; opacity: 0.92; }

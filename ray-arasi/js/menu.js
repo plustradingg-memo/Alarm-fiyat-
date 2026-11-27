@@ -146,6 +146,16 @@
     3: '<svg viewBox="0 0 24 24"><rect x="2" y="11" width="5" height="10"/><rect x="8" y="2" width="5" height="19"/><rect x="14" y="6" width="4" height="15"/><rect x="19" y="13" width="3" height="8"/></svg>',
     rail: '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4"/><circle cx="9" cy="13" r="1.3"/><circle cx="15" cy="13" r="1.3"/></svg>',
     air: '<svg viewBox="0 0 24 24"><path d="M2 13l8-2 3-8h2l-1 8 7 1v2l-7 1 1 6h-2l-3-6-8-1z"/></svg>',
+    // demiryolu bölgeleri: tramvay, bölge treni, lokomotif, hızlı tren
+    rail0: '<svg viewBox="0 0 24 24"><path class="l" d="M9 2h6M12 2v3"/><rect x="5" y="5" width="14" height="12" rx="3"/><rect x="7.5" y="7.5" width="9" height="4" rx="1" class="h"/><path class="l" d="M8 21l2-4M16 21l-2-4"/></svg>',
+    rail1: '<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="14" rx="4"/><rect x="6.5" y="6" width="11" height="4.5" rx="1" class="h"/><circle cx="8.5" cy="13.5" r="1.3" class="h"/><circle cx="15.5" cy="13.5" r="1.3" class="h"/><path class="l" d="M7 21l2-4M17 21l-2-4"/></svg>',
+    rail2: '<svg viewBox="0 0 24 24"><rect x="2" y="8" width="13" height="8" rx="1.5"/><path d="M15 10h4l3 3v3h-7z"/><rect x="4" y="4" width="4" height="4"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+    rail3: '<svg viewBox="0 0 24 24"><path d="M2 16V11c0-2 2-4 5-4h7c4 0 8 3 8 7v2z"/><path d="M15 9h3l2 3h-5z" class="h"/><path class="l" d="M2 19.5h20"/><circle cx="7" cy="16.5" r="1.4" class="h"/><circle cx="12" cy="16.5" r="1.4" class="h"/></svg>',
+    // havalimanı bölgeleri: küçük uçak, kule, terminal, dev uçak
+    air0: '<svg viewBox="0 0 24 24"><path d="M3 12l7-1 2-6h2l-1 6 6 1v2l-6 1 1 4h-2l-2-4-7-1z"/></svg>',
+    air1: '<svg viewBox="0 0 24 24"><path d="M8 3h8l2 5H6z"/><rect x="7.5" y="4.5" width="9" height="2" class="h"/><path d="M10 8h4v13h-4z"/><path class="l" d="M6 21h12"/></svg>',
+    air2: '<svg viewBox="0 0 24 24"><path d="M2 20V11l10-5 10 5v9z"/><rect x="5" y="13" width="3" height="3" class="h"/><rect x="10.5" y="13" width="3" height="3" class="h"/><rect x="16" y="13" width="3" height="3" class="h"/></svg>',
+    air3: '<svg viewBox="0 0 24 24"><path d="M1 12.5l9-1.5 3-8h2.5l-1.5 8 8 1.2v2.6l-8 1.2 1.5 5H13l-3-5-9-1.5z"/><path d="M5 11.5l1-3h1.5l-.5 3z"/></svg>',
   };
   class Menu {
     constructor(app) {
@@ -182,7 +192,7 @@
       this.views.forEach((el) => { if (el.closest('.menu-banner')) el.dataset.scene = set.mode; });
       this.tabs.forEach((b) => b.setAttribute('aria-selected', b.dataset.set === set.mode));
       this.grid.dataset.set = set.mode;
-      const chapters = set.mode === 'road' ? LV.CHAPTERS : [{ name: set.name, from: 1, to: lv.length, color: set.mode === 'rail' ? '#f0a020' : '#4d7cff' }];
+      const chapters = LV.CHAPTERS_M[set.mode] || LV.CHAPTERS;
       const W = Math.max(280, (this.grid.clientWidth || 362) - 4);
       const next = lv.find((L) => LV.progress.unlocked(L.id) && !LV.progress.stars(L.id));
       let html = '';
@@ -199,7 +209,7 @@
         }
         const last = pos[pos.length - 1]; d += ' L' + last.x + ' ' + (last.y + 46);
         const locked0 = items.length && !LV.progress.unlocked(items[0].id);
-        html += '<section class="lv-ch' + (locked0 ? ' off' : '') + '" style="--ch:' + ch.color + '"><header class="lv-ch-head"><span class="ci">' + (ICONS[set.mode === 'road' ? ci : set.mode] || '') + '</span><span class="cn"><b>' + ch.name + '</b><em>Bölüm ' + ch.from + '–' + ch.to + '</em></span><span class="cs">' + STAR + got + '<small>/' + items.length * 3 + '</small></span></header>' +
+        html += '<section class="lv-ch' + (locked0 ? ' off' : '') + '" style="--ch:' + ch.color + '"><header class="lv-ch-head"><span class="ci">' + (ICONS[set.mode === 'road' ? ci : set.mode + ci] || ICONS[set.mode] || '') + '</span><span class="cn"><b>' + ch.name + '</b><em>Bölüm ' + ch.from + '–' + ch.to + '</em></span><span class="cs">' + STAR + got + '<small>/' + items.length * 3 + '</small></span></header>' +
           '<div class="lv-chmap" style="height:' + H + 'px"><svg class="lv-road" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><path class="r0" d="' + d + '"/><path class="r1" d="' + d + '"/><path class="r2" d="' + d + '"/></svg>' +
           items.map((L, i) => {
             const st = LV.progress.stars(L.id), open = LV.progress.unlocked(L.id), need = LV.progress.need(L.id), p = pos[i];

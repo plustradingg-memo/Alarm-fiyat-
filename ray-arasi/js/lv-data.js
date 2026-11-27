@@ -107,7 +107,7 @@
     },
     /* ---------- 11–20: haritalar büyür, engeller bir arada ---------- */
     {
-      id: 11, name: 'Nehir ve ray', board: [24, 38], goal: 36, spawn: 3.0, budget: 92, star2: 82, bridges: 3, tunnels: 1,
+      id: 11, name: 'Geniş nehir', board: [24, 38], goal: 36, spawn: 3.0, budget: 92, star2: 82, bridges: 3, tunnels: 1,
       intro: 'Şehir büyüdü: tahta artık daha geniş. Nehir ve demiryolu birlikte; üç renk ortada kesişiyor.',
       tip: 'Dikey iki yolu nehirden köprüyle geçir, yeşil yolu ortadan çiz. Sonra kalabalık kesişimi köprü, rayı alt geçit yap. İki parmakla yakınlaştırabilirsin.',
       water: [[[-12.5, -4.4], [12.5, -3.8], [12.5, -1.6], [-12.5, -2.2]]],
@@ -210,26 +210,28 @@
      cols: [{ x, c: renk, t: iş yeri türü }], rows: [{ z, c, t, rtl: sağdan sola }], sets: çözümde köprü / alt geçit yapılacak kesişimler.
      Asfalt bütçesi ve 2. yıldız sınırı çözüm uzunluğundan hesaplanır. */
   const TYPES = ['fabrika', 'okul', 'avm', 'ofis', 'hastane', 'stadyum'];
+  const RTYPES = ['gar', 'liman', 'maden'];
   function grid(o) {
     const [W, D] = o.board || [20, 32];
     const zB = D / 2 - 2, zT = -D / 2 + 2.3, xL = -W / 2 + 1.6, xR = W / 2 - 1.8;
+    const eh = o.rail ? 1.6 : 1.7, ed = o.rail ? 1.8 : 1.9, TY = o.rail ? RTYPES : TYPES; // giriş uzaklığı (bina derinliğine göre)
     const houses = [], dests = [], solution = [];
     let len = 0;
     const line = (a, b) => { len += Math.hypot(b[0] - a[0], b[1] - a[1]); solution.push(['road', [a, b]]); };
     (o.cols || []).forEach((c, k) => {
       houses.push({ x: c.x, z: zB, dir: 'N', color: c.c });
-      dests.push({ x: c.x, z: zT, dir: 'S', color: c.c, type: c.t || TYPES[k % TYPES.length] });
-      line([c.x, zB - 1.7], [c.x, zT + 1.9]);
+      dests.push({ x: c.x, z: zT, dir: 'S', color: c.c, type: c.t || TY[k % TY.length] });
+      line([c.x, zB - eh], [c.x, zT + ed]);
     });
     (o.rows || []).forEach((r, k) => {
       const hx = r.rtl ? W / 2 - 1.6 : xL, dx = r.rtl ? -W / 2 + 1.8 : xR;
       houses.push({ x: hx, z: r.z, dir: r.rtl ? 'W' : 'E', color: r.c });
-      dests.push({ x: dx, z: r.z, dir: r.rtl ? 'E' : 'W', color: r.c, type: r.t || TYPES[(k + 3) % TYPES.length] });
-      line([hx + (r.rtl ? -1.7 : 1.7), r.z], [dx + (r.rtl ? 1.9 : -1.9), r.z]);
+      dests.push({ x: dx, z: r.z, dir: r.rtl ? 'E' : 'W', color: r.c, type: r.t || TY[(k + 3) % TY.length] });
+      line([hx + (r.rtl ? -eh : eh), r.z], [dx + (r.rtl ? ed : -ed), r.z]);
     });
     for (const st of o.sets || []) solution.push(['set', [st[0], st[1]], st[2]]);
     const L = Object.assign({ budget: Math.ceil(len * (o.slack || 1.22)), star2: Math.ceil(len * 1.07), bridges: 0, tunnels: 0 }, o, { houses, dests, solution });
-    delete L.cols; delete L.rows; delete L.sets;
+    delete L.cols; delete L.rows; delete L.sets; delete L.rail;
     return L;
   }
 
@@ -470,6 +472,381 @@
       solution: [['road', [[-6, -9.2], [-6.4, 0], [-5.4, 0]]], ['road', [[-6.4, -2], [0, -5], [6.4, -2], [6.4, 0], [5.4, 0]]], ['road', [[-5.4, 0.2], [-6, 5], [6, 9.4]]], ['road', [[5.4, 0.2], [6.6, 4], [6, 9.2]]]],
     },
   ];
+
+  /* ================= BÜYÜYEN DEMİRYOLU VE HAVALİMANI HARİTALARI =================
+     Yardımcılar: el yapımı bir bölüm daha büyük tahtaya ölçeklenir (binalar boyutunu korur, hatlar girişlere yeniden oturur)
+     ya da aynalanır; ızgara (grid) ve apron üreticileri yeni bölümleri kurar. */
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const ENT = { arr: 1.3, dep: 1.3, gate: 1.7 };
+  const entOf = (b, kind, mode) => {
+    const e = ENT[b.role] || (mode === 'rail' ? (kind === 'house' ? 1.6 : 1.8) : (kind === 'house' ? 1.7 : 1.9));
+    return [b.x + DIR[b.dir][0] * e, b.z + DIR[b.dir][1] * e];
+  };
+  const plen = (pts) => { let s = 0; for (let i = 1; i < pts.length; i++) s += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return s; };
+  const solLen = (sol) => sol.reduce((a, st) => a + (st[0] === 'set' ? 0 : plen(st[1])), 0);
+  const river = (W, z) => [[-W / 2 - 0.5, z - 1.1], [W / 2 + 0.5, z - 0.5], [W / 2 + 0.5, z + 1.5], [-W / 2 - 0.5, z + 0.9]];
+  const ridge = (x0, x1, z0, z1) => [[x0, z0], [x1, z0 - 0.5], [x1, z1], [x0 + 0.3, z1 + 0.4]];
+  function mirror(L) {
+    const M = (p) => [r2(-p[0]), p[1]], FD = { E: 'W', W: 'E', N: 'N', S: 'S' };
+    const mb = (b) => Object.assign({}, b, { x: r2(-b.x), dir: FD[b.dir] });
+    L.houses = L.houses.map(mb); L.dests = L.dests.map(mb);
+    L.solution = L.solution.map((st) => (st[0] === 'set' ? ['set', M(st[1]), st[2]] : [st[0], st[1].map(M)]));
+    for (const k of ['water', 'hills']) if (L[k]) L[k] = L[k].map((pl) => pl.map(M));
+    if (L.rails) L.rails = L.rails.map((r) => Object.assign({}, r, { pts: r.pts.map(M) }));
+    return L;
+  }
+  function scale(src, mode, o) {
+    const [W0, D0] = src.board || [20, 32], [W, D] = o.board, sx = W / W0, sz = D / D0;
+    const P = (p) => [r2(p[0] * sx), r2(p[1] * sz)];
+    const bl = (b) => Object.assign({}, b, { x: r2(b.x * sx), z: r2(b.z * sz) });
+    const houses = src.houses.map(bl), dests = src.dests.map(bl), ends = [];
+    src.houses.forEach((b, k) => ends.push([entOf(b, 'house', mode), entOf(houses[k], 'house', mode)]));
+    src.dests.forEach((b, k) => ends.push([entOf(b, 'dest', mode), entOf(dests[k], 'dest', mode)]));
+    const snap = (p) => { const e = ends.find(([a]) => Math.hypot(a[0] - p[0], a[1] - p[1]) < 0.5); return e ? [r2(e[1][0]), r2(e[1][1])] : P(p); };
+    const solution = src.solution.map((st) => (st[0] === 'set' ? ['set', P(st[1]), st[2]] : [st[0], st[1].map((p, i, a) => (i === 0 || i === a.length - 1 ? snap(p) : P(p)))]));
+    const k = solLen(solution) / solLen(src.solution);
+    const L = Object.assign({}, src, { budget: Math.ceil(src.budget * k), star2: Math.ceil(src.star2 * k) }, o, { houses, dests, solution });
+    if (src.water) L.water = src.water.map((pl) => pl.map(P));
+    if (src.hills) L.hills = src.hills.map((pl) => pl.map(P));
+    if (src.rails) L.rails = src.rails.map((r) => Object.assign({}, r, { pts: r.pts.map(P) }));
+    delete L.mirror; delete L.n; delete L.mode;
+    return o.mirror ? mirror(L) : L;
+  }
+  const rgrid = (o) => grid(Object.assign({ rail: true }, o));
+  // apron: üstte iniş pisti; iniş (sol) → U biçimli taksi yolu → kalkış (sağ); kapılar apronun altında (ve üstünde).
+  // twin: kalkış alttaki ikinci pistten; apron ortada, taksi yolu Z biçimli olur.
+  function apron(o) {
+    const [W, D] = o.board || [20, 32];
+    const zr = -D / 2 + 2.8, zb = zr + 2.6, ze = zb + 1.3, zr2 = -zr;
+    const zA = o.twin ? 0 : D / 2 - 9.5, zg = zA + 6.5, zt = zA - 6.5;
+    const s = o.mirror ? -1 : 1, ax = -s * (W / 2 - 2), dx = -ax, zdb = o.twin ? zr2 - 2.6 : zb, zd = o.twin ? zdb - 1.3 : ze;
+    const gates = o.gates.map((g) => ({ x: s * g.x, z: zg, dir: 'N', color: g.c, role: 'gate' }));
+    const top = (o.top || []).map((g) => ({ x: s * g.x, z: zt, dir: 'S', color: g.c, role: 'gate' }));
+    const all = gates.concat(top);
+    const houses = [{ x: ax, z: zb, dir: 'S', role: 'arr', colors: all.map((g) => g.color) }];
+    const dests = all.concat([{ x: dx, z: zdb, dir: o.twin ? 'N' : 'S', role: 'dep' }]);
+    const solution = [['road', [[ax, ze], [ax, zA], [dx, zA], [dx, zd]]]];
+    for (const g of gates) solution.push(['road', [[g.x, zg - 1.7], [g.x, zA]]]);
+    for (const g of top) solution.push(['road', [[g.x, zt + 1.7], [g.x, zA]]]);
+    const rails = [{ pts: [[-W / 2 - 0.8, zr], [W / 2 + 0.8, zr]], runway: true, every: o.every || 9, first: 4 }];
+    if (o.twin) rails.push({ pts: [[-W / 2 - 0.8, zr2], [W / 2 + 0.8, zr2]], runway: true, every: o.every || 9, first: 7 });
+    if (o.mid) { const zm = r2((ze + (top.length ? zt - 0.9 : zA)) / 2); rails.push({ pts: [[-W / 2 - 0.8, zm], [W / 2 + 0.8, zm]], runway: true, every: o.midEvery || 7, first: 2 }); }
+    const len = solLen(solution);
+    const L = Object.assign({ budget: Math.ceil(len * (o.slack || 1.25)), star2: Math.ceil(len * 1.08), bridges: 0, tunnels: 0, dwell: 2.4 }, o, { houses, dests, solution, rails });
+    for (const k of ['gates', 'top', 'mid', 'midEvery', 'every', 'mirror', 'slack', 'twin']) delete L[k];
+    return L;
+  }
+  const RUSH = (every, k) => ({ every, dur: 10, k });
+  const byId = (list, id) => list.find((l) => l.id === id);
+
+  // ---------- demiryolu: 34 yeni bölüm (kimlik 107–140) ----------
+  const R0 = (id) => byId(LV.RAIL, id);
+  const RAIL_NEW = [
+    rgrid({ id: 107, name: 'İki hat', goal: 10, spawn: 3.2,
+      intro: 'İki istasyon, iki gar. Her istasyonu kendi rengindeki gara bağla; hatlar kesişmek zorunda değil.',
+      tip: 'İki hattı da dümdüz yukarı döşe.',
+      cols: [{ x: -4, c: 'or', t: 'gar' }, { x: 4, c: 'bl', t: 'liman' }] }),
+    rgrid({ id: 108, name: 'Kesişen hatlar', goal: 12, spawn: 3.4,
+      intro: 'Yeşil hat turuncu hattı kesecek. Kesişimde ? çıkar: dokunup Makas seç; trenler kesişimden sırayla geçer.',
+      tip: 'İki hattı döşe, sonra ? işaretine dokunup Makas seç.',
+      cols: [{ x: 0, c: 'or', t: 'gar' }], rows: [{ z: 0, c: 'gr', t: 'maden' }] }),
+    rgrid({ id: 109, name: 'Dağdan iki hat', goal: 12, spawn: 3.2, tunnels: 2,
+      intro: 'Bir sıradağ iki hattın da önünü kesiyor. Dağın içinden geçen hat tünel olur; iki tünel hakkın var.',
+      tip: 'İki hattı dağın üstünden dümdüz döşe: dağın içinde kalan kısımlar kendiliğinden tünel olur.',
+      hills: [ridge(-10.5, 10.5, -3, 3)],
+      cols: [{ x: -4, c: 'or', t: 'gar' }, { x: 4, c: 'bl', t: 'maden' }] }),
+    rgrid({ id: 110, name: 'Nehir köprüleri', goal: 14, spawn: 3.7, bridges: 2,
+      intro: 'Nehir iki hattı da kesiyor, aşağıda yeşil hat iki hattın arasından geçecek. Nehir köprüleri kendiliğinden kurulur.',
+      tip: 'Üç hattı döşe: nehri geçen kısımlar köprü olur. Yeşil hattın kesişimlerini makas yap.',
+      water: [river(20, -5)],
+      cols: [{ x: -4, c: 'or', t: 'liman' }, { x: 4, c: 'bl', t: 'gar' }], rows: [{ z: 5, c: 'gr', t: 'maden' }] }),
+    rgrid({ id: 111, name: 'Bölge hattı', board: [22, 34], goal: 18, spawn: 3.9, bridges: 1,
+      intro: 'Bölge hattına hoş geldin: harita büyüdü. Yeşil hat iki hattı kesiyor; bir kesişimi köprüyle ayır.',
+      tip: 'Üç hattı döşe. "Köprü"ye basıp sağdaki kesişime dokun, soldakini makas bırak.',
+      cols: [{ x: -5, c: 'or' }, { x: 5, c: 'bl' }], rows: [{ z: 1, c: 'gr' }], sets: [[5, 1, 'bridge']] }),
+    scale(R0(102), 'rail', { id: 112, name: 'Uzun makas', board: [22, 36], goal: 20, spawn: 4.7, rush: RUSH(30, 0.65),
+      intro: 'Makaslı hat yeniden, ama daha uzun ve yoğun saatli: zaman zaman seferler sıklaşır.',
+      tip: 'İki istasyonun hattını ortada bir ana hatta birleştir, yukarıda yeniden ikiye ayır.' }),
+    rgrid({ id: 113, name: 'Üç köprü', board: [22, 36], goal: 20, spawn: 3.0, bridges: 3, tunnels: 1,
+      intro: 'Nehir üç hattı da kesiyor, sağda bir tepe var. Köprüler ve tünel kendiliğinden kurulur.',
+      tip: 'Üç hattı dümdüz döşe: nehri geçen kısımlar köprü, tepenin içi tünel olur.',
+      water: [river(22, -2)], hills: [ridge(2.5, 11.5, 6, 10)],
+      cols: [{ x: -5, c: 'or' }, { x: 0, c: 'bl' }, { x: 5, c: 'gr' }] }),
+    rgrid({ id: 114, name: 'Dört makas', board: [24, 36], goal: 22, spawn: 3.0, bridges: 1, tunnels: 1,
+      intro: 'İki dikey, iki yatay hat: dört kesişim. Bir köprü ve bir tünelle en kalabalık iki kesişimi ayır.',
+      tip: 'Dört hattı döşe. Sol üstteki kesişimi köprü, sağ alttakini alt geçit (tünel) yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: -5, c: 'gr' }, { z: 5, c: 'pu', rtl: true }], sets: [[-6, -5, 'bridge'], [6, 5, 'tunnel']] }),
+    scale(R0(104), 'rail', { id: 115, name: 'Çapraz köprü', board: [24, 36], goal: 26, spawn: 2.4, rush: RUSH(32, 0.65),
+      intro: 'İki yoğun çapraz hat ve yoğun saatler. Uzun trenler makasta beklemesin: kesişimi köprüyle ayır.',
+      tip: 'İki çapraz hattı döşe, sonra kesişimi köprü yap.' }),
+    rgrid({ id: 116, name: 'Dağ geçidi', board: [24, 38], goal: 20, spawn: 4.0, bridges: 1, tunnels: 2,
+      intro: 'Sıradağ iki hattı kesiyor, yukarıda yeşil hat iki hattın üstünden geçecek.',
+      tip: 'Üç hattı döşe: dağın içi tünel olur. Sağdaki kesişimi köprü yap.',
+      hills: [ridge(-12.5, 12.5, -1, 4)],
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: -9, c: 'gr' }], sets: [[6, -9, 'bridge']] }),
+    rgrid({ id: 117, name: 'Üçlü kesişim', board: [24, 38], goal: 26, spawn: 4.4, bridges: 1, tunnels: 1, rush: RUSH(34, 0.65),
+      intro: 'Mor hat üç hattı birden kesiyor ve seferler zaman zaman sıklaşıyor.',
+      tip: 'Dört hattı döşe. Ortadaki kesişimi köprü, sağdakini tünel yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 0, c: 'bl' }, { x: 6, c: 'gr' }], rows: [{ z: 2, c: 'pu' }], sets: [[0, 2, 'bridge'], [6, 2, 'tunnel']] }),
+    scale(R0(105), 'rail', { id: 118, name: 'Büyük nehir', board: [24, 38], goal: 22, spawn: 2.8, rush: RUSH(32, 0.65),
+      intro: 'Nehir ve dağ yeniden, ama harita büyük ve seferler sık.',
+      tip: 'İki hattı da dümdüz döşe: nehri kesen kısım köprü, dağın içi tünel olur.' }),
+    rgrid({ id: 119, name: 'Ters yön', board: [24, 38], goal: 26, spawn: 4.2, bridges: 3, tunnels: 1,
+      intro: 'Mor hat ters yönden geliyor, ortada bir nehir var. Köprülerini ve tünelini paylaştır.',
+      tip: 'Dört hattı döşe. Sağ üstteki kesişimi köprü, sol alttakini tünel yap.',
+      water: [river(24, 0)],
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: -8, c: 'gr' }, { z: 8, c: 'pu', rtl: true }], sets: [[6, -8, 'bridge'], [-6, 8, 'tunnel']] }),
+    scale(R0(106), 'rail', { id: 120, name: 'Bölge garı', board: [24, 38], goal: 36, spawn: 2.6, rush: RUSH(30, 0.62),
+      intro: 'Bölge hattının son sınavı: üç hat, iki kesişim ve yoğun saatler.',
+      tip: 'Dikey iki hattı ve yatay mor hattı döşe. Kesişimlerden birini köprü, öbürünü tünel yap.' }),
+    rgrid({ id: 121, name: 'Ana hat', board: [26, 40], goal: 30, spawn: 4.1, bridges: 2, tunnels: 1,
+      intro: 'Ana hatta hoş geldin. Beş hat, altı kesişim: köprüleri ve tüneli en kalabalık kesişimlere koy.',
+      tip: 'Beş hattı döşe. Ortadaki iki kesişime köprü ve tünel, sağ üste bir köprü daha koy.',
+      cols: [{ x: -7, c: 'or' }, { x: 0, c: 'bl' }, { x: 7, c: 'gr' }], rows: [{ z: -6, c: 'pu' }, { z: 6, c: 'rd', rtl: true }], sets: [[0, -6, 'bridge'], [0, 6, 'tunnel'], [7, -6, 'bridge']] }),
+    rgrid({ id: 122, name: 'Nehir ve dağlar', board: [26, 40], goal: 28, spawn: 3.5, bridges: 4, tunnels: 3,
+      intro: 'Nehir ve sıradağ üç hattı da kesiyor, en üstte mor hat var.',
+      tip: 'Dört hattı döşe: nehir köprü, dağ tünel olur. Ortadaki üst kesişimi köprü yap.',
+      water: [river(26, -6)], hills: [ridge(-13.5, 13.5, 4, 8)],
+      cols: [{ x: -7, c: 'or' }, { x: 0, c: 'bl' }, { x: 7, c: 'gr' }], rows: [{ z: -13, c: 'pu' }], sets: [[0, -13, 'bridge']] }),
+    rgrid({ id: 123, name: 'Üç yatay', board: [26, 40], goal: 30, spawn: 3.6, bridges: 2, tunnels: 1, rush: RUSH(34, 0.65),
+      intro: 'İki dikey hat, üç yatay hat ve yoğun saatler. Altı kesişimden üçünü ayırabilirsin.',
+      tip: 'Beş hattı döşe. Sol üstü ve sağ ortayı köprü, sol altı tünel yap.',
+      cols: [{ x: -7, c: 'or' }, { x: 7, c: 'bl' }], rows: [{ z: -10, c: 'gr' }, { z: 0, c: 'pu', rtl: true }, { z: 10, c: 'rd' }], sets: [[-7, -10, 'bridge'], [7, 0, 'bridge'], [-7, 10, 'tunnel']] }),
+    rgrid({ id: 124, name: 'Göl kıyısı', board: [26, 40], goal: 28, spawn: 3.9, bridges: 2, tunnels: 1,
+      intro: 'Solda bir göl, üstte mor hat. Turuncu hat gölün üstünden köprüyle geçer.',
+      tip: 'Dört hattı döşe. Mor hatla ortadaki kesişimi köprü, sağdakini tünel yap.',
+      water: [[[-10, -1], [-7, -1.8], [-4.2, -1], [-3.6, 2], [-4.2, 5], [-7, 5.8], [-10, 5], [-10.6, 2]]],
+      cols: [{ x: -7, c: 'or' }, { x: 0, c: 'bl' }, { x: 7, c: 'gr' }], rows: [{ z: -10, c: 'pu' }], sets: [[0, -10, 'bridge'], [7, -10, 'tunnel']] }),
+    rgrid({ id: 125, name: 'Dört hat', board: [28, 42], goal: 30, spawn: 2.8, bridges: 4, tunnels: 2,
+      intro: 'Dört paralel hat: nehir hepsini, sağdaki dağ ikisini kesiyor. Kesişim yok ama seferler sık.',
+      tip: 'Dört hattı dümdüz döşe.',
+      water: [river(28, -6)], hills: [ridge(0.5, 14.5, 5, 9)],
+      cols: [{ x: -9, c: 'or' }, { x: -3, c: 'bl' }, { x: 3, c: 'gr' }, { x: 9, c: 'pu' }] }),
+    scale(R0(106), 'rail', { id: 126, name: 'Ana gar', board: [28, 44], goal: 40, spawn: 2.4, rush: RUSH(30, 0.62),
+      intro: 'Büyük gar yeniden, ama ana hatta: hatlar uzun, seferler sık.',
+      tip: 'Dikey iki hattı ve yatay mor hattı döşe. Kesişimlerden birini köprü, öbürünü tünel yap.' }),
+    rgrid({ id: 127, name: 'Kavşak ağı', board: [28, 44], goal: 34, spawn: 4.3, bridges: 2, tunnels: 2,
+      intro: 'Beş hat, altı kesişim; dördünü ayırabilirsin. Hangisi makas kalsın?',
+      tip: 'Beş hattı döşe. Ortadaki iki kesişime köprü ve tünel, köşelere de birer tane koy.',
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: -7, c: 'pu' }, { z: 7, c: 'rd', rtl: true }], sets: [[0, -7, 'bridge'], [0, 7, 'tunnel'], [-8, 7, 'bridge'], [8, -7, 'tunnel']] }),
+    rgrid({ id: 128, name: 'Uzun kesen', board: [28, 44], goal: 34, spawn: 4.4, bridges: 2, tunnels: 1, rush: RUSH(34, 0.65),
+      intro: 'Kırmızı hat dört hattı birden kesiyor. Üç kesişimi ayırabilirsin.',
+      tip: 'Beş hattı döşe. İçteki iki kesişime köprü ve tünel, sağdakine bir köprü daha koy.',
+      cols: [{ x: -8, c: 'or' }, { x: -3, c: 'bl' }, { x: 3, c: 'gr' }, { x: 8, c: 'pu' }], rows: [{ z: 0, c: 'rd' }], sets: [[-3, 0, 'bridge'], [3, 0, 'tunnel'], [8, 0, 'bridge']] }),
+    rgrid({ id: 129, name: 'Dokuz makas', board: [28, 44], goal: 40, spawn: 4.5, bridges: 3, tunnels: 2, rush: RUSH(34, 0.65),
+      intro: 'Altı hat, dokuz kesişim ve yoğun saatler. Beşini ayırabilirsin.',
+      tip: 'Altı hattı döşe. Merkezi ve bir köşegeni köprü, öbür köşegenin uçlarını tünel yap.',
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: -10, c: 'pu' }, { z: 0, c: 'rd', rtl: true }, { z: 10, c: 'tq' }],
+      sets: [[0, 0, 'bridge'], [-8, -10, 'bridge'], [8, 10, 'bridge'], [8, -10, 'tunnel'], [-8, 10, 'tunnel']] }),
+    rgrid({ id: 130, name: 'Ana hat sınavı', board: [28, 44], goal: 40, spawn: 4.6, bridges: 5, tunnels: 2, rush: RUSH(32, 0.62),
+      intro: 'Nehir, beş hat, altı kesişim ve yoğun saatler. Bu bölümü bitiren hızlı trene geçer.',
+      tip: 'Beş hattı döşe. Ortadaki iki kesişimi köprü, köşelerdeki ikisini tünel yap.',
+      water: [river(28, 0)],
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: -8, c: 'pu' }, { z: 8, c: 'rd', rtl: true }], sets: [[0, -8, 'bridge'], [0, 8, 'bridge'], [8, -8, 'tunnel'], [-8, 8, 'tunnel']] }),
+    rgrid({ id: 131, name: 'Hızlı tren', board: [30, 46], goal: 36, spawn: 4.2, bridges: 2, tunnels: 2,
+      intro: 'Hızlı tren bölgesine hoş geldin. Soldaki dağ turuncu hattı tünele sokuyor.',
+      tip: 'Beş hattı döşe. Ortadaki üst kesişimi köprü, alttakini tünel, sağ üstü köprü yap.',
+      hills: [ridge(-15.5, -4, -2, 3)],
+      cols: [{ x: -9, c: 'or' }, { x: 0, c: 'bl' }, { x: 9, c: 'gr' }], rows: [{ z: -9, c: 'pu' }, { z: 9, c: 'rd', rtl: true }], sets: [[0, -9, 'bridge'], [0, 9, 'tunnel'], [9, -9, 'bridge']] }),
+    rgrid({ id: 132, name: 'Dağ tünelleri', board: [30, 46], goal: 36, spawn: 4.2, bridges: 2, tunnels: 4,
+      intro: 'Uzun bir sıradağ dört hattı da kesiyor, en üstte kırmızı hat dördünün önünden geçiyor.',
+      tip: 'Beş hattı döşe: dağın içi tünel olur. İçteki iki kesişimi köprü yap.',
+      hills: [ridge(-15.5, 15.5, -2, 3)],
+      cols: [{ x: -9, c: 'or' }, { x: -3, c: 'bl' }, { x: 3, c: 'gr' }, { x: 9, c: 'pu' }], rows: [{ z: -12, c: 'rd' }], sets: [[-3, -12, 'bridge'], [3, -12, 'bridge']] }),
+    rgrid({ id: 133, name: 'Hat ağı', board: [30, 46], goal: 44, spawn: 4.5, bridges: 3, tunnels: 3, rush: RUSH(34, 0.62),
+      intro: 'Altı hat, dokuz kesişim ve yoğun saatler. Altısını ayırabilirsin.',
+      tip: 'Altı hattı döşe. Merkezi ve bir köşegeni köprü, öbür köşegeni ve alt ortayı tünel yap.',
+      cols: [{ x: -9, c: 'or' }, { x: 0, c: 'bl' }, { x: 9, c: 'gr' }], rows: [{ z: -12, c: 'pu' }, { z: 0, c: 'rd', rtl: true }, { z: 12, c: 'tq' }],
+      sets: [[0, 0, 'bridge'], [-9, -12, 'bridge'], [9, 12, 'bridge'], [9, -12, 'tunnel'], [-9, 12, 'tunnel'], [0, 12, 'tunnel']] }),
+    scale(R0(105), 'rail', { id: 134, name: 'Nehir ekspresi', board: [30, 48], goal: 30, spawn: 2.4, rush: RUSH(30, 0.62),
+      intro: 'Nehir ve dağ, şimdi hızlı tren hızında: seferler çok sık.',
+      tip: 'İki hattı da dümdüz döşe: nehri kesen kısım köprü, dağın içi tünel olur.' }),
+    rgrid({ id: 135, name: 'Beş hat', board: [32, 48], goal: 40, spawn: 2.6, bridges: 5, tunnels: 2, rush: RUSH(32, 0.62),
+      intro: 'Beş paralel hat: nehir hepsini, soldaki dağ ikisini kesiyor. Kesişim yok ama yoğun saatler zorlu.',
+      tip: 'Beş hattı dümdüz döşe.',
+      water: [river(32, -4)], hills: [ridge(-16.5, -2.5, 6, 10)],
+      cols: [{ x: -10, c: 'or' }, { x: -5, c: 'bl' }, { x: 0, c: 'gr' }, { x: 5, c: 'pu' }, { x: 10, c: 'rd' }] }),
+    rgrid({ id: 136, name: 'Ekspres kavşaklar', board: [32, 48], goal: 44, spawn: 4.2, bridges: 6, tunnels: 2,
+      intro: 'Nehrin iki yanında iki yatay hat: dört nehir köprüsü ve sekiz kesişim.',
+      tip: 'Altı hattı döşe. İçteki dört kesişimin çaprazlarını köprü ve tünel yap.',
+      water: [river(32, 0)],
+      cols: [{ x: -10, c: 'or' }, { x: -3, c: 'bl' }, { x: 3, c: 'gr' }, { x: 10, c: 'pu' }], rows: [{ z: -8, c: 'rd' }, { z: 8, c: 'tq', rtl: true }],
+      sets: [[-3, -8, 'bridge'], [3, 8, 'bridge'], [3, -8, 'tunnel'], [-3, 8, 'tunnel']] }),
+    scale(R0(106), 'rail', { id: 137, name: 'Merkez gar', board: [32, 50], goal: 48, spawn: 2.2, rush: RUSH(28, 0.6),
+      intro: 'Şehrin merkez garı: üç uzun hat, iki kesişim ve çok sık seferler.',
+      tip: 'Dikey iki hattı ve yatay mor hattı döşe. Kesişimlerden birini köprü, öbürünü tünel yap.' }),
+    rgrid({ id: 138, name: 'Sekiz kesişim', board: [32, 50], goal: 48, spawn: 4.4, bridges: 3, tunnels: 3,
+      intro: 'Dört dikey, iki yatay hat: sekiz kesişimden altısını ayırabilirsin.',
+      tip: 'Altı hattı döşe. İçteki dört kesişime ve iki köşeye köprü ya da tünel koy.',
+      cols: [{ x: -10, c: 'or' }, { x: -3, c: 'bl' }, { x: 3, c: 'gr' }, { x: 10, c: 'pu' }], rows: [{ z: -9, c: 'rd' }, { z: 9, c: 'tq', rtl: true }],
+      sets: [[-3, -9, 'bridge'], [3, 9, 'bridge'], [10, -9, 'bridge'], [3, -9, 'tunnel'], [-3, 9, 'tunnel'], [-10, 9, 'tunnel']] }),
+    rgrid({ id: 139, name: 'Adalar hattı', board: [32, 50], goal: 44, spawn: 4.4, bridges: 7, tunnels: 1,
+      intro: 'İki nehir şehri üçe bölüyor; altı nehir köprüsü kendiliğinden kurulur.',
+      tip: 'Beş hattı döşe. Ortadaki üst kesişimi köprü, alttakini tünel yap.',
+      water: [river(32, -7), river(32, 7)],
+      cols: [{ x: -10, c: 'or' }, { x: 0, c: 'bl' }, { x: 10, c: 'gr' }], rows: [{ z: -14, c: 'pu' }, { z: 14, c: 'rd', rtl: true }], sets: [[0, -14, 'bridge'], [0, 14, 'tunnel']] }),
+    rgrid({ id: 140, name: 'Hızlı tren ağı', board: [32, 50], goal: 56, spawn: 5.3, bridges: 4, tunnels: 4, rush: RUSH(32, 0.6),
+      intro: 'Yedi hat, on iki kesişim ve yoğun saatler. Demiryolunun son sınavı.',
+      tip: 'Yedi hattı döşe. Sekiz kesişimi köprü ve tünellerle ayır; köşegenleri dağıt.',
+      cols: [{ x: -10, c: 'or' }, { x: -3, c: 'bl' }, { x: 3, c: 'gr' }, { x: 10, c: 'pu' }], rows: [{ z: -12, c: 'rd' }, { z: 0, c: 'tq', rtl: true }, { z: 12, c: 'pk' }],
+      sets: [[-3, 0, 'bridge'], [3, 0, 'tunnel'], [-10, -12, 'bridge'], [10, 12, 'bridge'], [3, -12, 'bridge'], [10, -12, 'tunnel'], [-10, 12, 'tunnel'], [-3, 12, 'tunnel']] }),
+  ];
+
+  // ---------- havalimanı: 34 yeni bölüm (kimlik 207–240) ----------
+  const A0 = (id) => byId(LV.AIR, id);
+  const G3 = (xs, cs) => xs.map((x, k) => ({ x, c: cs[k] }));
+  const AIR_NEW = [
+    apron({ id: 207, name: 'Kısa tur', goal: 5, spawn: 5.0,
+      intro: 'Bu kez iniş solda, kalkış sağda. Uçaklar apron boyunca kapıya gelir, sonra kalkışa devam eder.',
+      tip: 'İnişten aşağı in, kapının önünden geçen yatay bir apron çiz, kalkışa çık. Kapıyı aprona kısa bir yolla bağla.',
+      gates: G3([0], ['or']) }),
+    apron({ id: 208, name: 'Apron', goal: 8, spawn: 4.2,
+      intro: 'İki kapı aynı apronu paylaşıyor. Tek bir U biçimli taksi yolu ve iki kısa bağlantı yeter.',
+      tip: 'İnişten kalkışa U biçimli bir taksi yolu çiz, iki kapıyı aprona bağla.',
+      gates: G3([-2.2, 2.2], ['or', 'bl']) }),
+    apron({ id: 209, name: 'Orta pist', goal: 8, spawn: 4.0, mid: true,
+      intro: 'İnişle apron arasında ikinci bir pist var. Taksi yolu pisti keserken uçaklar bekleme çizgisinde durur.',
+      tip: 'U biçimli yolu çiz: pisti iki yerden dik keser. Kapıları aprona bağla.',
+      gates: G3([-2.2, 2.2], ['gr', 'pu']) }),
+    apron({ id: 210, name: 'İki sıra kapı', board: [22, 34], goal: 10, spawn: 3.6,
+      intro: 'Apronun iki yanında kapılar: üstteki kapı aşağı, alttakiler yukarı bakıyor.',
+      tip: 'U biçimli yolu çiz, üç kapıyı da aprona kısa yollarla bağla.',
+      gates: G3([-3, 3], ['or', 'bl']), top: G3([0], ['gr']) }),
+    scale(A0(204), 'air', { id: 211, name: 'Büyük köprü', board: [22, 36], goal: 16, spawn: 2.1, rush: RUSH(30, 0.65),
+      intro: 'Taksi köprüsü yeniden, ama yoğun saatli: gelen ve giden yollar ortada kesişiyor.',
+      tip: 'İnişten A kapısına, B kapısından kalkışa çapraz yollar çiz, yanları bağla; ortadaki kesişimi köprü yap.' }),
+    apron({ id: 212, name: 'Üç kapı', board: [24, 36], goal: 12, spawn: 3.4,
+      intro: 'Bölge havalimanına hoş geldin: harita büyüdü, üç havayolu var.',
+      tip: 'U biçimli yolu çiz, üç kapıyı aprona bağla.',
+      gates: G3([-4, 0, 4], ['or', 'bl', 'gr']) }),
+    scale(A0(203), 'air', { id: 213, name: 'Ters pist', board: [24, 36], goal: 12, spawn: 3.9, mirror: true,
+      intro: 'İniş sağda, kalkış solda; arada ikinci bir pist var. Pisti kesen yolları az tut.',
+      tip: 'Ortadaki pisti dik kesen iki yol çiz: biri kapıya iner, öbürü kalkışa çıkar.' }),
+    apron({ id: 214, name: 'Pist trafiği', board: [24, 38], goal: 14, spawn: 3.4, mid: true, mirror: true,
+      intro: 'İniş sağda, kalkış solda, arada işlek bir pist. Uçaklar pisti geçmek için sıra bekler.',
+      tip: 'U biçimli yolu çiz: pisti iki yerden dik keser. Üç kapıyı aprona bağla.',
+      gates: G3([-4, 0, 4], ['or', 'bl', 'pu']) }),
+    scale(A0(202), 'air', { id: 215, name: 'Yoğun apron', board: [24, 38], goal: 12, spawn: 3.2, rush: RUSH(30, 0.65),
+      intro: 'İki kapılı terminal ve yoğun saatler: zaman zaman uçaklar sıklaşır.',
+      tip: 'İnişten inen ana taksi yolunu iki kapıya ayır; kapılardan kalkışa giden yolları da birleştir.' }),
+    apron({ id: 216, name: 'Çift sıra', board: [24, 38], goal: 14, spawn: 3.2, rush: RUSH(32, 0.65),
+      intro: 'Dört kapı apronun iki yanında karşılıklı duruyor; yoğun saatlerde apron dolar.',
+      tip: 'U biçimli yolu çiz, karşılıklı kapıları aynı noktadan aprona bağla.',
+      gates: G3([-4, 4], ['or', 'bl']), top: G3([-4, 4], ['gr', 'pu']) }),
+    scale(A0(205), 'air', { id: 217, name: 'Bölge yoğun saati', board: [24, 38], goal: 22, spawn: 3.6, rush: RUSH(32, 0.65),
+      intro: 'Üç havayolu, kesişen yollar ve yoğun saatler. Kesişimi alt geçitle ayır.',
+      tip: 'Soldan üç kapıya, kapılardan sağdaki kalkışa yol çiz; gelen ve giden yolların kesiştiği yeri alt geçit yap.' }),
+    apron({ id: 218, name: 'Ayna apron', board: [24, 38], goal: 16, spawn: 3.7, mid: true, mirror: true,
+      intro: 'İniş sağda, ortada bir pist ve iki sıra kapı.',
+      tip: 'U biçimli yolu çiz, dört kapıyı aprona bağla.',
+      gates: G3([-4, 0, 4], ['or', 'bl', 'gr']), top: G3([0], ['pu']) }),
+    scale(A0(204), 'air', { id: 219, name: 'Ters köprü', board: [24, 38], goal: 18, spawn: 2.0, mirror: true, rush: RUSH(30, 0.65),
+      intro: 'Taksi köprüsünün aynası: iniş solda, kalkış sağda. Ortadaki kesişimi köprüyle ayır.',
+      tip: 'Çapraz iki yolu ve yan bağlantıları çiz, ortadaki kesişimi köprü yap.' }),
+    apron({ id: 220, name: 'Bölge pistleri', board: [24, 38], goal: 18, spawn: 3.5, twin: true, rush: RUSH(30, 0.65),
+      intro: 'Üstte iniş, altta kalkış pisti; kapılar ortadaki apronun iki yanında. Bölge havalimanının son sınavı.',
+      tip: 'İnişten aşağı in, ortada yatay bir apron çiz, öbür uçtan kalkışa in. Kapıları aprona bağla.',
+      gates: G3([-4, 4], ['or', 'bl']), top: G3([0], ['gr']) }),
+    apron({ id: 221, name: 'Uluslararası', board: [26, 40], goal: 18, spawn: 3.0,
+      intro: 'Uluslararası terminale hoş geldin: beş kapı, iki sıra.',
+      tip: 'U biçimli yolu çiz, beş kapıyı aprona bağla.',
+      gates: G3([-5, 0, 5], ['or', 'bl', 'gr']), top: G3([-5, 5], ['pu', 'rd']) }),
+    scale(A0(205), 'air', { id: 222, name: 'Gece uçuşları', board: [26, 40], goal: 24, spawn: 3.0, mirror: true,
+      intro: 'İnişler sağda, kalkış solda; üç havayolunun yolları kesişiyor.',
+      tip: 'Sağdan üç kapıya, kapılardan soldaki kalkışa yol çiz; kesişimi alt geçit yap.' }),
+    apron({ id: 223, name: 'Dört kapı', board: [28, 42], goal: 20, spawn: 3.5, mid: true,
+      intro: 'Dört kapı ve işlek bir orta pist. Uçaklar pisti iki kez geçer.',
+      tip: 'U biçimli yolu çiz, dört kapıyı aprona bağla.',
+      gates: G3([-6, -2, 2, 6], ['or', 'bl', 'gr', 'pu']) }),
+    scale(A0(204), 'air', { id: 224, name: 'Köprü saati', board: [28, 42], goal: 22, spawn: 2.3, rush: RUSH(30, 0.62),
+      intro: 'Uzun çapraz taksi yolları ve sık yoğun saatler. Köprü olmadan apron kilitlenir.',
+      tip: 'Çapraz iki yolu ve yan bağlantıları çiz, ortadaki kesişimi köprü yap.' }),
+    apron({ id: 225, name: 'Altı kapı', board: [28, 42], goal: 22, spawn: 3.0, mirror: true,
+      intro: 'Altı kapı, iki sıra; iniş sağda.',
+      tip: 'U biçimli yolu çiz, altı kapıyı aprona bağla.',
+      gates: G3([-6, -2, 2, 6], ['or', 'bl', 'gr', 'pu']), top: G3([-2, 2], ['rd', 'tq']) }),
+    apron({ id: 226, name: 'Çapraz pistler', board: [28, 44], goal: 24, spawn: 3.5, twin: true, mirror: true, rush: RUSH(30, 0.62),
+      intro: 'İniş üstte sağda, kalkış altta solda; beş kapı ortadaki apronun iki yanında.',
+      tip: 'İnişten aşağı in, ortada yatay bir apron çiz, öbür uçtan kalkışa in. Kapıları aprona bağla.',
+      gates: G3([-6, 0, 6], ['or', 'bl', 'gr']), top: G3([-3, 3], ['pu', 'rd']) }),
+    apron({ id: 227, name: 'Transfer', board: [28, 44], goal: 24, spawn: 4.7, mid: true, midEvery: 10, rush: RUSH(32, 0.65),
+      intro: 'Altı kapı, orta pist ve yoğun saatler: aktarma yolcuları bekliyor.',
+      tip: 'U biçimli yolu çiz, altı kapıyı aprona bağla.',
+      gates: G3([-6, -2, 2, 6], ['or', 'bl', 'gr', 'pu']), top: G3([-6, 6], ['rd', 'tq']) }),
+    scale(A0(203), 'air', { id: 228, name: 'Pist geçidi', board: [28, 44], goal: 16, spawn: 4.7, rush: RUSH(30, 0.65),
+      intro: 'İşlek orta pist ve uzun taksi yolları. Pisti kesen yolları az tut.',
+      tip: 'Ortadaki pisti dik kesen iki yol çiz: biri kapıya iner, öbürü kalkışa çıkar.' }),
+    scale(A0(205), 'air', { id: 229, name: 'Kalabalık terminal', board: [28, 44], goal: 28, spawn: 3.5, rush: RUSH(30, 0.62),
+      intro: 'Üç havayolu, uzun yollar ve sık yoğun saatler.',
+      tip: 'Soldan üç kapıya, kapılardan sağdaki kalkışa yol çiz; kesişimi alt geçit yap.' }),
+    apron({ id: 230, name: 'Uluslararası sınav', board: [28, 44], goal: 28, spawn: 4.7, mid: true, midEvery: 10, rush: RUSH(32, 0.62),
+      intro: 'Yedi kapı, orta pist ve yoğun saatler. Bu bölümü bitiren mega havalimanına geçer.',
+      tip: 'U biçimli yolu çiz, yedi kapıyı aprona bağla.',
+      gates: G3([-6, -2, 2, 6], ['or', 'bl', 'gr', 'pu']), top: G3([-6, -2, 2], ['rd', 'tq', 'pk']) }),
+    apron({ id: 231, name: 'Mega apron', board: [30, 46], goal: 26, spawn: 3.1,
+      intro: 'Mega havalimanına hoş geldin: uzun bir apron ve altı kapı.',
+      tip: 'U biçimli yolu çiz, altı kapıyı aprona bağla.',
+      gates: G3([-7, -2.3, 2.3, 7], ['or', 'bl', 'gr', 'pu']), top: G3([-2.3, 2.3], ['rd', 'tq']) }),
+    scale(A0(204), 'air', { id: 232, name: 'Mega köprü', board: [30, 46], goal: 26, spawn: 2.2, mirror: true, rush: RUSH(30, 0.62),
+      intro: 'Çok uzun çapraz taksi yolları, sık iniş ve yoğun saatler.',
+      tip: 'Çapraz iki yolu ve yan bağlantıları çiz, ortadaki kesişimi köprü yap.' }),
+    apron({ id: 233, name: 'Gece pisti', board: [30, 46], goal: 28, spawn: 4.8, mid: true, midEvery: 10, mirror: true, rush: RUSH(32, 0.62),
+      intro: 'İniş sağda, işlek orta pist, altı kapı ve yoğun saatler.',
+      tip: 'U biçimli yolu çiz, altı kapıyı aprona bağla.',
+      gates: G3([-7, -2.3, 2.3, 7], ['or', 'bl', 'gr', 'pu']), top: G3([-7, 7], ['rd', 'tq']) }),
+    apron({ id: 234, name: 'Paralel pistler', board: [30, 48], goal: 28, spawn: 4.1, twin: true, rush: RUSH(30, 0.62),
+      intro: 'İki uzun pist ve ortada altı kapılı terminal; yoğun saatlerde iniş ve kalkış sıklaşır.',
+      tip: 'İnişten aşağı in, ortada yatay bir apron çiz, öbür uçtan kalkışa in. Kapıları aprona bağla.',
+      gates: G3([-7, -2.3, 2.3, 7], ['or', 'bl', 'gr', 'pu']), top: G3([-4.6, 4.6], ['rd', 'tq']) }),
+    apron({ id: 235, name: 'Beş kapı', board: [32, 48], goal: 30, spawn: 3.9, mid: true, midEvery: 10,
+      intro: 'Beş kapılı uzun apron ve işlek orta pist.',
+      tip: 'U biçimli yolu çiz, beş kapıyı aprona bağla.',
+      gates: G3([-8, -4, 0, 4, 8], ['or', 'bl', 'gr', 'pu', 'rd']) }),
+    scale(A0(205), 'air', { id: 236, name: 'Tatil sezonu', board: [32, 48], goal: 30, spawn: 4.6, mirror: true, rush: RUSH(30, 0.6),
+      intro: 'Tatil sezonu: üç havayolu, kesişen yollar, sık yoğun saatler.',
+      tip: 'Sağdan üç kapıya, kapılardan soldaki kalkışa yol çiz; kesişimi alt geçit yap.' }),
+    apron({ id: 237, name: 'Yedi kapı', board: [32, 50], goal: 32, spawn: 3.3, rush: RUSH(32, 0.62),
+      intro: 'Yedi kapı, iki sıra ve yoğun saatler.',
+      tip: 'U biçimli yolu çiz, yedi kapıyı aprona bağla.',
+      gates: G3([-8, -4, 0, 4, 8], ['or', 'bl', 'gr', 'pu', 'rd']), top: G3([-4, 4], ['tq', 'pk']) }),
+    scale(A0(204), 'air', { id: 238, name: 'Son köprü', board: [32, 50], goal: 28, spawn: 2.4, rush: RUSH(30, 0.6),
+      intro: 'En uzun çapraz taksi yolları ve en sık inişler. Köprüyü doğru yere koy.',
+      tip: 'Çapraz iki yolu ve yan bağlantıları çiz, ortadaki kesişimi köprü yap.' }),
+    apron({ id: 239, name: 'Dev pistler', board: [32, 50], goal: 32, spawn: 3.9, twin: true, mirror: true, rush: RUSH(30, 0.6),
+      intro: 'İki dev pist ve ortada yedi kapılı terminal; yoğun saatler sık.',
+      tip: 'İnişten aşağı in, ortada yatay bir apron çiz, öbür uçtan kalkışa in. Kapıları aprona bağla.',
+      gates: G3([-8, -4, 0, 4, 8], ['or', 'bl', 'gr', 'pu', 'rd']), top: G3([-6, 6], ['tq', 'pk']) }),
+    apron({ id: 240, name: 'Mega havalimanı', board: [32, 50], goal: 32, spawn: 4.9, mid: true, midEvery: 10, mirror: true, rush: RUSH(32, 0.6),
+      intro: 'Yedi kapı, işlek orta pist ve yoğun saatler. Havalimanının son sınavı.',
+      tip: 'U biçimli yolu çiz, yedi kapıyı aprona bağla.',
+      gates: G3([-8, -4, 0, 4, 8], ['or', 'bl', 'gr', 'pu', 'rd']), top: G3([-4, 4], ['tq', 'pk']) }),
+  ];
+  // bölüm sırası: eski 6 bölüm (kimlikleri ve yıldızları korunur) ilk bölgeye yayılır
+  {
+    const ord = (old, add, seq) => { const by = new Map(old.concat(add).map((l) => [l.id, l])); return seq.map((id) => by.get(id)); };
+    const tail = (a) => Array.from({ length: 30 }, (_, k) => a + k);
+    LV.RAIL = ord(LV.RAIL, RAIL_NEW, [101, 107, 102, 108, 103, 109, 104, 110, 105, 106].concat(tail(111)));
+    LV.AIR = ord(LV.AIR, AIR_NEW, [201, 207, 202, 208, 203, 209, 204, 210, 205, 206].concat(tail(211)));
+  }
+  // moda göre bölgeler ve yıldız kapıları
+  LV.CHAPTERS_M = {
+    road: LV.CHAPTERS,
+    rail: [
+      { name: 'Banliyö', from: 1, to: 10, color: '#f0a020' },
+      { name: 'Bölge hattı', from: 11, to: 20, color: '#ef6c4a' },
+      { name: 'Ana hat', from: 21, to: 30, color: '#d9468f' },
+      { name: 'Hızlı tren', from: 31, to: 40, color: '#7a5af0' },
+    ],
+    air: [
+      { name: 'Küçük havalimanı', from: 1, to: 10, color: '#4d9cff' },
+      { name: 'Bölge havalimanı', from: 11, to: 20, color: '#22b5a8' },
+      { name: 'Uluslararası', from: 21, to: 30, color: '#5b63f0' },
+      { name: 'Mega havalimanı', from: 31, to: 40, color: '#ff7a59' },
+    ],
+  };
+  LV.GATE_L = { or: 'A', bl: 'B', gr: 'C', pu: 'D', rd: 'E', tq: 'F', pk: 'G' }; // havalimanı kapı harfleri
+  LV.chapterOf = (L) => { const list = LV.CHAPTERS_M[L.mode || 'road'] || LV.CHAPTERS; return list.find((c) => (L.n || 1) >= c.from && (L.n || 1) <= c.to) || list[0]; };
+  LV.GATES_M = { road: LV.GATES, rail: { 10: 20, 20: 42, 30: 62, 40: 80 }, air: { 10: 20, 20: 42, 30: 62, 40: 80 } };
 
   // bölüm setleri (ana ekrandaki sekmeler)
   LV.SETS = [

@@ -12,8 +12,9 @@ yaya geçidi ve dur çizgisi, ışıklı kavşaklarda direk, şeridin üstüne u
 Köprülerde alçak bordür, sık dikmeli metal korkuluk, iki sütunlu başlıklı ayaklar ve uzun köprülerde lamba direkleri
 bulunur. Araç iş yerine varınca "+1" parıltısı çıkar, bölüm kazanılınca konfeti yağar.
 
-Ana ekranda üç bölüm seti var: **Karayolu** (evler → iş yerleri), **Demiryolu** (istasyonlar → garlar, uzun
-trenler, makaslar, dağdan tünel) ve **Havalimanı** (uçaklar iner, kapıya yanaşır, kalkar; pist geçişleri).
+Ana ekranda üç bölüm seti var, her birinde **40 bölüm**: **Karayolu** (evler → iş yerleri), **Demiryolu**
+(istasyonlar → garlar, uzun trenler, makaslar, dağdan tünel) ve **Havalimanı** (uçaklar iner, kapıya yanaşır,
+kalkar; pist geçişleri).
 Hepsi aynı serbest çizim, kesişim seçimi ve köprü / alt geçit düğmeleriyle oynanır.
 
 ## Nasıl oynanır?
@@ -103,8 +104,8 @@ Karayolunda **40 bölüm** var; dört bölgeye ayrılır: **Köy** (1–10), **K
 başlığında o bölgede topladığın yıldızlar, bölüm düğmelerinin üstünde kazandığın yıldızlar yazar. Sıradaki bölümün
 çevresinde bir halka atar.
 
-**Yıldız kapıları (mücadele):** her bölgenin son bölümüne (10, 20, 30, 40) girmek için önceki bölümlerden yeterli
-toplam yıldız gerekir: **10. bölüm 20 ⭐, 20. bölüm 42 ⭐, 30. bölüm 62 ⭐, 40. bölüm 80 ⭐**. Kapı bölümünün
+**Yıldız kapıları (mücadele):** üç sette de her bölgenin son bölümüne (10, 20, 30, 40) girmek için önceki
+bölümlerden yeterli toplam yıldız gerekir: **10. bölüm 20 ⭐, 20. bölüm 42 ⭐, 30. bölüm 62 ⭐, 40. bölüm 80 ⭐**. Kapı bölümünün
 düğmesinde kırmızı yıldız rozeti durur (yeterince yıldızın olunca yeşile döner). Yıldızın yetmezse kazanma kartı
 "… için toplam N yıldız gerekiyor; sende M var" der ve önceki bölümleri daha iyi bitirmeni ister.
 
@@ -130,7 +131,7 @@ düğmesinde kırmızı yıldız rozeti durur (yeterince yıldızın olunca yeş
 | 13 | Büyük kavşak | 20×32 m | 4 renk |
 | 14 | Kasaba yolları | 22×35 m | 4 renk |
 | 15 | Yeni köprüler | 22×35 m | su, ray, 3 renk |
-| 16 | Nehir ve ray | 24×38 m | su, ray, 3 renk |
+| 16 | Geniş nehir | 24×38 m | su, ray, 3 renk |
 | 17 | Göl kenarı | 24×38 m | su, ray, 3 renk |
 | 18 | Tek köprü | 24×38 m | su, ray, 2 renk |
 | 19 | Dağ geçidi | 24×38 m | dağ, 3 renk |
@@ -182,14 +183,57 @@ hattı döşersin (**Ray döşe**). Her hat çift hatlıdır (gidiş ve dönüş
 - Nehri kesen hat kendiliğinden köprü olur.
 - Bir istasyonda 8 sefer birikirse kaybedersin. Malzeme göstergesi **Ray** metresini gösterir.
 
-| # | Bölüm | Öğrettiği |
-|---|---|---|
-| 1 | İlk hat | İstasyondan limana ray döşemek |
-| 2 | Makas | Hatları birleştirip ayırmak (az ray) |
-| 3 | Dağ | Dağı tünelle geçmek |
-| 4 | Köprülü hat | Yoğun makası köprüyle ayırmak |
-| 5 | Nehir ve dağ | Köprü ve tüneli birlikte kullanmak |
-| 6 | Büyük gar | Üç hat: bir kesişim köprü, öbürü tünel |
+Demiryolunda da **40 bölüm** ve dört bölge var: **Banliyö** (1–10), **Bölge hattı** (11–20), **Ana hat** (21–30),
+**Hızlı tren** (31–40). Harita 20×32 m'den 32×50 m'ye büyür; hat sayısı 1'den 7'ye çıkar, nehirler, göller,
+sıradağlar ve yoğun saatler birleşir. Yıldız kapıları karayoluyla aynıdır (10 → 20 ⭐, 20 → 42 ⭐, 30 → 62 ⭐,
+40 → 80 ⭐). Eski 6 bölüm ilk bölgeye yayıldı; kazandığın yıldızlar korunur.
+
+| # | Bölüm | Harita | İçerik |
+|---|---|---|---|
+| | **Banliyö** (bölüm 1–10) | | |
+| 1 | İlk hat | 20×32 m | 1 hat |
+| 2 | İki hat | 20×32 m | 2 hat |
+| 3 | Makas | 20×32 m | 2 hat |
+| 4 | Kesişen hatlar | 20×32 m | 2 hat |
+| 5 | Dağ | 20×32 m | 1 hat, dağ, 1 tünel |
+| 6 | Dağdan iki hat | 20×32 m | 2 hat, dağ, 2 tünel |
+| 7 | Köprülü hat | 20×32 m | 2 hat, 1 köprü |
+| 8 | Nehir köprüleri | 20×32 m | 3 hat, nehir, 2 köprü |
+| 9 | Nehir ve dağ | 20×32 m | 2 hat, nehir, dağ, 2 köprü, 1 tünel |
+| 10 | Büyük gar | 20×32 m | 3 hat, 1 köprü, 1 tünel · ⭐ 20 gerekli |
+| | **Bölge hattı** (bölüm 11–20) | | |
+| 11 | Bölge hattı | 22×34 m | 3 hat, 1 köprü |
+| 12 | Uzun makas | 22×36 m | 2 hat, yoğun saat |
+| 13 | Üç köprü | 22×36 m | 3 hat, nehir, dağ, 3 köprü, 1 tünel |
+| 14 | Dört makas | 24×36 m | 4 hat, 1 köprü, 1 tünel |
+| 15 | Çapraz köprü | 24×36 m | 2 hat, 1 köprü, yoğun saat |
+| 16 | Dağ geçidi | 24×38 m | 3 hat, dağ, 1 köprü, 2 tünel |
+| 17 | Üçlü kesişim | 24×38 m | 4 hat, 1 köprü, 1 tünel, yoğun saat |
+| 18 | Büyük nehir | 24×38 m | 2 hat, nehir, dağ, 2 köprü, 1 tünel, yoğun saat |
+| 19 | Ters yön | 24×38 m | 4 hat, nehir, 3 köprü, 1 tünel |
+| 20 | Bölge garı | 24×38 m | 3 hat, 1 köprü, 1 tünel, yoğun saat · ⭐ 42 gerekli |
+| | **Ana hat** (bölüm 21–30) | | |
+| 21 | Ana hat | 26×40 m | 5 hat, 2 köprü, 1 tünel |
+| 22 | Nehir ve dağlar | 26×40 m | 4 hat, nehir, dağ, 4 köprü, 3 tünel |
+| 23 | Üç yatay | 26×40 m | 5 hat, 2 köprü, 1 tünel, yoğun saat |
+| 24 | Göl kıyısı | 26×40 m | 4 hat, göl, 2 köprü, 1 tünel |
+| 25 | Dört hat | 28×42 m | 4 hat, nehir, dağ, 4 köprü, 2 tünel |
+| 26 | Ana gar | 28×44 m | 3 hat, 1 köprü, 1 tünel, yoğun saat |
+| 27 | Kavşak ağı | 28×44 m | 5 hat, 2 köprü, 2 tünel |
+| 28 | Uzun kesen | 28×44 m | 5 hat, 2 köprü, 1 tünel, yoğun saat |
+| 29 | Dokuz makas | 28×44 m | 6 hat, 3 köprü, 2 tünel, yoğun saat |
+| 30 | Ana hat sınavı | 28×44 m | 5 hat, nehir, 5 köprü, 2 tünel, yoğun saat · ⭐ 62 gerekli |
+| | **Hızlı tren** (bölüm 31–40) | | |
+| 31 | Hızlı tren | 30×46 m | 5 hat, dağ, 2 köprü, 2 tünel |
+| 32 | Dağ tünelleri | 30×46 m | 5 hat, dağ, 2 köprü, 4 tünel |
+| 33 | Hat ağı | 30×46 m | 6 hat, 3 köprü, 3 tünel, yoğun saat |
+| 34 | Nehir ekspresi | 30×48 m | 2 hat, nehir, dağ, 2 köprü, 1 tünel, yoğun saat |
+| 35 | Beş hat | 32×48 m | 5 hat, nehir, dağ, 5 köprü, 2 tünel, yoğun saat |
+| 36 | Ekspres kavşaklar | 32×48 m | 6 hat, nehir, 6 köprü, 2 tünel |
+| 37 | Merkez gar | 32×50 m | 3 hat, 1 köprü, 1 tünel, yoğun saat |
+| 38 | Sekiz kesişim | 32×50 m | 6 hat, 3 köprü, 3 tünel |
+| 39 | Adalar hattı | 32×50 m | 5 hat, nehir, 7 köprü, 1 tünel |
+| 40 | Hızlı tren ağı | 32×50 m | 7 hat, 4 köprü, 4 tünel, yoğun saat · ⭐ 80 gerekli |
 
 ## Havalimanı bölümleri
 
@@ -204,17 +248,68 @@ sonra **KALKIŞ** noktasına gidip pistte hızlanarak havalanır. Hedef: **kalka
 - Taksi yolları kesişirse kavşak, köprü ya da alt geçit seçersin (aynı **?** kutusu ve **Köprü** düğmesi).
 - Havada ya da bir kapıda 8 uçak beklerse kaybedersin. Malzeme göstergesi **Beton** metresini gösterir.
 
-| # | Bölüm | Öğrettiği |
-|---|---|---|
-| 1 | İlk uçuş | İnişten kapıya, kapıdan kalkışa yol |
-| 2 | İki kapı | İki havayolu, ortak ana yol |
-| 3 | Pisti geç | Pist geçişinde bekleme çizgisi |
-| 4 | Taksi köprüsü | Gelen ve giden yolların kesişimini köprüyle ayırmak |
-| 5 | Yoğun saat | Üç kapı, sık iniş |
-| 6 | İki pist | İniş ve kalkış ayrı pistlerde |
+Havalimanında da **40 bölüm** ve dört bölge var: **Küçük havalimanı** (1–10), **Bölge havalimanı** (11–20),
+**Uluslararası** (21–30), **Mega havalimanı** (31–40). Harita 20×32 m'den 32×50 m'ye büyür, kapı sayısı 1'den 7'ye
+(KAPI A–G) çıkar. Yeni düzenler:
 
-Demiryolu ve havalimanı bölümleri de kontrol betiğinde çözüm yoluyla oynanıp kazanılır; Demiryolu 4 ve 6 ile
-Havalimanı 4 köprüsüz denemede kaybedilir. Her setin ilk bölümü açıktır; sonrakiler bir öncekini bitirince açılır.
+- **Apron:** iniş bir uçta, kalkış öbür uçta; U biçimli tek taksi yolu kapıların önünden geçer, kapılar aprona kısa
+  yollarla bağlanır. Kapılar apronun iki yanında karşılıklı da durabilir.
+- **Orta pist:** iniş ile apron arasında işlek ikinci bir pist; U yolu onu iki yerden keser (bekleme çizgisi).
+- **Ayrı pistler:** uçaklar üstteki piste iner, alttaki pistten kalkar; taksi yolu Z biçimini alır.
+- **Taksi köprüsü / alt geçit:** gelen ve giden yollar çaprazlanır; kesişimi köprü ya da alt geçitle ayırırsın.
+
+Yıldız kapıları ve yoğun saatler burada da var. Eski 6 bölüm ilk bölgeye yayıldı; kazandığın yıldızlar korunur.
+
+| # | Bölüm | Harita | İçerik |
+|---|---|---|---|
+| | **Küçük havalimanı** (bölüm 1–10) | | |
+| 1 | İlk uçuş | 20×32 m | 1 kapı |
+| 2 | Kısa tur | 20×32 m | 1 kapı |
+| 3 | İki kapı | 20×32 m | 2 kapı |
+| 4 | Apron | 20×32 m | 2 kapı |
+| 5 | Pisti geç | 20×32 m | 1 kapı, pist geçişi |
+| 6 | Orta pist | 20×32 m | 2 kapı, pist geçişi |
+| 7 | Taksi köprüsü | 20×32 m | 2 kapı, 1 köprü |
+| 8 | İki sıra kapı | 22×34 m | 3 kapı |
+| 9 | Yoğun saat | 20×32 m | 3 kapı, 1 köprü, 1 alt geçit |
+| 10 | İki pist | 20×32 m | 2 kapı, iniş ve kalkış ayrı pistte, 1 köprü, 1 alt geçit · ⭐ 20 gerekli |
+| | **Bölge havalimanı** (bölüm 11–20) | | |
+| 11 | Büyük köprü | 22×36 m | 2 kapı, 1 köprü, yoğun saat |
+| 12 | Üç kapı | 24×36 m | 3 kapı |
+| 13 | Ters pist | 24×36 m | 1 kapı, pist geçişi |
+| 14 | Pist trafiği | 24×38 m | 3 kapı, pist geçişi |
+| 15 | Yoğun apron | 24×38 m | 2 kapı, yoğun saat |
+| 16 | Çift sıra | 24×38 m | 4 kapı, yoğun saat |
+| 17 | Bölge yoğun saati | 24×38 m | 3 kapı, 1 köprü, 1 alt geçit, yoğun saat |
+| 18 | Ayna apron | 24×38 m | 4 kapı, pist geçişi |
+| 19 | Ters köprü | 24×38 m | 2 kapı, 1 köprü, yoğun saat |
+| 20 | Bölge pistleri | 24×38 m | 3 kapı, iniş ve kalkış ayrı pistte, yoğun saat · ⭐ 42 gerekli |
+| | **Uluslararası** (bölüm 21–30) | | |
+| 21 | Uluslararası | 26×40 m | 5 kapı |
+| 22 | Gece uçuşları | 26×40 m | 3 kapı, 1 köprü, 1 alt geçit |
+| 23 | Dört kapı | 28×42 m | 4 kapı, pist geçişi |
+| 24 | Köprü saati | 28×42 m | 2 kapı, 1 köprü, yoğun saat |
+| 25 | Altı kapı | 28×42 m | 6 kapı |
+| 26 | Çapraz pistler | 28×44 m | 5 kapı, iniş ve kalkış ayrı pistte, yoğun saat |
+| 27 | Transfer | 28×44 m | 6 kapı, pist geçişi, yoğun saat |
+| 28 | Pist geçidi | 28×44 m | 1 kapı, pist geçişi, yoğun saat |
+| 29 | Kalabalık terminal | 28×44 m | 3 kapı, 1 köprü, 1 alt geçit, yoğun saat |
+| 30 | Uluslararası sınav | 28×44 m | 7 kapı, pist geçişi, yoğun saat · ⭐ 62 gerekli |
+| | **Mega havalimanı** (bölüm 31–40) | | |
+| 31 | Mega apron | 30×46 m | 6 kapı |
+| 32 | Mega köprü | 30×46 m | 2 kapı, 1 köprü, yoğun saat |
+| 33 | Gece pisti | 30×46 m | 6 kapı, pist geçişi, yoğun saat |
+| 34 | Paralel pistler | 30×48 m | 6 kapı, iniş ve kalkış ayrı pistte, yoğun saat |
+| 35 | Beş kapı | 32×48 m | 5 kapı, pist geçişi |
+| 36 | Tatil sezonu | 32×48 m | 3 kapı, 1 köprü, 1 alt geçit, yoğun saat |
+| 37 | Yedi kapı | 32×50 m | 7 kapı, yoğun saat |
+| 38 | Son köprü | 32×50 m | 2 kapı, 1 köprü, yoğun saat |
+| 39 | Dev pistler | 32×50 m | 7 kapı, iniş ve kalkış ayrı pistte, yoğun saat |
+| 40 | Mega havalimanı | 32×50 m | 7 kapı, pist geçişi, yoğun saat · ⭐ 80 gerekli |
+
+Her setin ilk bölümü açıktır; sonrakiler bir öncekini bitirince açılır. 120 bölümün hepsi `test/bolumler.cjs` ile
+tarayıcısız olarak örnek çözümle oynanıp kazanılır; köprünün gerçekten gerektiği bölümler (örneğin Demiryolu 7, 10,
+15, 20, 26, 37 ve Havalimanı 7, 11, 19, 24, 32, 38) köprüsüz denemede kaybedilir.
 
 ## Serbest atölye (ızgaralı kurma)
 
@@ -375,9 +470,10 @@ ray-arasi/
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran (bölüm haritası, demiryolu sekmesi), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, önceden kurulan köprü, gerçekçi kavşak, köprü, büyük haritalar (14 Dağ yolu, 20 Megakent), demiryolu (nehir ve dağ, büyük gar), havalimanı (taksi köprüsü), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
+├── ekran-goruntuleri/      Ana ekran (bölüm haritası, demiryolu ve havalimanı sekmeleri), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, önceden kurulan köprü, gerçekçi kavşak, köprü, büyük haritalar (14 Dağ yolu, 20 Megakent), demiryolu (nehir ve dağ, büyük gar, hızlı tren ağı), havalimanı (taksi köprüsü, mega havalimanı, ayrı pistler), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
-└── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
+├── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği (tarayıcıda)
+└── test/bolumler.cjs       120 bölümün hepsini tarayıcısız oynayan bölüm denetimi
 ```
 
 Bütün görseller kodla üretilir (üç boyutlu modeller, dokular, sesler); dışarıdan görsel ya da ses dosyası yüklenmez.
@@ -389,7 +485,9 @@ Gerçek dokunuş ve sürüklemelerle şunları dener:
 - **Bölümler:** bölüm kartları ve kilitler, hedef kartı, fareyle eğri yol çizip uçların eve ve iş yerine yapışması,
   trafiği başlatıp kazanmak ve yıldızlar, sonraki bölümün açılması, kesişen yolların ışıklı kavşak olması, kesişim
   işaretine dokunup köprüye ve geri kavşağa çevirmek, asfalt sınırı, sil ve geri al, ipucu, köprülü düzenle bölüm 3'ü
-  kazanmak, yolu olmayan evin taşıp bölümün kaybedilmesi ve "yollarımla tekrar dene".
+  kazanmak, yolu olmayan evin taşıp bölümün kaybedilmesi ve "yollarımla tekrar dene"; demiryolu ve havalimanı
+  sekmelerinde 40'ar bölüm, dört bölge ve yıldız kapıları, büyüyen haritalar, örnek bölümlerin çözümle kazanılması,
+  havalimanında A–G kapı harfleri.
 - **Serbest atölye:** 4 düz yolla başlayan şehir, ızgarada yol çizme, kavşak, köprü, alt geçit, hatalı çizimin
   reddi, silme, geri alma, Otopark aracı, talepler ve gerekçeleri, talebi yolla bağlama, evden işe giden yolculuklar,
   aşama atlama, trafik sıkışınca büyümenin durması, U dönüşü ve kalıcı kilitlenme olmaması, sıkışma halkası,
@@ -400,6 +498,13 @@ Gerçek dokunuş ve sürüklemelerle şunları dener:
 npm i -D playwright
 npx playwright install chromium
 node test/kontrol.cjs
+```
+
+Bölüm denetimi için tarayıcı gerekmez (yalnızca Node): 3 × 40 bölümü örnek çözümle oynar, yıldız kapılarına
+ulaşılabildiğini ve köprüsüz denemesi kaybedilmesi gerekenlerin kaybedildiğini doğrular (1–2 dakika).
+
+```bash
+node test/bolumler.cjs
 ```
 
 Ekran görüntüleri `test/cikti/` klasörüne yazılır.

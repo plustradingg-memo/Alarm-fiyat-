@@ -394,7 +394,7 @@
       // giriş yolu
       const drive = mesh(rb(mode === 'air' ? 1.5 : 0.9, 0.05, 0.9, 0.02), mode === 'rail' ? m.ballast : mode === 'air' ? m.concrete : m.drive, 0, 0.03, b.d / 2 + 0.45, false); body.add(drive);
       // tabela ve giriş işareti
-      const label = b.role === 'arr' ? 'İNİŞ' : b.role === 'dep' ? 'KALKIŞ' : b.role === 'gate' ? 'KAPI ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[b.color] || '') :
+      const label = b.role === 'arr' ? 'İNİŞ' : b.role === 'dep' ? 'KALKIŞ' : b.role === 'gate' ? 'KAPI ' + (RA.LV.GATE_L[b.color] || '') :
         mode === 'rail' ? (b.kind === 'house' ? 'İSTASYON' : ({ gar: 'GAR', liman: 'LİMAN', maden: 'MADEN' }[b.type] || 'GAR')) :
         b.kind === 'house' ? 'EVLER' : ({ fabrika: 'FABRİKA', okul: 'OKUL', avm: 'AVM', ofis: 'OFİS', hastane: 'HASTANE', stadyum: 'STADYUM' }[b.type] || 'İŞ YERİ');
       const sp = new T.Sprite(new T.SpriteMaterial({ map: signTex(label, col.css), depthTest: false, transparent: true }));
