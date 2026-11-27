@@ -6,6 +6,12 @@ oyun yolu kendisi toparlar; yollar birbirine kavuşurken küçük bir "öpüşme
 kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar verirsin**; **Köprü** düğmesine basınca
 köprü yapabileceğin yerler parlar, istediğine elle köprü koyarsın. Bölüm bölüm zorlaşır, yıldız toplarsın.
 
+**Görünüm:** maket gökyüzünde süzülen bulutların arasında durur; arayüz beyaz, yuvarlak kartlardan oluşur ve
+bölgenin rengini taşır. Kavşaklar gerçek kavşak gibidir: kollar kavisli köşe kaldırımlarıyla birleşir, her kolda
+yaya geçidi ve dur çizgisi, ışıklı kavşaklarda direk, şeridin üstüne uzanan kol ve üç renkli lamba başlığı vardır.
+Köprülerde alçak bordür, sık dikmeli metal korkuluk, iki sütunlu başlıklı ayaklar ve uzun köprülerde lamba direkleri
+bulunur. Araç iş yerine varınca "+1" parıltısı çıkar, bölüm kazanılınca konfeti yağar.
+
 Ana ekranda üç bölüm seti var: **Karayolu** (evler → iş yerleri), **Demiryolu** (istasyonlar → garlar, uzun
 trenler, makaslar, dağdan tünel) ve **Havalimanı** (uçaklar iner, kapıya yanaşır, kalkar; pist geçişleri).
 Hepsi aynı serbest çizim, kesişim seçimi ve köprü / alt geçit düğmeleriyle oynanır.
@@ -41,7 +47,12 @@ Hepsi aynı serbest çizim, kesişim seçimi ve köprü / alt geçit düğmeleri
   bağlandığı dört kollu kavşaklar (bu iki yol tek yol olup ana yolun üstünden geçer). İstediğine dokun, köprü olur.
   Hakkın kaldıkça parlayan yerler yenilenir; hak bitince ya da düğmeye yeniden basınca Yol çiz'e dönülür.
   **Alt geçit** düğmesi aynısını alt geçit için (mor ışıkla) yapar. Bu modda var olan köprünün işaretinde × rozeti
-  olur; ona dokunursan köprü kaldırılır, orası kavşak olur. Modda uzun sürüklersen yol çizmeye geçilir.
+  olur; ona dokunursan köprü kaldırılır, orası kavşak olur.
+- **Yol yokken bile önce köprüyü kur:** Köprü (ya da Alt geçit) modunda boş bir yere dokun: orada yarı saydam,
+  parlayan bir köprü kurulur ve hakkın ayrılır. Sürükleyerek dokunursan köprünün yönünü verirsin (dokunursan yanındaki
+  yolun yönünde, yol yoksa dikine durur). Sonra o noktanın yakınından geçen yolları çiz: oyun yolları tam köprünün
+  ortasından geçirir. **Köprüde** köprü yönündeki yol üstten, onu kesen yol alttan geçer; **alt geçitte** tersi.
+  İki yol orada kesişince kurduğun köprü gerçek köprüye dönüşür. Kurduğun köprünün × işaretine dokunursan kaldırılır.
 - Yer parlamıyorsa nedeni yazar (hak bitti, bu bölümde hak yok, rampalar için kesişimin iki yanında düz yol yok…).
 - Köprü ve alt geçit hakların bu düğmelerin üstünde yazar. Nehri kesen yol kendiliğinden alçak bir köprü olur ve
   bir köprü hakkı kullanır.
@@ -87,38 +98,75 @@ bekletmemek. Bir bölümü bitirince sonraki açılır.
 
 ### Bölümler
 
-| # | Bölüm | Öğrettiği |
-|---|---|---|
-| 1 | İlk yol | Evden iş yerine yol çizmek |
-| 2 | Kavşak | Kesişen yollar, ışıklı kavşak |
-| 3 | İlk köprü | Yoğun kavşağı köprüyle ayırmak |
-| 4 | Ortak yol | Az asfaltla yolları birleştirmek (Y kavşak) |
-| 5 | Nehir | Suyun üstünden köprüyle geçmek |
-| 6 | Hemzemin geçit | Tren geçen yolu alt geçitten geçirmek |
-| 7 | Üç renk | Hangi kesişim kavşak, hangisi köprü? |
-| 8 | Nehir ve ray | Köprü ve alt geçidi birlikte kullanmak |
-| 9 | Göl | Göl çevresinde yol ve tek köprü |
-| 10 | Büyük kavşak | Dört akış, dört kesişim |
-| 11 | Nehir ve ray | 24×38 m tahta: nehir ve demiryolu birlikte, üç renk |
-| 12 | Tek köprü | Tek köprü hakkıyla iki yolu birleştirip nehri geçmek, raydan önce ayırmak |
-| 13 | Göl | Gölün üstünden köprü mü, etrafından dolaşmak mı? |
-| 14 | Dağ yolu | 28×44 m: dağın içinden tünelle geçen yol, dolambaçlı yeşil cadde |
-| 15 | İki ray | İki demiryolu, altı hemzemin geçit: hangileri alt geçit olsun? |
-| 16 | İki nehir | İki nehir, iki köprü: üç yolu ortak bir ana yolda toplamak |
-| 17 | Metropol | 32×50 m: beş renk, nehir ve demiryolu, altı kesişim |
-| 18 | Kavşak ağı | Altı renk, altı cadde, dokuz kesişim |
-| 19 | Dağ, nehir, ray | Hepsi bir arada: tünel, köprü, geçit |
-| 20 | Megakent | Altı renk, nehir, demiryolu ve dağ |
+Karayolunda **40 bölüm** var; dört bölgeye ayrılır: **Köy** (1–10), **Kasaba** (11–20), **Şehir** (21–30),
+**Metropol** (31–40). Ana ekranda bölümler kıvrılan bir yol üstünde yuvarlak düğmeler olarak dizilir; her bölgenin
+başlığında o bölgede topladığın yıldızlar, bölüm düğmelerinin üstünde kazandığın yıldızlar yazar. Sıradaki bölümün
+çevresinde bir halka atar.
 
-**Haritalar büyür:** ilk 10 bölüm 20×32 m'lik tahtada, 11–13. bölümler 24×38 m, 14–16. bölümler 28×44 m, 17–20.
-bölümler 32×50 m'lik tahtada oynanır. Bölüm açılınca tahtanın tamamı ekrana sığar. Büyük haritalarda sağda
+**Yıldız kapıları (mücadele):** her bölgenin son bölümüne (10, 20, 30, 40) girmek için önceki bölümlerden yeterli
+toplam yıldız gerekir: **10. bölüm 20 ⭐, 20. bölüm 42 ⭐, 30. bölüm 62 ⭐, 40. bölüm 80 ⭐**. Kapı bölümünün
+düğmesinde kırmızı yıldız rozeti durur (yeterince yıldızın olunca yeşile döner). Yıldızın yetmezse kazanma kartı
+"… için toplam N yıldız gerekiyor; sende M var" der ve önceki bölümleri daha iyi bitirmeni ister.
+
+**Yoğun saat:** ileri bölümlerde (tabloda "yoğun saat" yazanlar) belli aralıklarla trafik birden artar: evlerden araçlar daha sık
+çıkar, üst çubuk kırmızı atar ve "Yoğun saat!" uyarısı çıkar. Bölüm kartında "Yoğun saat dalgaları" yazar.
+
+| # | Bölüm | Harita | İçerik |
+|---|---|---|---|
+| | **Köy** (bölüm 1–10) | | |
+| 1 | İlk yol | 20×32 m | 1 renk |
+| 2 | İki ev | 20×32 m | 2 renk |
+| 3 | Kavşak | 20×32 m | 2 renk |
+| 4 | Üç yol | 20×32 m | 3 renk |
+| 5 | İlk köprü | 20×32 m | 2 renk |
+| 6 | Ortak yol | 20×32 m | 2 renk |
+| 7 | Nehir | 20×32 m | su, 2 renk |
+| 8 | Hemzemin geçit | 20×32 m | ray, 2 renk |
+| 9 | Köprülü nehir | 20×32 m | su, 3 renk |
+| 10 | Üç renk | 20×32 m | 3 renk · ⭐ 20 gerekli |
+| | **Kasaba** (bölüm 11–20) | | |
+| 11 | Nehir ve ray | 20×32 m | su, ray, 2 renk |
+| 12 | Göl | 20×32 m | su, 3 renk |
+| 13 | Büyük kavşak | 20×32 m | 4 renk |
+| 14 | Kasaba yolları | 22×35 m | 4 renk |
+| 15 | Yeni köprüler | 22×35 m | su, ray, 3 renk |
+| 16 | Nehir ve ray | 24×38 m | su, ray, 3 renk |
+| 17 | Göl kenarı | 24×38 m | su, ray, 3 renk |
+| 18 | Tek köprü | 24×38 m | su, ray, 2 renk |
+| 19 | Dağ geçidi | 24×38 m | dağ, 3 renk |
+| 20 | Göl | 24×38 m | su, 3 renk · ⭐ 42 gerekli |
+| | **Şehir** (bölüm 21–30) | | |
+| 21 | Raylı şehir | 26×41 m | ray, 4 renk |
+| 22 | Dağ yolu | 28×44 m | dağ, 3 renk |
+| 23 | Köprülü nehirler | 28×44 m | su, 3 renk |
+| 24 | İki ray | 28×44 m | ray, 4 renk |
+| 25 | Kavşak dörtlüsü | 28×44 m | yoğun saat, 4 renk |
+| 26 | İki nehir | 28×44 m | su, 3 renk |
+| 27 | Dağ ve göl | 28×44 m | su, dağ, 4 renk |
+| 28 | Yoğun cadde | 28×44 m | ray, yoğun saat, 4 renk |
+| 29 | Nehir kavşağı | 28×44 m | su, 5 renk |
+| 30 | Şehir merkezi | 28×44 m | yoğun saat, 5 renk · ⭐ 62 gerekli |
+| | **Metropol** (bölüm 31–40) | | |
+| 31 | Liman şehri | 30×47 m | su, ray, 4 renk |
+| 32 | Metropol | 32×50 m | su, ray, 5 renk |
+| 33 | Çift ray | 32×50 m | su, ray, yoğun saat, 4 renk |
+| 34 | Kavşak ağı | 32×50 m | 6 renk |
+| 35 | Dağlar arasında | 32×50 m | dağ, 5 renk |
+| 36 | Dağ, nehir, ray | 32×50 m | su, ray, dağ, 4 renk |
+| 37 | Gece trafiği | 32×50 m | su, yoğun saat, 5 renk |
+| 38 | Adalar | 32×50 m | su, 5 renk |
+| 39 | Büyük sınav | 32×50 m | ray, yoğun saat, 6 renk |
+| 40 | Megakent | 32×50 m | su, ray, dağ, 6 renk · ⭐ 80 gerekli |
+
+**Haritalar büyür:** 1–13. bölümler 20×32 m'lik tahtada başlar, sonra 22×35, 24×38, 26×41, 28×44, 30×47 ve
+32×50 m'ye kadar adım adım büyür. Bölüm açılınca tahtanın tamamı ekrana sığar. Büyük haritalarda sağda
 **+ / − / ⛶** düğmeleri çıkar; **iki parmakla** sıkıştırıp açarak yakınlaştırır, iki parmakla sürükleyerek
 kaydırırsın (bilgisayarda fare tekerleği yakınlaştırır, sağ tuşla sürüklemek kaydırır). Tek parmak her zaman yol
-çizer. Yeni renkler: kırmızı, turkuaz, pembe. Karayolunda da dağ olabilir: dağın içinden geçen yol tünel olur
-(bir alt geçit hakkı kullanır).
+çizer. Renkler: turuncu, mavi, yeşil, mor, kırmızı, turkuaz, pembe. Karayolunda da dağ olabilir: dağın içinden
+geçen yol tünel olur (bir alt geçit hakkı kullanır).
 
 Her bölüm, kontrol betiğinde çözüm yoluyla baştan sona oynanıp kazanıldığı doğrulanmıştır; köprüsüz (hepsi kavşak)
-denemede 3, 4, 9, 10, 14, 15, 17, 18, 19 ve 20. bölümler kaybedilir.
+denemede 5, 6, 12, 13, 22, 25, 28, 32, 33, 34 ve 36. bölümler kaybedilir.
 
 ## Demiryolu bölümleri
 
@@ -327,7 +375,7 @@ ray-arasi/
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran (karayolu ve demiryolu sekmesi), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, köprü, büyük haritalar (14 Dağ yolu, 20 Megakent), demiryolu (nehir ve dağ, büyük gar), havalimanı (taksi köprüsü), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
+├── ekran-goruntuleri/      Ana ekran (bölüm haritası, demiryolu sekmesi), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, önceden kurulan köprü, gerçekçi kavşak, köprü, büyük haritalar (14 Dağ yolu, 20 Megakent), demiryolu (nehir ve dağ, büyük gar), havalimanı (taksi köprüsü), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```

@@ -41,7 +41,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
 
   console.log('ANA EKRAN');
   ok(await page.locator('#menu').isVisible(), 'ana ekran görünür');
-  ok((await page.locator('#lv-grid .lv-btn').count()) === 20, 'ana ekranda 20 karayolu bölümü var');
+  ok((await page.locator('#lv-grid .lv-btn').count()) === 40, 'ana ekranda 40 karayolu bölümü var');
   ok(!(await page.locator('.lv-btn[data-lv="1"]').getAttribute('class')).includes('locked') && (await page.locator('.lv-btn[data-lv="2"]').getAttribute('class')).includes('locked'), 'ilk bölüm açık, sonrakiler kilitli');
   ok((await page.locator('#menu .free-btn').count()) === 3, 'serbest atölye düğmeleri duruyor: Karayolu, Demiryolu, Havalimanı');
   await page.waitForTimeout(600); await shot('00-ana-ekran');
@@ -79,14 +79,14 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.evaluate(() => { RA.app.openLevel(1); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); const b = g.level.blds; g.addStroke([{ x: b[0].ex, z: b[0].ez }, { x: -4, z: 2 }, { x: 1, z: -2 }, { x: 4, z: -5 }, { x: b[1].ex, z: b[1].ez }], 'junction', true); g.togglePlay(); });
   const w1 = await page.evaluate(() => { const g = RA.app.lv; let t = 0; for (; t < 120 && !g.ended; t += 0.5) RA.app.advance(0.5); return { ended: g.ended, t, del: g.sim.stats.delivered }; });
   ok(w1.ended === 'win', 'turuncu araçlar fabrikaya ulaştı, bölüm kazanıldı (' + w1.del + ' araç, ' + w1.t + ' sn)');
-  await page.waitForTimeout(800);
+  await page.waitForFunction(() => !document.getElementById('lv-card').hidden && /Harika/.test(document.getElementById('lv-card').textContent), null, { timeout: 5000 }).catch(() => {});
   ok(/Harika/.test(await page.locator('#lv-card').textContent()) && (await page.locator('#lv-card .lv-stars i.on').count()) >= 1, 'kazanma kartı ve yıldızlar (' + (await page.locator('#lv-card .lv-stars i.on').count()) + ' yıldız)');
   await shot('11-bolum1-kazandi');
   await page.locator('#lv-card [data-act="menu"]').tap();
-  ok(!(await page.locator('.lv-btn[data-lv="2"]').getAttribute('class')).includes('locked'), 'bölüm 2 açıldı, yıldızlar ana ekranda görünüyor');
+  ok(!(await page.locator('.lv-btn[data-lv="21"]').getAttribute('class')).includes('locked'), 'bölüm 2 açıldı, yıldızlar ana ekranda görünüyor');
 
   console.log('\nBÖLÜM 3 — KESİŞİM: KAVŞAK, KÖPRÜ, ALT GEÇİT');
-  await page.evaluate(() => { RA.LV.progress.set(2, 1); RA.app.showMenu(); });
+  await page.evaluate(() => { [21, 2, 22].forEach((id) => RA.LV.progress.set(id, 1)); RA.app.showMenu(); });
   await page.locator('.lv-btn[data-lv="3"]').tap();
   await page.locator('#lv-card [data-act="start"]').tap();
   await page.evaluate(() => { RA.app.manual = true; });
@@ -115,7 +115,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   // Köprü düğmesi: köprü yapılabilecek yerler parlar, oyuncu istediğine dokunur (kavşak olan kesişim de olur)
   await page.locator('#lv-tok-b').tap(); await page.waitForTimeout(80);
   const bm = await page.evaluate(() => { const g = RA.app.lv; return { tool: g.tool, spots: (g.spotList || []).filter((q) => q.act === 'set').length, on: document.getElementById('lv-tok-b').classList.contains('on'), marks: g.view.marks.every((m) => !m.sp.visible) }; });
-  ok(bm.tool === 'bridge' && bm.spots === 1 && bm.on && bm.marks && /1 yer parlıyor/.test((await lvToast()).txt), '"Köprü"ye basınca köprü yapılabilecek yer parladı (kavşak olan kesişim): "' + (await lvToast()).txt + '"');
+  ok(bm.tool === 'bridge' && bm.spots === 1 && bm.on && bm.marks && /1 kesişim parlıyor/.test((await lvToast()).txt), '"Köprü"ye basınca köprü yapılabilecek yer parladı (kavşak olan kesişim): "' + (await lvToast()).txt + '"');
   await page.waitForTimeout(150); await shot('13a-kopru-yerleri');
   await page.mouse.click(mk.x, mk.y); await page.waitForTimeout(80);
   const bd = await page.evaluate(() => { const g = RA.app.lv; return { type: g.net.crossings[0].type, br: g.net.usage.bridges, tool: g.tool }; });
@@ -232,11 +232,11 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
       g.togglePlay(); let t = 0; for (; t < 500 && !g.ended; t += 0.5) RA.app.advance(0.5);
       return { n, ended: g.ended, del: g.sim.stats.delivered, peak: g.sim.stats.peak, len: Math.round(g.net.usage.len) };
     };
-    const sol = run(false), naive = [3, 4, 9, 10, 14, 15, 17, 18, 19, 20].includes(L.id) ? run(true) : null;
-    return { id: L.id, name: L.name, goal: L.goal, board: (L.board || [20, 32]).join('×'), sol, naive };
+    const sol = run(false), naive = [3, 4, 9, 10, 14, 30, 32, 17, 36, 18, 19].includes(L.id) ? run(true) : null;
+    return { id: L.id, n: L.n, name: L.name, goal: L.goal, board: (L.board || [20, 32]).join('×'), sol, naive };
   }));
-  for (const r of all) ok(r.sol.n > 0 && r.sol.ended === 'win', 'Bölüm ' + r.id + ' (' + r.name + ', ' + r.board + ' m): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ' araç, ' + r.sol.len + ' m asfalt, evde en çok ' + r.sol.peak + ' kişi)');
-  for (const r of all) if (r.naive) ok(r.naive.ended === 'lose', 'Bölüm ' + r.id + ': köprüsüz (hepsi kavşak) denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
+  for (const r of all) ok(r.sol.n > 0 && r.sol.ended === 'win', 'Bölüm ' + r.n + ' (' + r.name + ', ' + r.board + ' m): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ' araç, ' + r.sol.len + ' m asfalt, evde en çok ' + r.sol.peak + ' kişi)');
+  for (const r of all) if (r.naive) ok(r.naive.ended === 'lose', 'Bölüm ' + r.n + ' (' + r.name + '): köprüsüz (hepsi kavşak) denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
   // haritalar büyür; tahtanın tamamı ekrana sığar, yakınlaştırılıp kaydırılabilir
   const sizes = await page.evaluate(() => [1, 11, 14, 17].map((id) => {
     RA.app.openLevel(id); const g = RA.app.lv; g.hideCard();
@@ -253,6 +253,66 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.locator('#lv-zfit').tap();
   const zf = await page.evaluate(() => RA.app.lv.cam.zoom);
   ok(zm.z > 1.9 && zw < zm.z && zf === 1, '+ ile yakınlaşıyor (' + zm.z.toFixed(2) + '×), fare tekerleğiyle uzaklaşıyor (' + zw.toFixed(2) + '×), ⛶ ile tüm tahta geri geliyor');
+  await page.evaluate(() => RA.app.showMenu());
+
+  console.log('\n40 BÖLÜM, YILDIZ KAPILARI, YOĞUN SAAT, ÖNCEDEN KÖPRÜ');
+  const sg = await page.evaluate(() => {
+    const P = RA.LV.progress, saved = Object.assign({}, P.get()), L = RA.LV.LEVELS;
+    const first9 = L.slice(0, 9).map((l) => l.id), g10 = L[9].id;
+    RA.store.set('lv.stars', Object.fromEntries(first9.map((id) => [id, 1])));
+    const low = { unlocked: P.unlocked(g10), need: P.need(g10), have: P.before(g10) };
+    RA.store.set('lv.stars', Object.fromEntries(first9.map((id) => [id, 3])));
+    const high = { unlocked: P.unlocked(g10), have: P.before(g10) };
+    RA.store.set('lv.stars', saved);
+    const sizes = L.map((l) => (l.board || [20, 32])[0]);
+    return { n: L.length, low, high, gates: Object.entries(RA.LV.GATES).map(([k, v]) => k + ':' + v).join(' '), grows: sizes.every((w, i) => !i || w >= sizes[i - 1]), first: sizes[0], last: sizes[39], rush: L.filter((l) => l.rush).length };
+  });
+  ok(sg.n === 40 && sg.grows && sg.first === 20 && sg.last === 32, 'karayolu 40 bölüm; harita bölüm bölüm büyüyor (20 m → 32 m genişlik)');
+  ok(!sg.low.unlocked && sg.low.need === 20 && sg.high.unlocked, 'yıldız kapısı: 10. bölüm için 20 yıldız gerekiyor; ilk 9 bölüm 1 yıldızla bitince kilitli (' + sg.low.have + '), 3 yıldızla açık (' + sg.high.have + ') · kapılar ' + sg.gates);
+  await page.evaluate(() => { RA.store.set('lv.set', 'road'); RA.app.showMenu(); });
+  const mp = await page.evaluate(() => ({ ch: document.querySelectorAll('#lv-grid .lv-ch').length, gates: document.querySelectorAll('#lv-grid .lv-node .g').length, roads: document.querySelectorAll('#lv-grid .lv-road').length, next: !!document.querySelector('#lv-grid .lv-node.next') || RA.LV.LEVELS.every((l) => RA.LV.progress.stars(l.id) > 0), stars: document.getElementById('menu-stars').textContent }));
+  ok(mp.ch === 4 && mp.gates === 4 && mp.roads === 4 && mp.next && /\/ 120/.test(mp.stars), 'ana ekran bölüm haritası: 4 bölge (Köy, Kasaba, Şehir, Metropol), kıvrılan yollar, 4 yıldız kapısı rozeti, sıradaki bölüm işaretli, toplam yıldız ' + mp.stars.trim());
+  await page.waitForTimeout(400); await shot('19-bolum-haritasi');
+  // kazanma kartı: sonraki bölüm yıldız kapısıyla kilitliyse not düşer
+  const gc = await page.evaluate(() => {
+    const P = RA.LV.progress, saved = Object.assign({}, P.get()), L = RA.LV.LEVELS;
+    RA.store.set('lv.stars', Object.fromEntries(L.slice(0, 8).map((l) => [l.id, 1])));
+    RA.app.openLevel(L[8].id); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); g.playSolution(); g.togglePlay();
+    for (let t = 0; t < 300 && !g.ended; t += 0.5) RA.app.advance(0.5);
+    return new Promise((res) => setTimeout(() => { const txt = document.getElementById('lv-card').textContent; RA.store.set('lv.stars', saved); res({ ended: g.ended, txt, next: !!document.querySelector('#lv-card [data-act="next"]') }); }, 900));
+  });
+  ok(gc.ended === 'win' && /yıldız gerekiyor/.test(gc.txt) && !gc.next, '9. bölüm az yıldızla bitince kartta "10. bölüm için yıldız gerekiyor" yazıyor, Sonraki bölüm düğmesi yok');
+  await shot('19b-yildiz-kapisi');
+  // yoğun saat
+  const rs = await page.evaluate(() => {
+    const L = RA.LV.LEVELS.find((l) => l.rush); RA.app.openLevel(L.id); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); g.playSolution(); g.togglePlay();
+    let seen = false, k0 = 0; for (let t = 0; t < L.rush.every + 2 && !g.ended; t += 0.5) { RA.app.advance(0.5); if (document.getElementById('lv').dataset.rush === '1') { seen = true; break; } }
+    return { name: L.name, seen, toast: document.getElementById('lv-toast').textContent };
+  });
+  ok(rs.seen && /Yoğun saat/.test(rs.toast), 'yoğun saat: ' + rs.name + ' bölümünde dalga başlayınca uyarı çıktı ve üst çubuk kırmızı atıyor');
+  // yol yokken köprü kur, sonra yolları çiz
+  await page.evaluate(() => { RA.app.openLevel(3); RA.app.manual = true; RA.app.lv.hideCard(); });
+  await page.locator('#lv-tok-b').tap(); await page.waitForTimeout(60);
+  ok((await page.evaluate(() => RA.app.lv.tool)) === 'bridge' && /kurmak istediğin yere dokun/.test((await lvToast()).txt), 'yol yokken "Köprü"ye basınca köprü modu açıldı: "' + (await lvToast()).txt + '"');
+  const pq0 = await W(0.3, 0.4), pq1 = await W(0.3 + 0.48 * 3, 0.4 - 0.88 * 3);
+  await page.mouse.move(pq0.x, pq0.y); await page.mouse.down(); await page.mouse.move(pq1.x, pq1.y, { steps: 8 }); await page.mouse.up(); await page.waitForTimeout(80);
+  const pl = await page.evaluate(() => { const g = RA.app.lv; return { n: g.plans.length, nb: document.getElementById('lv-nb').textContent, ghost: !!g.view.planG, tool: g.tool }; });
+  ok(pl.n === 1 && pl.nb === '0' && pl.ghost, 'boş yere sürükleyerek köprü kuruldu (yarı saydam köprü göründü, köprü hakkı ayrıldı): "' + (await lvToast()).txt + '"');
+  await page.waitForTimeout(300); await shot('19c-onceden-kopru');
+  const pb = await page.evaluate(() => {
+    const g = RA.app.lv, b = g.level.blds; g.setTool('road');
+    const line = (p0, p1) => { const o = []; for (let k = 0; k <= 30; k++) o.push({ x: p0.ex + (p1.ex - p0.ex) * k / 30 + Math.sin(k) * 0.15, z: p0.ez + (p1.ez - p0.ez) * k / 30 }); return o; };
+    g.addStroke(line(b[0], b[2])); const mid = { plans: g.plans.length, cross: g.net.crossings.length };
+    g.addStroke(line(b[1], b[3]));
+    const c = g.net.crossings[0], ys = g.net.S.map((st) => g.net.strokeY.get(st.id)(RA.LV.geo.nearest(st, c.x, c.z).s));
+    return { mid, type: c && c.type, plans: g.plans.length, ys, toast: document.getElementById('lv-toast').textContent, usage: g.net.usage.bridges };
+  });
+  ok(pb.mid.plans === 1 && pb.type === 'bridge' && pb.plans === 0 && pb.usage === 1 && pb.ys[0] > 1 && pb.ys[1] < 0.2 && /kurduğun köprüden/.test(pb.toast), 'sonra çizilen yollar kurulan köprüden geçti: köprü yönündeki turuncu yol üstte, mavi yol altta ("' + pb.toast + '")');
+  // gerçekçi ışıklar
+  const tl = await page.evaluate(() => { RA.app.openLevel(2); RA.app.manual = true; const g = RA.app.lv; g.hideCard(); g.playSolution(); g.togglePlay(); RA.app.advance(4); return { n: g.view.lamps.length, heads: g.view.lamps.every((l) => l.red && l.amber && l.green), lit: g.view.lamps.filter((l) => l.green.emissiveIntensity > 1).length }; });
+  ok(tl.n >= 4 && tl.heads && tl.lit >= 1, 'ışıklı kavşakta her kolda üç renkli lamba başlığı (' + tl.n + ' lamba, ' + tl.lit + ' tanesi yeşil)');
+  await page.waitForTimeout(300); await page.evaluate(() => { const g = RA.app.lv, n = g.net.nodes.find((q) => q.kind === 'j'); document.getElementById('lv-toast').hidden = true; if (n) { const q = RA.project(new THREE.Vector3(n.x, 0, n.z), g.camera, RA.app.w, RA.app.h); g.zoomAt(q.x, q.y, 0.35); } });
+  await page.waitForTimeout(300); await shot('19d-gercekci-kavsak');
   await page.evaluate(() => RA.app.showMenu());
 
   console.log('\nDEMİRYOLU VE HAVALİMANI BÖLÜMLERİ');

@@ -22,13 +22,16 @@
       rail: RA.mat(0xf2f2ec, { roughness: 0.6 }),
       line: RA.mat(0xf4f4ee, { roughness: 0.7 }),
       dash: new T.MeshBasicMaterial({ map: RA.tex.dash(), transparent: true, depthWrite: false }),
+      railing: RA.mat(0x7f8a96, { roughness: 0.4, metalness: 0.5 }),
+      lampHead: new T.MeshStandardMaterial({ color: 0xfff6d8, emissive: 0xffe9a8, emissiveIntensity: 0.9 }),
       water: new T.MeshStandardMaterial({ color: 0x3f8fd0, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.92 }),
       bank: RA.mat(0xc8b98f, { roughness: 1 }),
       gravel: new T.MeshStandardMaterial({ map: RA.tex.clone(RA.tex.gravel(), 1, 1), roughness: 1 }),
       steel: RA.mat(0x9aa1aa, { roughness: 0.35, metalness: 0.6 }),
       sleeper: RA.mat(0x6b4e3a, { roughness: 0.9 }),
       wood: RA.mat(0x9a6b43, { roughness: 0.8 }),
-      table: RA.mat(0x3a4a52, { roughness: 1 }),
+      table: RA.mat(0xf1e3c6, { roughness: 1 }),
+      cloud: new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true, emissive: 0xdfe8f5, emissiveIntensity: 0.25 }),
       drive: RA.mat(0x5a5e66, { roughness: 0.9 }),
       // demiryolu
       ballast: new T.MeshStandardMaterial({ map: RA.tex.clone(RA.tex.gravel(), 1, 1), color: 0xcfc6b8, roughness: 1 }),
@@ -117,6 +120,25 @@
     const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; texCache[key] = t; return t;
   }
   function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  // gökyüzü: yukarıdan aşağı açılan mavi (menü için bulutlu ve tepeli)
+  RA.skyTexture = function (menu) {
+    return canvasTex('sky' + (menu ? 'm' : ''), menu ? 512 : 16, menu ? 1024 : 256, (g, w, h) => {
+      const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#5fb8ff'); gr.addColorStop(0.55, '#a9dcff'); gr.addColorStop(1, '#e6f7ff');
+      g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      if (!menu) return;
+      const cloud = (x, y, s) => { g.fillStyle = 'rgba(255,255,255,0.92)'; for (const [dx, dy, r] of [[0, 0, 1], [0.9, 0.15, 0.8], [-0.9, 0.2, 0.75], [0.35, -0.45, 0.75], [-0.4, -0.3, 0.6]]) { g.beginPath(); g.arc(x + dx * s * 40, y + dy * s * 40, r * s * 34, 0, Math.PI * 2); g.fill(); } };
+      cloud(90, 120, 1.1); cloud(400, 70, 0.9); cloud(300, 300, 0.7); cloud(60, 520, 0.8); cloud(450, 640, 1.0); cloud(220, 820, 0.7);
+      const hill = (y, col, amp, ph) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 8) g.lineTo(x, y + Math.sin(x / w * Math.PI * 2 + ph) * amp + Math.sin(x / w * Math.PI * 5 + ph * 2) * amp * 0.35); g.lineTo(w, h); g.fill(); };
+      hill(h - 120, '#8fd36b', 26, 0.4); hill(h - 70, '#6cc251', 22, 2.1);
+    });
+  };
+  function popTex(css) {
+    return canvasTex('pop' + css, 128, 80, (g) => {
+      g.fillStyle = '#ffffff'; rr(g, 6, 8, 116, 64, 30); g.fill();
+      g.fillStyle = css; rr(g, 12, 14, 104, 52, 24); g.fill();
+      g.fillStyle = '#ffffff'; g.font = '900 40px Overpass, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('+1', 64, 43);
+    });
+  }
   // kesişim işareti: kavşak (artı), köprü (kemer), alt geçit (tünel), hemzemin (bariyer)
   // köprü / alt geçit modunda var olanın işaretinde kaldırma rozeti (×) olur
   function removeTex(type) {
@@ -178,7 +200,53 @@
   LV.tex = { markTex, signTex, pendTex, heartTex };
 
   class LvView {
-    constructor(scene) { this.scene = scene; this.base = null; this.roads = null; this.prev = null; this.anims = []; this.lastNow = 0; }
+    constructor(scene) { this.scene = scene; this.base = null; this.roads = null; this.prev = null; this.anims = []; this.lastNow = 0; this.pops = 0; }
+
+    /* ---------- şenlik: teslimat parıltısı, kazanınca konfeti ---------- */
+    pop(x, z, css) {
+      const now = performance.now(); if (now - this.pops < 120) return; this.pops = now; // çok sık olmasın
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: popTex(css || '#ffc531'), transparent: true, depthTest: false })); sp.renderOrder = 25; sp.scale.set(1.1, 0.7, 1);
+      const grp = new T.Group(); grp.position.set(x, 1.6, z); grp.add(sp); this.scene.add(grp);
+      const stars = []; for (let k = 0; k < 6; k++) { const s = RA.glowSprite(k % 2 ? 0xffe27a : 0xffffff, 0.35, 1); s.renderOrder = 24; grp.add(s); const a = (k / 6) * Math.PI * 2; stars.push({ s, vx: Math.cos(a) * 2, vz: Math.sin(a) * 2 }); }
+      this.anims.push({ t: 0, step: (a, dt) => {
+        a.t += dt; const t = a.t;
+        sp.position.y = t * 1.4; sp.material.opacity = t < 0.6 ? 1 : Math.max(0, 1 - (t - 0.6) / 0.4); const sc = t < 0.15 ? t / 0.15 : 1; sp.scale.set(1.1 * sc, 0.7 * sc, 1);
+        for (const q of stars) { q.s.position.set(q.vx * t, 0.4 + 2 * t - 3 * t * t, q.vz * t); q.s.material.opacity = Math.max(0, 1 - t / 0.6); }
+        if (t > 1) { this.scene.remove(grp); sp.material.dispose(); stars.forEach((q) => q.s.material.dispose()); return false; }
+        return true;
+      } });
+    }
+    confetti() {
+      const W = LV.C.W, D = LV.C.D, n = 160, cols = [0xff5a5f, 0xffc531, 0x2fbf71, 0x2f7fe0, 0x9050d8, 0xff8a1f, 0x12a8a0];
+      const geo = new T.PlaneGeometry(0.32, 0.18);
+      const ps = [];
+      const grp = new T.Group(); this.scene.add(grp);
+      for (let i = 0; i < n; i++) {
+        const mesh = new T.Mesh(geo, new T.MeshBasicMaterial({ color: cols[i % cols.length], side: T.DoubleSide, transparent: true }));
+        mesh.position.set((Math.random() - 0.5) * W, 8 + Math.random() * 10, (Math.random() - 0.5) * D);
+        grp.add(mesh); ps.push({ mesh, vy: -2.5 - Math.random() * 2.5, sx: (Math.random() - 0.5) * 2, rx: Math.random() * 6, rz: Math.random() * 6 });
+      }
+      this.anims.push({ t: 0, step: (a, dt) => {
+        a.t += dt;
+        for (const q of ps) { q.mesh.position.y += q.vy * dt; q.mesh.position.x += Math.sin(a.t * 3 + q.rx) * q.sx * dt; q.mesh.rotation.x += q.rx * dt; q.mesh.rotation.z += q.rz * dt; if (a.t > 3) q.mesh.material.opacity = Math.max(0, 1 - (a.t - 3) / 1); }
+        if (a.t > 4) { this.scene.remove(grp); geo.dispose(); ps.forEach((q) => q.mesh.material.dispose()); return false; }
+        return true;
+      } });
+    }
+    // maketin çevresinde süzülen bulutlar
+    clouds() {
+      if (this.cloudG) this.scene.remove(this.cloudG);
+      const g = new T.Group(), m = mats(), rnd = RA.rng(77), W = LV.C.W, D = LV.C.D;
+      const spots = [[-W / 2 - 6, -D / 4], [W / 2 + 6, D / 6], [-W / 2 - 8, D / 3], [W / 2 + 7, -D / 3], [0, -D / 2 - 9], [-W / 3, D / 2 + 7], [W / 3, D / 2 + 8]];
+      for (const [x, z] of spots) {
+        const c = new T.Group();
+        const k = 3 + Math.floor(rnd() * 3);
+        for (let i = 0; i < k; i++) { const s = new T.Mesh(RA.geo('cloudball', () => new T.IcosahedronGeometry(1, 1)), m.cloud); const r = 1.2 + rnd() * 1.3; s.scale.set(r * 1.3, r * 0.8, r); s.position.set((i - k / 2) * 1.6, rnd() * 0.6, (rnd() - 0.5) * 1.2); c.add(s); }
+        c.position.set(x, 4 + rnd() * 3, z); c.userData.v = 0.15 + rnd() * 0.2; c.userData.x0 = x; g.add(c);
+      }
+      g.children.forEach((c) => c.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }));
+      this.scene.add(g); this.cloudG = g;
+    }
 
     /* ---------- animasyonlar: yolun serilmesi ve yolların öpüşmesi ---------- */
     sweep(pts) {
@@ -414,16 +482,35 @@
       for (const [s0, s1] of parts) {
         if (s1 - s0 < 0.3) continue;
         const sub = path.slice(s0, s1), yy = (s) => yf(s0 + s);
-        g.add(new T.Mesh(wallY(sub, -hw - 0.08, yy, 0.02, -0.28, 0.25, true), m.deck));
-        g.add(new T.Mesh(wallY(sub, hw + 0.08, yy, 0.02, -0.28, 0.25, false), m.deck));
-        // korkuluk (açık renk, üstten bakınca köprü belli olsun)
-        for (const x of [-hw - 0.04, hw + 0.04]) g.add(new T.Mesh(ribbonY(sub, x - 0.07, x + 0.07, (s) => yy(s) + 0.22, 0, 0.25), m.parapet));
-        for (const [x, f] of [[-hw - 0.11, true], [hw + 0.11, false], [-hw + 0.03, false], [hw - 0.03, true]]) g.add(new T.Mesh(wallY(sub, x, yy, 0.22, 0.02, 0.25, f), m.parapet));
-        g.add(new T.Mesh(ribbonY(sub, -hw - 0.08, hw + 0.08, (s) => yy(s) - 0.28, 0, 0.25), m.deck));
-        for (let s = 0.6; s < sub.length - 0.3; s += 1.7) {
-          const y = yy(s); if (y < 0.55) continue;
-          const P = sub.at(s), Tn = sub.tan(s);
-          const pl = mesh(rb(0.32, y - 0.25, 0.32, 0.04), m.pillar, P.x, (y - 0.25) / 2, P.z); pl.rotation.y = -Math.atan2(Tn.z, Tn.x); g.add(pl);
+        // güverte yanları ve altı (kutu kiriş)
+        g.add(new T.Mesh(wallY(sub, -hw - 0.08, yy, 0.02, -0.3, 0.25, true), m.deck));
+        g.add(new T.Mesh(wallY(sub, hw + 0.08, yy, 0.02, -0.3, 0.25, false), m.deck));
+        g.add(new T.Mesh(ribbonY(sub, -hw - 0.08, hw + 0.08, (s) => yy(s) - 0.3, 0, 0.25), m.deck));
+        // alçak bordür
+        for (const [x, f] of [[-hw - 0.08, true], [hw + 0.08, false]]) g.add(new T.Mesh(wallY(sub, x, yy, 0.1, 0.02, 0.25, f), m.parapet));
+        for (const x of [-hw - 0.03, hw + 0.03]) g.add(new T.Mesh(ribbonY(sub, x - 0.06, x + 0.06, (s) => yy(s) + 0.1, 0, 0.25), m.parapet));
+        // metal korkuluk: dikmeler ve üst küpeşte
+        for (let s = 0.15; s < sub.length - 0.1; s += 0.42) {
+          const P = sub.at(s), Tn = sub.tan(s), y = yy(s), a = -Math.atan2(Tn.z, Tn.x);
+          for (const x of [-hw - 0.03, hw + 0.03]) { const po = mesh(RA.geo('rpost', () => new T.BoxGeometry(0.045, 0.24, 0.045)), m.railing, P.x - Tn.z * x, y + 0.22, P.z + Tn.x * x, false); po.rotation.y = a; g.add(po); }
+        }
+        for (const x of [-hw - 0.03, hw + 0.03]) g.add(new T.Mesh(ribbonY(sub, x - 0.035, x + 0.035, (s) => yy(s) + 0.34, 0, 0.2), m.railing));
+        // ayaklar: iki sütun ve üstte başlık kirişi
+        for (let s = 0.9; s < sub.length - 0.5; s += 2.3) {
+          const y = yy(s); if (y < 0.6) continue;
+          const P = sub.at(s), Tn = sub.tan(s), a = -Math.atan2(Tn.z, Tn.x), h = y - 0.42;
+          for (const x of [-hw * 0.55, hw * 0.55]) { const c = mesh(RA.geo('pcol', () => new T.CylinderGeometry(0.1, 0.12, 1, 10)), m.pillar, P.x - Tn.z * x, h / 2, P.z + Tn.x * x); c.scale.y = h; g.add(c); }
+          const cap = mesh(RA.geo('pcap' + hw.toFixed(2), () => new T.BoxGeometry(0.34, 0.14, hw * 2 + 0.2)), m.pillar, P.x, y - 0.37, P.z); cap.rotation.y = a; g.add(cap);
+        }
+        // uzun köprüde lamba direkleri (bir sağ, bir sol)
+        if (sub.length > 4.5) {
+          let side = 1;
+          for (let s = 1.4; s < sub.length - 1; s += 3.2) {
+            const P = sub.at(s), Tn = sub.tan(s), y = yy(s), x = (hw + 0.03) * side, a = -Math.atan2(Tn.z, Tn.x);
+            const lp = mesh(RA.geo('blpole', () => new T.CylinderGeometry(0.025, 0.03, 0.9, 6)), m.railing, P.x - Tn.z * x, y + 0.55, P.z + Tn.x * x); g.add(lp);
+            const hd = mesh(RA.geo('blhead', () => new T.BoxGeometry(0.1, 0.05, 0.26)), m.lampHead, P.x - Tn.z * (x - side * 0.12), y + 1.0, P.z + Tn.x * (x - side * 0.12), false); hd.rotation.y = a; g.add(hd);
+            side = -side;
+          }
         }
       }
     }
@@ -501,6 +588,7 @@
       }
       // kavşak ve birleşme yerleri
       for (const n of net.nodes) {
+        if (mode === 'road' && n.kind === 'j') { this.roadJunction(stat, n, net, m); continue; }
         if (n.kind === 'j' || n.kind === 'joint') {
           // kavşak zemini: kolların arasını dolduran düz asfalt / balast / beton
           const r = mode === 'rail' ? (n.kind === 'j' ? LV.C.JR + 0.25 : 0.7) : mode === 'air' ? (n.kind === 'j' ? LV.C.JR + 0.35 : 1.15) : n.kind === 'j' ? LV.C.JR + 0.02 : 0.9;
@@ -532,17 +620,32 @@
       const merged = RA.mergeStatic(stat);
       merged.children.forEach((o) => { o.castShadow = true; o.receiveShadow = true; }); // köprüler alttaki yola gölge düşürür
       root.add(merged);
-      // ışıklar: her kavşak kolunda (gelen şeridin sağında) bir lamba
+      // trafik ışıkları: her kolda gelen şeridin sağında direk, şeridin üstüne uzanan kol ve üç renkli lamba başlığı
       this.lamps = [];
+      const poleM = RA.mat(0x3d4249, { roughness: 0.5 }), headM = RA.mat(0x1c1f24, { roughness: 0.6 });
       for (const n of net.nodes) {
         if (n.kind !== 'j' || n.deg < 4) continue; // 3 kollu kavşaklar ışıksız: önce gelen geçer
         for (const arm of n.arms) {
-          const ang = arm.ang; const rx = -Math.sin(ang), rz = Math.cos(ang);
-          const x = n.x + Math.cos(ang) * 1.35 - rx * 1.05, z = n.z + Math.sin(ang) * 1.35 - rz * 1.05;
-          const pole = mesh(RA.geo('lpole', () => new T.CylinderGeometry(0.035, 0.035, 0.75, 6)), RA.mat(0x3d4249), x, 0.375, z); root.add(pole);
-          const mat = new T.MeshStandardMaterial({ color: 0x111111, emissive: 0xff2a1f, emissiveIntensity: 2.4 });
-          const lamp = new T.Mesh(RA.geo('lbulb', () => new T.SphereGeometry(0.11, 12, 8)), mat); lamp.position.set(x, 0.82, z); root.add(lamp);
-          this.lamps.push({ n, e: arm.e.id, mat });
+          const dx = Math.cos(arm.ang), dz = Math.sin(arm.ang), rx = -dz, rz = dx;
+          const ln = net.lanes.find((l) => l.e === arm.e && l.to === n);
+          let side = -1;
+          if (ln) { const E = ln.path.at(ln.len); side = Math.sign((E.x - n.x) * rx + (E.z - n.z) * rz) || -1; }
+          const R = (mode === 'road' ? LV.C.JR : LV.C.JR + 0.2) + 0.75, off = mode === 'air' ? 1.35 : mode === 'rail' ? 0.95 : 1.12;
+          const x = n.x + dx * R + rx * side * off, z = n.z + dz * R + rz * side * off;
+          const grp = new T.Group(); grp.position.set(x, 0, z); grp.rotation.y = -Math.atan2(dz, dx); // yerel +x: koldan dışarı (gelen araca bakar)
+          grp.add(mesh(RA.geo('tlpole', () => new T.CylinderGeometry(0.035, 0.045, 1.25, 8)), poleM, 0, 0.625, 0));
+          grp.add(mesh(RA.geo('tlbase', () => new T.CylinderGeometry(0.08, 0.1, 0.06, 10)), poleM, 0, 0.03, 0));
+          const armL = off - 0.32;
+          const am = mesh(RA.geo('tlarm' + armL.toFixed(2), () => new T.BoxGeometry(0.05, 0.05, armL)), poleM, 0, 1.2, -side * armL / 2); grp.add(am);
+          const hz = -side * (armL - 0.02);
+          grp.add(mesh(RA.geo('tlhead', () => RA.rbox(0.1, 0.36, 0.13, 0.025)), headM, 0.03, 1.02, hz));
+          grp.add(mesh(RA.geo('tlback', () => RA.rbox(0.02, 0.44, 0.2, 0.01)), headM, -0.03, 1.02, hz));
+          const mk = (col) => new T.MeshStandardMaterial({ color: 0x111111, emissive: col, emissiveIntensity: 0.08, roughness: 0.3 });
+          const red = mk(0xff2a1f), amber = mk(0xffb400), green = mk(0x22e06a);
+          [[red, 1.13], [amber, 1.02], [green, 0.91]].forEach(([mt, y]) => { const b = new T.Mesh(RA.geo('tlbulb', () => new T.SphereGeometry(0.038, 10, 8)), mt); b.position.set(0.09, y, hz); grp.add(b); });
+          const glow = RA.glowSprite(0xff3b2f, 0.42, 0.6); glow.position.set(0.14, 1.02, hz); grp.add(glow);
+          root.add(grp);
+          this.lamps.push({ n, e: arm.e.id, red, amber, green, glow });
         }
       }
       // hemzemin geçit bariyerleri
@@ -597,6 +700,75 @@
       this.roads = root;
     }
 
+    // gerçekçi kavşak: kolların ağızlarını kavisli köşelerle birleştiren asfalt, köşe kaldırımları, yaya geçitleri, dur çizgileri
+    roadJunction(stat, n, net, m) {
+      const R = LV.C.JR, HA = 0.8, HC = 0.86;
+      const arms = n.arms.slice().sort((p, q) => p.ang - q.ang);
+      const D = arms.map((a) => ({ x: Math.cos(a.ang), z: Math.sin(a.ang) }));
+      const P = (k, h, sg) => ({ x: n.x + D[k].x * R - D[k].z * h * sg, z: n.z + D[k].z * R + D[k].x * h * sg });
+      const meet = (A, da, B, db) => { const det = da.x * -db.z - da.z * -db.x; if (Math.abs(det) < 1e-3) return null; const t = ((B.x - A.x) * -db.z - (B.z - A.z) * -db.x) / det; return { x: A.x + da.x * t, z: A.z + da.z * t }; };
+      // köşe eğrisi: k kolunun yanından k+1 kolunun yanına (yol kenarlarının buluştuğu köşeye doğru kıvrılır)
+      const corner = (k, h) => {
+        const j = (k + 1) % arms.length;
+        let gap = arms[j].ang - arms[k].ang; if (j === 0) gap += Math.PI * 2;
+        const A = P(k, h, 1), B = P(j, h, -1);
+        let C = gap > 1.2 && gap < 2.75 ? meet(A, { x: -D[k].x, z: -D[k].z }, B, { x: -D[j].x, z: -D[j].z }) : null;
+        if (C && Math.hypot(C.x - n.x, C.z - n.z) > R * 1.6) C = null;
+        if (!C) C = { x: (A.x + B.x) / 2, z: (A.z + B.z) / 2 };
+        const pts = []; for (let i = 0; i <= 10; i++) { const t = i / 10, u = 1 - t; pts.push({ x: u * u * A.x + 2 * u * t * C.x + t * t * B.x, z: u * u * A.z + 2 * u * t * C.z + t * t * B.z }); }
+        return pts;
+      };
+      const poly = [];
+      for (let k = 0; k < arms.length; k++) { poly.push(P(k, HA, -1)); poly.push(...corner(k, HA)); }
+      const shp = new T.Shape(poly.map((p) => new T.Vector2(p.x, -p.z)));
+      const geo = new T.ShapeGeometry(shp); geo.rotateX(-Math.PI / 2);
+      const pad = new T.Mesh(geo, m.asphalt); pad.position.y = 0.05; pad.receiveShadow = true; stat.add(pad);
+      // köşe kaldırımları
+      for (let k = 0; k < arms.length; k++) stat.add(new T.Mesh(ribbonY(new RA.Path(corner(k, HC)), -0.09, 0.09, () => 0, 0.06, 0.08), m.curb));
+      // yaya geçidi ve dur çizgisi
+      for (let k = 0; k < arms.length; k++) {
+        const ang = arms[k].ang, dx = D[k].x, dz = D[k].z, rx = -dz, rz = dx;
+        const cx = n.x + dx * (R + 0.32), cz = n.z + dz * (R + 0.32);
+        for (let q = -2; q <= 2; q++) {
+          const zb = mesh(RA.geo('zebra', () => new T.BoxGeometry(0.42, 0.012, 0.15)), m.line, cx + rx * q * 0.27, 0.058, cz + rz * q * 0.27, false);
+          zb.rotation.y = -ang; stat.add(zb);
+        }
+        const ln = net.lanes.find((l) => l.e === arms[k].e && l.to === n);
+        if (ln && ln.len > 1.2) {
+          const S = ln.path.at(Math.max(0, ln.len - 0.68)), Tn = ln.path.tan(Math.max(0, ln.len - 0.68));
+          const bar = mesh(RA.geo('stopbar', () => new T.BoxGeometry(0.07, 0.012, 0.66)), m.line, S.x, 0.058, S.z, false); bar.rotation.y = -Math.atan2(Tn.z, Tn.x); stat.add(bar);
+        }
+      }
+    }
+
+    /* ---------- önceden kurulmuş köprü / alt geçit (henüz yolu yok): yarı saydam taslak ---------- */
+    plans(list) {
+      if (this.planG) { this.scene.remove(this.planG); this.planG.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } else if (o.isSprite) o.material.dispose(); }); this.planG = null; }
+      if (!list || !list.length) return;
+      const g = new T.Group();
+      for (const pl of list) {
+        const col = pl.type === 'bridge' ? 0x3d8bff : 0xa061f0;
+        const mat = new T.MeshStandardMaterial({ color: col, transparent: true, opacity: 0.6, emissive: col, emissiveIntensity: 0.35, depthWrite: false, roughness: 0.5 });
+        const grp = new T.Group(); grp.position.set(pl.x, 0, pl.z);
+        // köprüde güverte planın yönünde; alt geçitte yön boyunca giden yol alttan geçer, güverte ona diktir
+        const a = Math.atan2(pl.dz, pl.dx) + (pl.type === 'tunnel' ? Math.PI / 2 : 0);
+        grp.rotation.y = -a;
+        const H = 1.15;
+        grp.add(new T.Mesh(new T.BoxGeometry(2.2, 0.16, 1.8), mat).translateY(H));
+        for (const sg of [-1, 1]) {
+          const ramp = new T.Mesh(new T.BoxGeometry(2.5, 0.14, 1.8), mat); ramp.position.set(sg * 2.25, H / 2, 0); ramp.rotation.z = -sg * Math.atan2(H, 2.3); grp.add(ramp);
+          for (const zz of [-0.95, 0.95]) { const rail = new T.Mesh(new T.BoxGeometry(2.2, 0.22, 0.08), mat); rail.position.set(0, H + 0.18, zz); grp.add(rail); }
+          const pier = new T.Mesh(new T.BoxGeometry(0.3, H, 1.4), mat); pier.position.set(sg * 0.85, H / 2, 0); grp.add(pier);
+        }
+        const ring = new T.Mesh(new T.RingGeometry(2.6, 2.85, 48), new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55, depthWrite: false }));
+        ring.rotation.x = -Math.PI / 2; ring.position.y = 0.07; grp.add(ring);
+        g.add(grp);
+        const sp = new T.Sprite(new T.SpriteMaterial({ map: markTex(pl.type), depthTest: false, transparent: true }));
+        sp.scale.set(1.1, 1.1, 1); sp.position.set(pl.x, 2.7, pl.z); sp.renderOrder = 18; sp.userData.bob = pl.id || 0; g.add(sp);
+      }
+      this.scene.add(g); this.planG = g;
+    }
+
     /* ---------- köprü / alt geçit yapılabilecek yerler (parlayan işaretler) ---------- */
     spots(list, kind) {
       if (this.spotG) { this.scene.remove(this.spotG); this.spotG.traverse((o) => { if (o.isMesh) { o.geometry.dispose(); o.material.dispose(); } else if (o.isSprite) o.material.dispose(); }); this.spotG = null; }
@@ -605,7 +777,7 @@
       if (!list) return;
       const g = new T.Group(), col = kind === 'bridge' ? 0x3d8bff : 0xa061f0;
       for (const s of list) {
-        const add = s.act !== 'unset';
+        const add = s.act === 'set' || s.act === 'merge';
         const sp = new T.Sprite(new T.SpriteMaterial({ map: add ? markTex(kind) : removeTex(kind), depthTest: false, transparent: true }));
         sp.position.set(s.x, 2.0, s.z); sp.renderOrder = 19; sp.scale.set(1.25, 1.25, 1); g.add(sp); s.sp = sp;
         if (add) {
@@ -647,7 +819,8 @@
         const ctl = L.n.ctl; if (!ctl) continue;
         const ph = ctl.n.phases.findIndex((p) => p.includes(L.e));
         const st = ph === ctl.cur ? (ctl.clearing ? 'amber' : 'green') : 'red';
-        L.mat.emissive.setHex(st === 'green' ? 0x22e06a : st === 'amber' ? 0xffb400 : 0xff2a1f);
+        L.red.emissiveIntensity = st === 'red' ? 2.6 : 0.08; L.amber.emissiveIntensity = st === 'amber' ? 2.6 : 0.08; L.green.emissiveIntensity = st === 'green' ? 2.6 : 0.08;
+        L.glow.material.color.setHex(st === 'green' ? 0x3bff7a : st === 'amber' ? 0xffc23a : 0xff3b2f); L.glow.position.y = st === 'red' ? 1.13 : st === 'amber' ? 1.02 : 0.91;
       }
       if (this.gates) for (const gt of this.gates) {
         const gs = sim.gateSt && sim.gateSt.get(gt.key); const a = gs ? gs.arm : 0;
@@ -663,8 +836,10 @@
         if (n !== b.pendN) { b.pendN = n; b.pend.material.map = pendTex(n, LV.Sim.PENDING_CAP); b.pend.material.needsUpdate = true; }
         b.pend.visible = running || n > 0;
       }
+      if (this.cloudG) for (const c of this.cloudG.children) c.position.x = c.userData.x0 + Math.sin(now * c.userData.v * 0.3) * 2.5;
+      if (this.planG) for (const o of this.planG.children) if (o.isSprite) o.position.y = 2.7 + Math.sin(now * 3 + o.userData.bob) * 0.15;
       if (this.spotL) for (const s of this.spotL) {
-        if (s.act === 'unset') continue;
+        if (s.act !== 'set' && s.act !== 'merge') continue;
         const k = 0.5 + 0.5 * Math.sin(now * 6), sc = 1.3 + k * 0.3;
         s.sp.scale.set(sc, sc, 1); s.ring.scale.setScalar(1 + k * 0.35); s.ring.material.opacity = 0.35 + 0.4 * k;
       }

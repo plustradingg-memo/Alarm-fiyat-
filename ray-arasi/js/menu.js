@@ -136,6 +136,17 @@
     };
   }
 
+  const STAR = '<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>';
+  const LOCK = '<svg class="lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  // bölge simgeleri: köy, kasaba, şehir, metropol; demiryolu ve havalimanı
+  const ICONS = {
+    0: '<svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9H3z"/><rect x="10" y="14" width="4" height="6"/></svg>',
+    1: '<svg viewBox="0 0 24 24"><path d="M2 12l5-4 5 4v8H2z"/><path d="M12 10l5-4 5 4v10H12z"/></svg>',
+    2: '<svg viewBox="0 0 24 24"><rect x="3" y="9" width="6" height="12"/><rect x="10" y="4" width="6" height="17"/><rect x="17" y="12" width="4" height="9"/></svg>',
+    3: '<svg viewBox="0 0 24 24"><rect x="2" y="11" width="5" height="10"/><rect x="8" y="2" width="5" height="19"/><rect x="14" y="6" width="4" height="15"/><rect x="19" y="13" width="3" height="8"/></svg>',
+    rail: '<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4"/><circle cx="9" cy="13" r="1.3"/><circle cx="15" cy="13" r="1.3"/></svg>',
+    air: '<svg viewBox="0 0 24 24"><path d="M2 13l8-2 3-8h2l-1 8 7 1v2l-7 1 1 6h-2l-3-6-8-1z"/></svg>',
+  };
   class Menu {
     constructor(app) {
       this.app = app;
@@ -153,25 +164,62 @@
         if (b.classList.contains('locked')) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); RA.audio.play('denied'); return; }
         app.openLevel(+b.dataset.lv);
       });
-      this.bg = new T.Color(0x1a242b);
+      this.bg = new T.Color(0xa9dcff);
+      // menü arka planı: bulutlu gökyüzü ve tepeler (tam ekran düzlem)
+      this.bgScene = new T.Scene(); this.bgCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const sky = RA.skyTexture(true);
+      this.bgScene.add(new T.Mesh(new T.PlaneGeometry(2, 2), new T.MeshBasicMaterial({ map: sky, depthTest: false, depthWrite: false })));
       this.refresh();
     }
-    // bölüm kartları: numara, ad, yıldızlar, kilit
+    // bölüm haritası: bölgeler, kıvrılan yol üstünde yuvarlak bölüm düğmeleri, yıldızlar, kilitler ve yıldız kapıları
     refresh() {
       const LV = RA.LV; if (!LV || !this.grid) return;
       const set = LV.SETS.find((q) => q.mode === this.set) || LV.SETS[0];
       const INFO = { road: ['Karayolu bölümleri', 'Evleri iş yerlerine bağla, trafiği tıkatma'], rail: ['Demiryolu bölümleri', 'İstasyonları garlara bağla, trenleri bekletme'], air: ['Havalimanı bölümleri', 'Uçakları kapıya yanaştır, kalkışa yetiştir'] }[set.mode];
+      const lv = set.levels, total = LV.progress.total(set.mode), max = lv.length * 3;
       document.getElementById('menu-set-t').textContent = INFO[0]; document.getElementById('menu-set-d').textContent = INFO[1];
+      const ts = document.getElementById('menu-stars'); if (ts) ts.innerHTML = STAR + '<b>' + total + '</b><small>/ ' + max + '</small>';
       this.views.forEach((el) => { if (el.closest('.menu-banner')) el.dataset.scene = set.mode; });
       this.tabs.forEach((b) => b.setAttribute('aria-selected', b.dataset.set === set.mode));
       this.grid.dataset.set = set.mode;
-      this.grid.innerHTML = set.levels.map((L) => {
-        const st = LV.progress.stars(L.id), open = LV.progress.unlocked(L.id);
-        return '<button type="button" role="listitem" class="lv-btn' + (open ? '' : ' locked') + (st ? ' done' : '') + '" data-lv="' + L.id + '" aria-label="' + set.name + ' ' + L.n + ': ' + L.name + (open ? ', ' + st + ' yıldız' : ', kilitli') + '">' +
-          '<span class="n">' + L.n + '</span><span class="t">' + L.name + '</span><span class="s">' + (open ? [1, 2, 3].map((k) => '<i class="' + (k <= st ? 'on' : '') + '">★</i>').join('') : '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>') + '</span></button>';
-      }).join('');
+      const chapters = set.mode === 'road' ? LV.CHAPTERS : [{ name: set.name, from: 1, to: lv.length, color: set.mode === 'rail' ? '#f0a020' : '#4d7cff' }];
+      const W = Math.max(280, (this.grid.clientWidth || 362) - 4);
+      const next = lv.find((L) => LV.progress.unlocked(L.id) && !LV.progress.stars(L.id));
+      let html = '';
+      chapters.forEach((ch, ci) => {
+        const items = lv.filter((L) => L.n >= ch.from && L.n <= ch.to);
+        const got = items.reduce((a, L) => a + LV.progress.stars(L.id), 0);
+        const cols = [0.17, 0.5, 0.83], rowH = 104, top = 50;
+        const pos = items.map((L, i) => { const row = Math.floor(i / 3), c = i % 3; return { x: Math.round((row % 2 ? cols[2 - c] : cols[c]) * W), y: top + row * rowH }; });
+        const H = top + (Math.ceil(items.length / 3) - 1) * rowH + 74;
+        let d = 'M' + pos[0].x + ' ' + (pos[0].y - 40) + ' L' + pos[0].x + ' ' + pos[0].y;
+        for (let i = 1; i < pos.length; i++) {
+          const a = pos[i - 1], b = pos[i];
+          d += a.y === b.y ? ' L' + b.x + ' ' + b.y : ' C' + (a.x + (a.x > W / 2 ? 46 : -46)) + ' ' + a.y + ' ' + (b.x + (b.x > W / 2 ? 46 : -46)) + ' ' + b.y + ' ' + b.x + ' ' + b.y;
+        }
+        const last = pos[pos.length - 1]; d += ' L' + last.x + ' ' + (last.y + 46);
+        const locked0 = items.length && !LV.progress.unlocked(items[0].id);
+        html += '<section class="lv-ch' + (locked0 ? ' off' : '') + '" style="--ch:' + ch.color + '"><header class="lv-ch-head"><span class="ci">' + (ICONS[set.mode === 'road' ? ci : set.mode] || '') + '</span><span class="cn"><b>' + ch.name + '</b><em>Bölüm ' + ch.from + '–' + ch.to + '</em></span><span class="cs">' + STAR + got + '<small>/' + items.length * 3 + '</small></span></header>' +
+          '<div class="lv-chmap" style="height:' + H + 'px"><svg class="lv-road" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><path class="r0" d="' + d + '"/><path class="r1" d="' + d + '"/><path class="r2" d="' + d + '"/></svg>' +
+          items.map((L, i) => {
+            const st = LV.progress.stars(L.id), open = LV.progress.unlocked(L.id), need = LV.progress.need(L.id), p = pos[i];
+            const cls = 'lv-btn lv-node' + (open ? '' : ' locked') + (st ? ' done' : '') + (next && next.id === L.id ? ' next' : '') + (need ? ' gate' : '');
+            const lab = set.name + ' ' + L.n + ': ' + L.name + (open ? ', ' + st + ' yıldız' : ', kilitli') + (need ? ', ' + need + ' yıldız gerekli' : '');
+            return '<button type="button" role="listitem" class="' + cls + '" data-lv="' + L.id + '" style="left:' + p.x + 'px;top:' + p.y + 'px" aria-label="' + lab + '">' +
+              '<span class="s">' + [1, 2, 3].map((k) => '<i class="' + (k <= st ? 'on' : '') + '">★</i>').join('') + '</span>' +
+              '<span class="n">' + (open ? L.n : LOCK) + '</span><span class="t">' + L.name + '</span>' +
+              (need ? '<span class="g' + (LV.progress.before(L.id) >= need ? ' ok' : '') + '">' + STAR + need + '</span>' : '') + '</button>';
+          }).join('') + '</div></section>';
+      });
+      this.grid.innerHTML = html;
+      // sıradaki bölüme kaydır
+      requestAnimationFrame(() => {
+        const el = this.grid.querySelector('.lv-node.next'); if (!el) return;
+        const gr = this.grid.getBoundingClientRect(), r = el.getBoundingClientRect();
+        this.grid.scrollTop += r.top - gr.top - gr.height * 0.42;
+      });
     }
-    resize() { }
+    resize() { if (this.app.state === 'menu') this.refresh(); }
     render(dt) {
       this.t += dt;
       const r = this.app.renderer;
@@ -179,6 +227,7 @@
       r.setScissorTest(false);
       r.setViewport(0, 0, this.app.w, this.app.h);
       r.setClearColor(this.bg, 1); r.clear();
+      r.render(this.bgScene, this.bgCam);
       r.setScissorTest(true);
       this.views.forEach((el) => {
         const v = el.getBoundingClientRect();

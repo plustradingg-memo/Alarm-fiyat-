@@ -145,7 +145,7 @@
       solution: [['road', [[-7.5, 18.3], [-7.5, -17.9]]], ['road', [[7.5, 18.3], [7.5, -17.9]]], ['road', [[-10.7, 12], [0, 12], [0, -12], [10.3, -12]]], ['set', [-7.5, 12], 'bridge'], ['set', [7.5, -12], 'bridge']],
     },
     {
-      id: 15, name: 'İki ray', board: [28, 44], goal: 40, spawn: 2.8, budget: 145, star2: 136, bridges: 1, tunnels: 3,
+      id: 15, name: 'İki ray', board: [28, 44], goal: 40, spawn: 3.2, budget: 145, star2: 136, bridges: 1, tunnels: 3,
       intro: 'İki demiryolu şehri üç parçaya bölüyor ve trenler sık geçiyor. Hangi geçitleri alt geçit yapacağını seç.',
       tip: 'Üç dikey yolu ve mor yatay yolu çiz. En kalabalık hemzemin geçitleri alt geçit yap, ortadaki kesişimi köprü.',
       rails: [{ pts: [[-14.8, -8], [14.8, -8]], every: 9, cars: 3, first: 2 }, { pts: [[-14.8, 8], [14.8, 8]], every: 9, cars: 4, first: 6 }],
@@ -154,7 +154,7 @@
       solution: [['road', [[-8, 18.3], [-8, -17.9]]], ['road', [[0, 18.3], [0, -17.9]]], ['road', [[8, 18.3], [8, -17.9]]], ['road', [[-10.7, 0], [10.3, 0]]], ['set', [0, 0], 'bridge'], ['set', [0, 8], 'tunnel'], ['set', [0, -8], 'tunnel'], ['set', [-8, 8], 'tunnel']],
     },
     {
-      id: 16, name: 'İki nehir', board: [28, 44], goal: 36, spawn: 3.8, budget: 96, star2: 88, bridges: 2, tunnels: 1,
+      id: 16, name: 'İki nehir', board: [28, 44], goal: 36, spawn: 4.5, budget: 96, star2: 88, bridges: 2, tunnels: 1,
       intro: 'İki nehir ve yalnızca iki köprü hakkı. Üç yol da iki nehri geçecek: ortak bir ana yol kur.',
       tip: 'Yeşil yolu ortadan dümdüz çiz (ana yol). Turuncu ve mavi yolları alttaki nehirden önce ana yola bağla, üstteki nehirden sonra ayır.',
       water: [[[-14.5, -9.2], [14.5, -8.6], [14.5, -6.6], [-14.5, -7.2]], [[-14.5, 7], [14.5, 7.6], [14.5, 9.6], [-14.5, 9]]],
@@ -163,7 +163,7 @@
       solution: [['road', [[0, 18.3], [0, -17.9]]], ['road', [[-8, 18.3], [-8, 15.4], [-0.4, 12.4]]], ['road', [[8, 18.3], [8, 15.4], [0.4, 12.4]]], ['road', [[0.4, -12.4], [8, -15.4], [8, -17.9]]], ['road', [[-0.4, -12.4], [-8, -15.4], [-8, -17.9]]]],
     },
     {
-      id: 17, name: 'Metropol', board: [32, 50], goal: 50, spawn: 2.5, budget: 196, star2: 184, bridges: 5, tunnels: 2,
+      id: 17, name: 'Metropol', board: [32, 50], goal: 50, spawn: 2.9, budget: 196, star2: 184, bridges: 5, tunnels: 2,
       intro: 'Dev bir şehir: beş renk, bir nehir ve bir demiryolu. Üç ana cadde nehri ve rayı, iki yatay cadde onları kesiyor.',
       tip: 'Üç dikey caddeyi ve iki yatay caddeyi çiz. Nehir köprüleri kendiliğinden olur; kalan köprü ve alt geçitleri en kalabalık kesişimlere koy.',
       water: [[[-16.5, 3], [16.5, 3.6], [16.5, 5.8], [-16.5, 5.2]]],
@@ -193,7 +193,7 @@
       solution: [['road', [[-10, 21.3], [-10, -20.9]]], ['road', [[10, 21.3], [10, -20.9]]], ['road', [[-12.7, -10], [12.3, -10]]], ['road', [[12.7, 17], [-12.3, 17]]], ['set', [-10, -10], 'bridge'], ['set', [10, 17], 'bridge'], ['set', [10, -15], 'tunnel'], ['set', [-10, -15], 'tunnel']],
     },
     {
-      id: 20, name: 'Megakent', board: [32, 50], goal: 64, spawn: 2.6, budget: 236, star2: 220, bridges: 6, tunnels: 4,
+      id: 20, name: 'Megakent', board: [32, 50], goal: 64, spawn: 2.8, budget: 236, star2: 220, bridges: 6, tunnels: 4,
       intro: 'Son bölüm: altı renk, nehir, demiryolu ve dağ. Şimdiye kadar öğrendiğin her şeyi kullan.',
       tip: 'Altı caddeyi çiz: dikeyler nehri köprüyle geçer, turkuaz cadde dağdan tünelle. Kalan köprü ve alt geçitleri en kalabalık kesişimlere ve geçitlere dağıt.',
       water: [[[-16.5, 5.4], [16.5, 6], [16.5, 8.2], [-16.5, 7.6]]],
@@ -205,6 +205,152 @@
         ['set', [2, 0], 'bridge'], ['set', [-6, -12], 'bridge'], ['set', [9, 17], 'bridge'], ['set', [9, -12], 'tunnel'], ['set', [2, -18], 'tunnel'], ['set', [-6, -18], 'tunnel']],
     },
   ];
+
+  /* ---------- ızgara bölüm üretici: dikey caddeler alttaki evden üstteki iş yerine, yatay caddeler bir yandan öbür yana ----------
+     cols: [{ x, c: renk, t: iş yeri türü }], rows: [{ z, c, t, rtl: sağdan sola }], sets: çözümde köprü / alt geçit yapılacak kesişimler.
+     Asfalt bütçesi ve 2. yıldız sınırı çözüm uzunluğundan hesaplanır. */
+  const TYPES = ['fabrika', 'okul', 'avm', 'ofis', 'hastane', 'stadyum'];
+  function grid(o) {
+    const [W, D] = o.board || [20, 32];
+    const zB = D / 2 - 2, zT = -D / 2 + 2.3, xL = -W / 2 + 1.6, xR = W / 2 - 1.8;
+    const houses = [], dests = [], solution = [];
+    let len = 0;
+    const line = (a, b) => { len += Math.hypot(b[0] - a[0], b[1] - a[1]); solution.push(['road', [a, b]]); };
+    (o.cols || []).forEach((c, k) => {
+      houses.push({ x: c.x, z: zB, dir: 'N', color: c.c });
+      dests.push({ x: c.x, z: zT, dir: 'S', color: c.c, type: c.t || TYPES[k % TYPES.length] });
+      line([c.x, zB - 1.7], [c.x, zT + 1.9]);
+    });
+    (o.rows || []).forEach((r, k) => {
+      const hx = r.rtl ? W / 2 - 1.6 : xL, dx = r.rtl ? -W / 2 + 1.8 : xR;
+      houses.push({ x: hx, z: r.z, dir: r.rtl ? 'W' : 'E', color: r.c });
+      dests.push({ x: dx, z: r.z, dir: r.rtl ? 'E' : 'W', color: r.c, type: r.t || TYPES[(k + 3) % TYPES.length] });
+      line([hx + (r.rtl ? -1.7 : 1.7), r.z], [dx + (r.rtl ? 1.9 : -1.9), r.z]);
+    });
+    for (const st of o.sets || []) solution.push(['set', [st[0], st[1]], st[2]]);
+    const L = Object.assign({ budget: Math.ceil(len * (o.slack || 1.22)), star2: Math.ceil(len * 1.07), bridges: 0, tunnels: 0 }, o, { houses, dests, solution });
+    delete L.cols; delete L.rows; delete L.sets;
+    return L;
+  }
+
+  // ara bölümler (kimlik 21–40): öğrenme eğrisini yumuşatır, haritalar adım adım büyür
+  const EXTRA = [
+    { id: 21, name: 'İki ev', goal: 12, spawn: 3.0,
+      intro: 'İki renk, iki ev, iki iş yeri. Her evi kendi rengindeki binaya bağla; yollar kesişmek zorunda değil.',
+      tip: 'İki yolu da dümdüz yukarı çiz.',
+      cols: [{ x: -5, c: 'or', t: 'fabrika' }, { x: 5, c: 'bl', t: 'okul' }] },
+    { id: 22, name: 'Üç yol', goal: 24, spawn: 2.8,
+      intro: 'Yeşil yol iki yolu da kesecek. Kesişimlerde turuncu ? çıkar: dokunup Kavşak seç.',
+      tip: 'Dikey iki yolu, sonra yatay yeşil yolu çiz. Her ? işaretine dokunup Kavşak seç.',
+      cols: [{ x: -4, c: 'or', t: 'fabrika' }, { x: 4, c: 'bl', t: 'ofis' }], rows: [{ z: 0, c: 'gr', t: 'avm' }] },
+    { id: 23, name: 'Köprülü nehir', goal: 30, spawn: 2.9, bridges: 3,
+      intro: 'Nehir ve kesişen bir yol. Nehri geçen yollar kendiliğinden köprü olur; üçüncü köprünü kalabalık kesişime koy.',
+      tip: 'Üç yolu çiz, sonra "Köprü"ye basıp sağdaki kesişime dokun.',
+      water: [[[-10.5, -2.4], [10.5, -1.8], [10.5, 0.2], [-10.5, -0.4]]],
+      cols: [{ x: -4, c: 'or', t: 'fabrika' }, { x: 4, c: 'bl', t: 'hastane' }], rows: [{ z: 7, c: 'gr', t: 'okul' }], sets: [[4, 7, 'bridge']] },
+    { id: 24, name: 'Kasaba yolları', board: [22, 35], goal: 36, spawn: 2.8, bridges: 1, tunnels: 1,
+      intro: 'Kasaba büyüdü, tahta genişledi. Üç dikey cadde, bir yatay cadde: bir kesişime köprü, birine alt geçit.',
+      tip: 'Dört caddeyi çiz. Ortadaki kesişimi köprü, sağdakini alt geçit yap.',
+      cols: [{ x: -5, c: 'or' }, { x: 0, c: 'bl' }, { x: 5, c: 'gr' }], rows: [{ z: 2, c: 'pu' }], sets: [[0, 2, 'bridge'], [5, 2, 'tunnel']] },
+    { id: 25, name: 'Yeni köprüler', board: [22, 35], goal: 34, spawn: 2.8, bridges: 3, tunnels: 1,
+      water: [[[-11.5, -5.2], [11.5, -4.6], [11.5, -2.6], [-11.5, -3.2]]],
+      rails: [{ pts: [[-11.8, 7], [11.8, 7]], every: 11, cars: 3, first: 3 }],
+      intro: 'Nehir, demiryolu ve yukarıda bir yatay cadde. Köprülerini ve alt geçidini paylaştır.',
+      tip: 'İki dikey caddeyi nehirden köprüyle geçir; üstteki yatay caddeyle kesişimi köprü, kalabalık hemzemin geçidi alt geçit yap.',
+      cols: [{ x: -5, c: 'or' }, { x: 5, c: 'bl' }], rows: [{ z: -10, c: 'gr', rtl: true }], sets: [[5, -10, 'bridge'], [-5, 7, 'tunnel']] },
+    { id: 26, name: 'Göl kenarı', board: [24, 38], goal: 34, spawn: 3.0, bridges: 2, tunnels: 1,
+      water: [[[-9, -3], [-6, -3.6], [-3, -2.6], [-2.6, 0], [-3.2, 2.8], [-6, 3.4], [-9, 2.6], [-9.4, 0]]],
+      rails: [{ pts: [[-12.8, -9], [12.8, -9]], every: 10, cars: 3, first: 4 }],
+      intro: 'Solda bir göl, aşağıda demiryolu. Turuncu cadde gölün üstünden mi geçsin, etrafından mı dolaşsın?',
+      tip: 'Turuncu caddeyi gölün üstünden dümdüz çiz (köprü olur). Yeşil caddeyle kesişimi kavşak, sağdaki hemzemin geçidi alt geçit yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: 8, c: 'gr' }], sets: [[6, -9, 'tunnel'], [6, 8, 'bridge']] },
+    { id: 27, name: 'Dağ geçidi', board: [24, 38], goal: 30, spawn: 2.6, bridges: 1, tunnels: 1,
+      hills: [[[-12.5, -2.2], [1.6, -2.8], [2, 2.6], [-12.5, 2.2]]],
+      intro: 'Sol yarıda bir dağ. Turuncu cadde dağın içinden tünelle geçebilir; dolaşmak uzun sürer.',
+      tip: 'Turuncu caddeyi dağın üstünden dümdüz çiz: içi tünel olur. Yeşil caddeyle kesişimi köprü yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: -9, c: 'gr' }], sets: [[6, -9, 'bridge']] },
+    { id: 28, name: 'Raylı şehir', board: [26, 41], goal: 44, spawn: 2.9, bridges: 2, tunnels: 2,
+      rails: [{ pts: [[-13.8, -6], [13.8, -6]], every: 10, cars: 3, first: 3 }],
+      intro: 'Şehir yine büyüdü. Bir demiryolu ve dört cadde: dört kesişim, iki hemzemin geçit.',
+      tip: 'Dört caddeyi çiz. Çapraz iki kesişimi köprü, iki hemzemin geçidi alt geçit yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: 4, c: 'gr' }, { z: -12, c: 'pu', rtl: true }], sets: [[6, 4, 'bridge'], [-6, -12, 'bridge'], [-6, -6, 'tunnel'], [6, -6, 'tunnel']] },
+    { id: 29, name: 'Köprülü nehirler', board: [28, 44], goal: 40, spawn: 3.0, bridges: 5, tunnels: 0,
+      water: [[[-14.5, -8.6], [14.5, -8], [14.5, -6], [-14.5, -6.6]], [[-14.5, 6.2], [14.5, 6.8], [14.5, 8.8], [-14.5, 8.2]]],
+      intro: 'İki nehir arasında yatay bir cadde. Dört köprü nehirlere, biri de ortadaki kesişime.',
+      tip: 'Üç caddeyi çiz; nehir köprüleri kendiliğinden olur. Sağdaki kesişimi köprü yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: 0, c: 'gr' }], sets: [[6, 0, 'bridge']] },
+    { id: 30, name: 'Kavşak dörtlüsü', board: [28, 44], goal: 48, spawn: 2.6, bridges: 1, tunnels: 1, rush: { every: 36, dur: 12, k: 0.6 },
+      intro: 'Dört cadde, dört kesişim ve yoğun saatler: trafik zaman zaman birden artar. Köprü ve alt geçidi en kalabalık yerlere koy.',
+      tip: 'Dört caddeyi çiz. Çaprazdaki iki kesişimden birini köprü, öbürünü alt geçit yap.',
+      cols: [{ x: -6, c: 'or' }, { x: 6, c: 'bl' }], rows: [{ z: -6, c: 'gr' }, { z: 6, c: 'pu', rtl: true }], sets: [[-6, -6, 'bridge'], [6, 6, 'tunnel']] },
+    { id: 31, name: 'Dağ ve göl', board: [28, 44], goal: 40, spawn: 2.6, bridges: 2, tunnels: 2,
+      hills: [[[-14.5, -12], [-3, -12.6], [-2.6, -6.4], [-14.5, -6]]],
+      water: [[[4.4, 3.2], [7, 2.6], [9.6, 3.4], [10.2, 6], [9.6, 8.6], [7, 9.4], [4.4, 8.6], [3.8, 6]]],
+      intro: 'Solda dağ, sağda göl. Turuncu cadde dağdan tünelle, mavi cadde gölden köprüyle geçer.',
+      tip: 'Dört caddeyi çiz. Soldaki üst kesişimi köprü, sağdaki alt kesişimi alt geçit yap.',
+      cols: [{ x: -7, c: 'or' }, { x: 7, c: 'bl' }], rows: [{ z: 14, c: 'gr' }, { z: -2, c: 'pu', rtl: true }], sets: [[-7, 14, 'bridge'], [7, -2, 'tunnel']] },
+    { id: 32, name: 'Yoğun cadde', board: [28, 44], goal: 48, spawn: 3.3, bridges: 1, tunnels: 2, rush: { every: 34, dur: 12, k: 0.6 },
+      rails: [{ pts: [[-14.8, -10], [14.8, -10]], every: 10, cars: 3, first: 3 }],
+      intro: 'Üç dikey cadde, bir yatay cadde, bir demiryolu ve yoğun saatler.',
+      tip: 'Dört caddeyi çiz. Ortadaki kesişimi köprü; ortadaki ve soldaki hemzemin geçitleri alt geçit yap.',
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: 2, c: 'pu' }], sets: [[0, 2, 'bridge'], [0, -10, 'tunnel'], [-8, -10, 'tunnel']] },
+    { id: 33, name: 'Nehir kavşağı', board: [28, 44], goal: 50, spawn: 3.0, bridges: 5, tunnels: 1,
+      water: [[[-14.5, 1], [14.5, 1.6], [14.5, 3.6], [-14.5, 3]]],
+      intro: 'Nehir şehri ortadan bölüyor; üç cadde nehri geçiyor, iki yatay cadde onları kesiyor.',
+      tip: 'Beş caddeyi çiz. Ortadaki iki kesişimi köprü, sağ alttakini alt geçit yap.',
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: -8, c: 'pu' }, { z: 12, c: 'rd', rtl: true }], sets: [[0, -8, 'bridge'], [0, 12, 'bridge'], [8, -8, 'tunnel']] },
+    { id: 34, name: 'Şehir merkezi', board: [28, 44], goal: 56, spawn: 3.5, bridges: 2, tunnels: 2, rush: { every: 34, dur: 12, k: 0.62 },
+      intro: 'Beş renk, altı kesişim ve yoğun saatler. Bu bölümü bitiren Metropol\'e geçer.',
+      tip: 'Beş caddeyi çiz. Ortadaki iki kesişime birer köprü ve alt geçit, köşelere birer tane daha koy.',
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: -6, c: 'pu' }, { z: 8, c: 'rd', rtl: true }], sets: [[0, -6, 'bridge'], [0, 8, 'tunnel'], [-8, 8, 'bridge'], [8, -6, 'tunnel']] },
+    { id: 35, name: 'Liman şehri', board: [30, 47], goal: 50, spawn: 2.8, bridges: 4, tunnels: 2,
+      water: [[[-15.5, -5.2], [15.5, -4.6], [15.5, -2.6], [-15.5, -3.2]]],
+      rails: [{ pts: [[-15.8, 10], [15.8, 10]], every: 10, cars: 4, first: 3 }],
+      intro: 'Metropol bölgesine hoş geldin. Nehir, demiryolu, üç cadde ve aşağıdan bir yatay cadde.',
+      tip: 'Dört caddeyi çiz. Ortadaki kesişimi köprü; ortadaki ve sağdaki hemzemin geçitleri alt geçit yap.',
+      cols: [{ x: -8, c: 'or' }, { x: 0, c: 'bl' }, { x: 8, c: 'gr' }], rows: [{ z: -12, c: 'pu' }], sets: [[0, -12, 'bridge'], [0, 10, 'tunnel'], [8, 10, 'tunnel']] },
+    { id: 36, name: 'Çift ray', board: [32, 50], goal: 50, spawn: 2.8, bridges: 4, tunnels: 3, rush: { every: 36, dur: 12, k: 0.62 },
+      water: [[[-16.5, -1.2], [16.5, -0.6], [16.5, 1.4], [-16.5, 0.8]]],
+      rails: [{ pts: [[-16.8, -9], [16.8, -9]], every: 9, cars: 3, first: 2 }, { pts: [[-16.8, 9], [16.8, 9]], every: 9, cars: 4, first: 6 }],
+      intro: 'İki demiryolu ve aralarında bir nehir. Altı hemzemin geçit var; alt geçitlerini dikkatli seç.',
+      tip: 'Dört caddeyi çiz. Yatay caddeyle ortadaki kesişimi köprü; üç kalabalık hemzemin geçidi alt geçit yap.',
+      cols: [{ x: -9, c: 'or' }, { x: 0, c: 'bl' }, { x: 9, c: 'gr' }], rows: [{ z: -16, c: 'pu' }], sets: [[0, -16, 'bridge'], [0, 9, 'tunnel'], [0, -9, 'tunnel'], [-9, 9, 'tunnel']] },
+    { id: 37, name: 'Dağlar arasında', board: [32, 50], goal: 54, spawn: 2.8, bridges: 2, tunnels: 4,
+      hills: [[[-16.5, -6], [-5, -6.6], [-4.6, 0], [-16.5, 0.4]], [[5, 5.6], [16.5, 5.2], [16.5, 11.4], [5.4, 11.8]]],
+      intro: 'İki dağ, beş cadde. Yan caddeler dağlardan tünelle geçer; kesişimleri iyi ayır.',
+      tip: 'Beş caddeyi çiz: soldaki ve sağdaki caddeler dağlardan tünelle geçer. Ortadaki iki kesişime köprü ve alt geçit, köşelere de birer tane koy.',
+      cols: [{ x: -10, c: 'or' }, { x: 0, c: 'bl' }, { x: 10, c: 'gr' }], rows: [{ z: -13, c: 'pu' }, { z: 16, c: 'rd', rtl: true }], sets: [[0, -13, 'bridge'], [0, 16, 'tunnel'], [-10, 16, 'bridge'], [10, -13, 'tunnel']] },
+    { id: 38, name: 'Gece trafiği', board: [32, 50], goal: 60, spawn: 3.8, bridges: 5, tunnels: 2, rush: { every: 30, dur: 12, k: 0.55 },
+      water: [[[-16.5, -1.2], [16.5, -0.6], [16.5, 1.4], [-16.5, 0.8]]],
+      intro: 'Beş renk, bir nehir ve sık gelen yoğun saatler. Her dalgada şehir sınavdan geçer.',
+      tip: 'Beş caddeyi çiz. Ortadaki iki kesişimi köprü, köşelerdeki ikisini alt geçit yap.',
+      cols: [{ x: -10, c: 'or' }, { x: 0, c: 'bl' }, { x: 10, c: 'gr' }], rows: [{ z: -8, c: 'pu' }, { z: 8, c: 'rd', rtl: true }], sets: [[0, -8, 'bridge'], [0, 8, 'bridge'], [10, -8, 'tunnel'], [-10, 8, 'tunnel']] },
+    { id: 39, name: 'Adalar', board: [32, 50], goal: 56, spawn: 2.8, bridges: 8, tunnels: 1,
+      water: [[[-16.5, -10.2], [16.5, -9.6], [16.5, -7.6], [-16.5, -8.2]], [[-16.5, 8], [16.5, 8.6], [16.5, 10.6], [-16.5, 10]], [[-3, -3.4], [0, -4.2], [3, -3.4], [3.6, 0], [3, 3.4], [0, 4.2], [-3, 3.4], [-3.6, 0]]],
+      intro: 'İki nehir ve ortada bir göl: şehir adalara bölünmüş. Köprü çok ama yollar da uzun.',
+      tip: 'Beş caddeyi çiz; nehir ve göl köprüleri kendiliğinden olur. Ortadaki üst kesişimi köprü, alttakini alt geçit yap.',
+      cols: [{ x: -9, c: 'or' }, { x: 0, c: 'bl' }, { x: 9, c: 'gr' }], rows: [{ z: -16, c: 'pu' }, { z: 16, c: 'rd', rtl: true }], sets: [[0, -16, 'bridge'], [0, 16, 'tunnel']] },
+    { id: 40, name: 'Büyük sınav', board: [32, 50], goal: 64, spawn: 3.6, bridges: 3, tunnels: 4, rush: { every: 32, dur: 12, k: 0.6 },
+      rails: [{ pts: [[-16.8, -18], [16.8, -18]], every: 10, cars: 3, first: 3 }],
+      intro: 'Altı renk, dokuz kesişim, bir demiryolu ve yoğun saatler. Megakent\'ten önceki son sınav.',
+      tip: 'Altı caddeyi çiz. Köprüleri çapraz dağıt, alt geçitleri öbür çapraza ve ortadaki hemzemin geçide koy.',
+      cols: [{ x: -10, c: 'or' }, { x: 0, c: 'bl' }, { x: 10, c: 'gr' }], rows: [{ z: -12, c: 'pu' }, { z: 0, c: 'rd', rtl: true }, { z: 12, c: 'tq' }],
+      sets: [[0, 0, 'bridge'], [-10, -12, 'bridge'], [10, 12, 'bridge'], [10, -12, 'tunnel'], [-10, 12, 'tunnel'], [0, 12, 'tunnel'], [0, -18, 'tunnel']] },
+  ].map(grid);
+  // bölüm sırası: eski 20 bölüm (kimlikleri ve yıldızları korunur) aralara giren 20 yeni bölümle 40'a yayılır
+  const ORDER = [1, 21, 2, 22, 3, 4, 5, 6, 23, 7, 8, 9, 10, 24, 25, 11, 26, 12, 27, 13, 28, 14, 29, 15, 30, 16, 31, 32, 33, 34, 35, 17, 36, 18, 37, 19, 38, 39, 40, 20];
+  {
+    const all = LV.LEVELS.concat(EXTRA), by = new Map(all.map((l) => [l.id, l]));
+    LV.LEVELS = ORDER.map((id) => by.get(id));
+  }
+  // bölgeler ve yıldız kapıları: bir bölgenin son bölümüne geçmek için o ana kadar yeterli yıldız gerekir
+  LV.CHAPTERS = [
+    { name: 'Köy', from: 1, to: 10, color: '#7cc95a', sky: '#bfe8ff' },
+    { name: 'Kasaba', from: 11, to: 20, color: '#f5b83d', sky: '#ffe1b3' },
+    { name: 'Şehir', from: 21, to: 30, color: '#4fa3f7', sky: '#cfe6ff' },
+    { name: 'Metropol', from: 31, to: 40, color: '#a274f0', sky: '#e5d8ff' },
+  ];
+  LV.GATES = { 10: 20, 20: 42, 30: 62, 40: 80 }; // bölüm numarası → gereken toplam yıldız (önceki bölümlerden)
 
   /* ================= DEMİRYOLU BÖLÜMLERİ =================
      İstasyondan (renkli) aynı renkteki gara tren hattı döşenir. Trenler uzundur: kavşaktan (makastan) geçmeleri

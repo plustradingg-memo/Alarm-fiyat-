@@ -297,3 +297,100 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 .lv-pick button[data-kind="junction"], .lv-pick button[data-kind="level"] { background: #fff3c4; }
 .lv-pick button[data-kind="bridge"] { background: #dce9ff; }
 .lv-pick button[data-kind="tunnel"] { background: #ecdfff; }
+
+
+/* ================= SEVİMLİ GÖRÜNÜM (gökyüzü, bölüm haritası, renkli arayüz) ================= */
+#menu { color: var(--ink); }
+.tagline { color: #1f4a66; text-shadow: 0 1px 0 rgba(255,255,255,0.7); }
+.title-plate { background: linear-gradient(180deg, #2f6bc2, #17304f); transform: rotate(-1.5deg); box-shadow: inset 0 0 0 3px #17304f, inset 0 0 0 5px #fff, 0 6px 0 rgba(23,48,79,0.35), 0 14px 26px rgba(23,48,79,0.25); }
+.menu-head .btn-sound { background: #fff; border-color: #fff; box-shadow: 0 4px 0 rgba(30,80,120,0.2); }
+.menu-head .btn-sound svg path { stroke: var(--ink); }
+.menu-head .btn-sound svg path.spk { fill: var(--ink); }
+.menu-banner { box-shadow: 0 0 0 5px #fff, 0 12px 26px rgba(30,80,120,0.28); }
+.menu-banner-txt { box-shadow: 0 4px 0 rgba(30,80,120,0.25); }
+.menu-stars { position: absolute; right: 10px; top: 10px; display: flex; align-items: center; gap: 4px; background: #fff; color: var(--ink); border-radius: 999px; padding: 5px 12px 4px 8px; font-weight: 900; font-size: 17px; box-shadow: 0 4px 0 rgba(30,80,120,0.22); }
+.menu-stars small { font-size: 12px; opacity: 0.55; font-weight: 800; }
+svg.star { width: 20px; height: 20px; fill: #ffc531; stroke: #d99a00; stroke-width: 1.3; stroke-linejoin: round; flex: none; }
+.lv-tabs button { background: rgba(255,255,255,0.8); color: var(--ink); box-shadow: 0 3px 0 rgba(30,80,120,0.18); }
+.lv-tabs button[aria-selected="true"] { background: var(--ink); color: #fff; box-shadow: 0 4px 0 rgba(0,0,0,0.25); }
+.lv-grid { display: block; padding: 2px 2px 24px; scroll-behavior: smooth; }
+.lv-ch { position: relative; margin: 8px 0 18px; background: rgba(255,255,255,0.5); border-radius: 24px; box-shadow: 0 6px 0 rgba(30,80,120,0.14), inset 0 0 0 2px rgba(255,255,255,0.8); overflow: hidden; }
+.lv-ch-head { display: flex; align-items: center; gap: 10px; padding: 9px 12px 8px; background: var(--ch); color: #fff; }
+.lv-ch-head .ci { width: 36px; height: 36px; border-radius: 12px; background: rgba(255,255,255,0.28); display: grid; place-items: center; flex: none; }
+.lv-ch-head .ci svg { width: 22px; height: 22px; fill: #fff; stroke: #fff; stroke-width: 0.5; stroke-linejoin: round; }
+.lv-ch-head .cn { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lv-ch-head .cn b { font-size: 19px; font-weight: 900; line-height: 1.1; text-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+.lv-ch-head .cn em { font-style: normal; font-size: 12px; font-weight: 800; opacity: 0.92; }
+.lv-ch-head .cs { display: flex; align-items: center; gap: 3px; background: #fff; color: var(--ink); border-radius: 999px; padding: 4px 10px 3px 6px; font-weight: 900; font-size: 14px; }
+.lv-ch-head .cs small { font-size: 11px; opacity: 0.55; }
+.lv-ch-head .cs .star { width: 16px; height: 16px; }
+.lv-ch.off .lv-ch-head { filter: saturate(0.45) brightness(0.97); }
+.lv-chmap { position: relative; }
+.lv-road { position: absolute; left: 0; top: 0; pointer-events: none; }
+.lv-road path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.lv-road .r0 { stroke: rgba(30,60,80,0.16); stroke-width: 30px; transform: translateY(4px); }
+.lv-road .r1 { stroke: #8d98a3; stroke-width: 24px; }
+.lv-road .r2 { stroke: #ffffff; stroke-width: 3px; stroke-dasharray: 10 12; opacity: 0.9; }
+.lv-btn.lv-node { position: absolute; display: block; width: 62px; height: 62px; min-height: 0; margin: -31px 0 0 -31px; padding: 0; border: 0; border-radius: 50%; background: #fff; color: var(--ink); text-align: center; box-shadow: 0 0 0 5px var(--ch), 0 8px 0 5px rgba(0,0,0,0.16); cursor: pointer; font-family: inherit; }
+.lv-btn.lv-node:active { transform: scale(0.94); }
+.lv-node .n { position: absolute; inset: 0; width: auto; height: auto; background: none; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 900; color: var(--ink); padding-top: 3px; }
+.lv-node .s { position: absolute; left: 50%; top: -17px; transform: translateX(-50%); display: flex; gap: 0; font-size: 17px; line-height: 1; color: #d0d9de; text-shadow: 0 1px 0 #fff; }
+.lv-node .s i { font-style: normal; }
+.lv-node .s i.on { color: #ffc531; text-shadow: 0 2px 0 #d99a00; }
+.lv-node .t { position: absolute; left: 50%; top: 72px; transform: translateX(-50%); width: 112px; font-size: 11.5px; font-weight: 900; line-height: 1.1; text-align: center; color: #18323f; text-shadow: 0 1px 0 #fff, 0 0 6px #fff, 0 0 10px #fff; }
+.lv-btn.lv-node.done { background: var(--ch); }
+.lv-node.done .n { color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+.lv-btn.lv-node.locked { background: #e3e9ed; box-shadow: 0 0 0 5px #bcc7ce, 0 8px 0 5px rgba(0,0,0,0.1); }
+.lv-node.locked .t { color: #6c7a83; }
+.lv-node .n svg.lock { width: 24px; height: 24px; fill: #b3bfc6; stroke: #8e9ca5; stroke-width: 1.6; }
+.lv-btn.lv-node.next { animation: nodebob 1.1s ease-in-out infinite; box-shadow: 0 0 0 5px var(--ch), 0 0 0 12px rgba(255,255,255,0.75), 0 8px 0 5px rgba(0,0,0,0.16); }
+@keyframes nodebob { 50% { transform: translateY(-7px); } }
+.lv-btn.lv-node.gate { width: 70px; height: 70px; margin: -35px 0 0 -35px; }
+.lv-node .g { position: absolute; right: -20px; top: -8px; display: flex; align-items: center; gap: 1px; background: #ff5a5f; color: #fff; border-radius: 999px; padding: 3px 8px 2px 4px; font-size: 12.5px; font-weight: 900; box-shadow: 0 2px 0 rgba(0,0,0,0.2), 0 0 0 2px #fff; }
+.lv-node .g.ok { background: #2fbf71; }
+.lv-node .g .star { width: 15px; height: 15px; fill: #fff; stroke: none; }
+.menu-foot { color: #1f4a66; }
+.free-btn { background: #fff; color: var(--ink); border-color: #fff; box-shadow: 0 3px 0 rgba(30,80,120,0.18); }
+
+/* oyun içi: beyaz kartlar, bölge rengi vurgusu */
+#lv { --ch: #2fbf71; }
+.lv-top .round-btn { background: #fff; border: 0; box-shadow: 0 4px 0 rgba(0,0,0,0.18); }
+.lv-top .round-btn svg { fill: var(--ink); }
+.lv-top .round-btn svg path { stroke: var(--ink); }
+#lv-hint { background: #ffc531; }
+#lv-hint svg .ln { stroke: #5a3d00; }
+.lv-head { background: #fff; color: var(--ink); border: 0; border-left: 7px solid var(--ch); box-shadow: 0 4px 0 rgba(0,0,0,0.16); }
+.lv-goal .meter { background: #e6edf1; }
+.lv-goal .meter i { background: linear-gradient(90deg, var(--ch), #2fbf71); }
+#lv[data-rush="1"] .lv-head { animation: rushpulse 0.9s ease-in-out infinite; border-left-color: #ff5a5f; }
+@keyframes rushpulse { 50% { box-shadow: 0 4px 0 rgba(0,0,0,0.16), 0 0 0 4px rgba(255,90,95,0.55); } }
+.lv-toast { background: #fff; color: var(--ink); border-radius: 18px; border: 3px solid var(--ch); box-shadow: 0 6px 0 rgba(0,0,0,0.14), 0 10px 24px rgba(0,0,0,0.12); }
+.lv-toast.err { background: #fff1f0; color: #b3261e; border-color: #ff7a72; }
+.lv-zoom .round-btn { background: #fff; border: 0; box-shadow: 0 4px 0 rgba(0,0,0,0.18); }
+.lv-zoom .round-btn svg .ln { stroke: var(--ink); }
+.lv-bar { border-radius: 24px 24px 0 0; box-shadow: 0 -6px 18px rgba(20,60,90,0.18); }
+.lv-tools button, .lv-tok { border-radius: 14px; box-shadow: 0 3px 0 rgba(0,0,0,0.08); }
+.lv-tools button.on { background: var(--ch); border-color: var(--ch); color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+.lv-tools button[data-lvtool="erase"].on { background: var(--red); border-color: var(--red); }
+.lv-play { background: #2fbf71; border-radius: 16px; box-shadow: 0 4px 0 #1f8a51; font-size: 17px; }
+.lv-card { background: rgba(20,70,110,0.38); backdrop-filter: blur(3px); }
+.lv-cardbox { position: relative; border-radius: 26px; padding-top: 26px; overflow: hidden; box-shadow: 0 10px 0 rgba(0,0,0,0.18), 0 24px 50px rgba(0,0,0,0.25); animation: cardin 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.lv-cardbox::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 10px; background: repeating-linear-gradient(90deg, var(--ch) 0 22px, #fff 22px 30px); }
+@keyframes cardin { from { transform: scale(0.85); opacity: 0; } }
+.lv-kicker { color: var(--ch) !important; }
+.lv-goalbox { background: #f2f8ff; border-color: #cfe3f7; }
+.lv-stars i.on { animation: starpop 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) backwards; }
+.lv-stars i:nth-child(2).on { animation-delay: 0.18s; }
+.lv-stars i:nth-child(3).on { animation-delay: 0.36s; }
+@keyframes starpop { from { transform: scale(0) rotate(-40deg); } }
+.lv-btns button { border-radius: 14px; }
+.lv-btns button.primary { background: var(--ch); border-color: var(--ch); box-shadow: 0 4px 0 rgba(0,0,0,0.22); }
+.lv-gate { background: #fff4e5; border: 2px solid #ffc98a; border-radius: 12px; padding: 8px 10px 6px; font-size: 13.5px !important; }
+.lv-gate.ok { background: #e8f8ee; border-color: #a9e3c1; }
+.lv-res li.rush { background: #ffe3e1; color: #b3261e; }
+.lv-btn.lv-node .n, .lv-btn.lv-node.done .n, .lv-btn.lv-node.locked .n { background: none; width: auto; height: auto; }
+.lv-btn.lv-node.done .n { color: #fff; }
+/* sıradaki bölüm: düğme yerinde durur (dokunması kolay), çevresinde nabız gibi atan halka */
+.lv-btn.lv-node.next { animation: none; }
+.lv-btn.lv-node.next::after { content: ''; position: absolute; inset: -14px; border-radius: 50%; border: 4px solid var(--ch); opacity: 0.6; animation: nodering 1.3s ease-out infinite; pointer-events: none; }
+@keyframes nodering { from { transform: scale(0.85); opacity: 0.8; } to { transform: scale(1.25); opacity: 0; } }

@@ -97,10 +97,17 @@
     spawn(dt) {
       const L = this.level;
       const prog = RA.clamp(this.stats.delivered / L.goal, 0, 1);
+      // yoğun saat: belli aralıklarla bir süre evlerden daha sık araç çıkar
+      let rushK = 1;
+      if (L.rush) {
+        const on = this.t % L.rush.every > L.rush.every - L.rush.dur;
+        if (on !== !!this.rushOn) { this.rushOn = on; if (this.game.onRush) this.game.onRush(on); }
+        if (on) rushK = L.rush.k;
+      }
       for (const h of this.houses) {
         if (h.dep) { while (h.queue.length && h.queue[0] <= this.t) { h.queue.shift(); h.pending++; } } // kapıda işi biten uçak kalkışa hazır
         else {
-          const iv = (h.b.every || L.spawn) * RA.lerp(1.2, 0.85, prog);
+          const iv = (h.b.every || L.spawn) * RA.lerp(1.2, 0.85, prog) * rushK;
           h.timer -= dt;
           if (h.timer <= 0) {
             h.timer += iv;
