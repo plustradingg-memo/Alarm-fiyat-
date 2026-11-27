@@ -433,6 +433,9 @@ pist doluluğu) elle yönetimde de çalışmaya devam eder.
 
 ## Çalıştırma
 
+**Mobil uygulama (App Store / Google Play):** oyunun Expo ile paketlenmiş hâli `../ray-arasi-mobil` klasöründedir;
+derleme ve mağazaya gönderme adımları oradaki `BENIOKU.md` dosyasında.
+
 **En kolayı:** `index.html` dosyasına çift tıkla. Oyun internet olmadan da açılır; yalnızca yazı tipi
 çevrimdışıyken sistem yazı tipine geçer.
 

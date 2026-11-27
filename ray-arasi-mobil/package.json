@@ -1,0 +1,28 @@
+{
+  "name": "ray-arasi-mobil",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "expo": "~58.1.0",
+    "expo-splash-screen": "~58.0.15",
+    "expo-status-bar": "~58.0.5",
+    "expo-system-ui": "~58.0.7",
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "react-native-safe-area-context": "~5.11.1",
+    "react-native-webview": "14.0.1"
+  },
+  "scripts": {
+    "paketle": "node scripts/paketle.cjs",
+    "postinstall": "node scripts/paketle.cjs",
+    "start": "node scripts/paketle.cjs && expo start",
+    "android": "node scripts/paketle.cjs && expo start --android",
+    "ios": "node scripts/paketle.cjs && expo start --ios",
+    "simge": "node scripts/simge.cjs",
+    "derle:android": "eas build --platform android --profile production",
+    "derle:ios": "eas build --platform ios --profile production",
+    "gonder:android": "eas submit --platform android --profile production --latest",
+    "gonder:ios": "eas submit --platform ios --profile production --latest"
+  },
+  "private": true
+}
