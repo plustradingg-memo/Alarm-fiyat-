@@ -7,7 +7,7 @@
   const T = THREE;
   const M = RA.M;
   const rb = RA.rbox, mesh = RA.mesh;
-  const BW = 20, BD = 32, GH = 0.6;
+  const GH = 0.6;
 
   let MAT = null;
   function mats() {
@@ -61,7 +61,7 @@
     return d;
   }
   const HILL_B = 0.9; // dağın eteği: çokgenden bu kadar taşar
-  const clipHill = (poly) => poly.map(([x, z]) => [RA.clamp(x, -9.95 + HILL_B, 9.95 - HILL_B), RA.clamp(z, -15.95 + HILL_B, 15.95 - HILL_B)]);
+  const clipHill = (poly) => poly.map(([x, z]) => [RA.clamp(x, -LV.C.W / 2 + 0.05 + HILL_B, LV.C.W / 2 - 0.05 - HILL_B), RA.clamp(z, -LV.C.D / 2 + 0.05 + HILL_B, LV.C.D / 2 - 0.05 - HILL_B)]);
   // dağ yüksekliği: kenardan içeri doğru yumuşakça yükselir (eteği çokgenden HILL_B taşar), tepesi hafif engebeli
   function hillHeight(poly, x, z) {
     const inside = LV.geo.inPoly(poly, x, z), d = polyDist(poly, x, z), sd = inside ? d : -d;
@@ -222,6 +222,7 @@
       this.dispose(this.base);
       const m = mats();
       const root = new T.Group(), stat = new T.Group();
+      const BW = LV.C.W, BD = LV.C.D;
       const table = mesh(new T.BoxGeometry(BW + 40, 0.4, BD + 40), m.table, 0, -GH - 0.5, 0); table.castShadow = false; root.add(table);
       for (const [x, z, w, d] of [[0, -BD / 2 - 0.3, BW + 1.2, 0.6], [0, BD / 2 + 0.3, BW + 1.2, 0.6], [-BW / 2 - 0.3, 0, 0.6, BD], [BW / 2 + 0.3, 0, 0.6, BD]]) stat.add(mesh(rb(w, GH + 0.3, d, 0.08), m.wood, x, -GH / 2 + 0.05, z));
       const ground = mesh(new T.BoxGeometry(BW, GH, BD), m.grass, 0, -GH / 2, 0); ground.castShadow = false; root.add(ground);
@@ -244,8 +245,9 @@
       // süs ağaçları (yolların altında kalanlar gizlenir)
       const rnd = RA.rng(level.id * 977 + 13);
       this.trees = [];
-      for (let k = 0; k < 140 && this.trees.length < 70; k++) {
-        const x = -9.4 + rnd() * 18.8, z = -15.4 + rnd() * 30.8;
+      const nT = Math.round(70 * (BW * BD) / 640);
+      for (let k = 0; k < nT * 2 && this.trees.length < nT; k++) {
+        const x = -BW / 2 + 0.6 + rnd() * (BW - 1.2), z = -BD / 2 + 0.6 + rnd() * (BD - 1.2);
         if (level.blds.some((b) => Math.hypot(b.x - x, b.z - z) < 2.6 || Math.hypot(b.ex - x, b.ez - z) < 1.4)) continue;
         if ((level.water || []).some((p) => LV.geo.inPoly(p, x, z))) continue;
         if ((level.hills || []).some((p) => LV.geo.inPoly(p, x, z) || polyDist(p, x, z) < HILL_B + 0.4)) continue;
@@ -326,7 +328,7 @@
       // tabela ve giriş işareti
       const label = b.role === 'arr' ? 'İNİŞ' : b.role === 'dep' ? 'KALKIŞ' : b.role === 'gate' ? 'KAPI ' + ({ or: 'A', bl: 'B', gr: 'C', pu: 'D' }[b.color] || '') :
         mode === 'rail' ? (b.kind === 'house' ? 'İSTASYON' : ({ gar: 'GAR', liman: 'LİMAN', maden: 'MADEN' }[b.type] || 'GAR')) :
-        b.kind === 'house' ? 'EVLER' : ({ fabrika: 'FABRİKA', okul: 'OKUL', avm: 'AVM', ofis: 'OFİS', hastane: 'HASTANE' }[b.type] || 'İŞ YERİ');
+        b.kind === 'house' ? 'EVLER' : ({ fabrika: 'FABRİKA', okul: 'OKUL', avm: 'AVM', ofis: 'OFİS', hastane: 'HASTANE', stadyum: 'STADYUM' }[b.type] || 'İŞ YERİ');
       const sp = new T.Sprite(new T.SpriteMaterial({ map: signTex(label, col.css), depthTest: false, transparent: true }));
       sp.center.set(0.5, 0); sp.scale.set(2.6, 0.98, 1); sp.position.set(b.x - b.ux * 0.6, 2.1, b.z - b.uz * 0.6); sp.renderOrder = 15; g.add(sp);
       const an = new T.Mesh(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({ map: anchorTex(col.css), transparent: true, depthWrite: false }));
@@ -345,7 +347,7 @@
       const poly = clipHill(poly0);
       const g = new T.Group();
       const xs0 = poly.map((p) => p[0]), zs0 = poly.map((p) => p[1]);
-      const x0 = Math.max(-10, Math.min(...xs0) - HILL_B - 0.3), x1 = Math.min(10, Math.max(...xs0) + HILL_B + 0.3), z0 = Math.max(-16, Math.min(...zs0) - HILL_B - 0.3), z1 = Math.min(16, Math.max(...zs0) + HILL_B + 0.3);
+      const x0 = Math.max(-LV.C.W / 2, Math.min(...xs0) - HILL_B - 0.3), x1 = Math.min(LV.C.W / 2, Math.max(...xs0) + HILL_B + 0.3), z0 = Math.max(-LV.C.D / 2, Math.min(...zs0) - HILL_B - 0.3), z1 = Math.min(LV.C.D / 2, Math.max(...zs0) + HILL_B + 0.3);
       const nx = Math.max(2, Math.ceil((x1 - x0) / 0.4)), nz = Math.max(2, Math.ceil((z1 - z0) / 0.4));
       const geo = new T.PlaneGeometry(x1 - x0, z1 - z0, nx, nz); geo.rotateX(-Math.PI / 2); geo.translate((x0 + x1) / 2, 0, (z0 + z1) / 2);
       const pos = geo.attributes.position;
@@ -461,9 +463,9 @@
         this.elevated(stat, path, yf, 0.86);
       }
       // raylar (her şeridin iki rayı ve traversleri) / taksi yolu sarı rehber çizgileri; kavşak içinde dönüş yolları boyunca
-      if (mode === 'rail' || mode === 'air') {
+      {
         const tracks = net.lanes.map((l) => ({ path: l.path, y: l.y })).concat(net.turns.map((t) => ({ path: t.path, y: () => 0, turn: true })));
-        for (const tr of tracks) {
+        if (mode !== 'road') for (const tr of tracks) {
           if (tr.path.length < 0.05) continue;
           if (mode === 'air') { stat.add(new T.Mesh(ribbonY(tr.path, -0.035, 0.035, tr.y, 0.058, 0.15), m.yline)); continue; }
           for (const x of [-0.12, 0.12]) stat.add(new T.Mesh(ribbonY(tr.path, x - 0.022, x + 0.022, tr.y, 0.125, 0.15), m.railSteel));
@@ -473,7 +475,7 @@
           }
         }
         // dağın içinden geçen hattın tünel ağızları
-        if (mode === 'rail' && net.strokeTun) {
+        if (net.strokeTun) {
           const hills = (level.hills || []).map(clipHill);
           const under = (p) => hills.some((q) => hillHeight(q, p.x, p.z) > 0.85);
           for (const st of net.S) for (const t of net.strokeTun.get(st.id) || []) {

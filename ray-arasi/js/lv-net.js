@@ -6,7 +6,9 @@
   // H_UP: köprü yüksekliği, RAMP: bir yandaki rampa boyu, FLAT: kesişimde düz kısım (yarısı),
   // H_W / RAMP_W: yalnızca suyun üstünden geçen alçak köprünün yüksekliği ve rampası,
   // JR: kavşak yarıçapı (şeritler buradan başlar), LO: şerit ofseti, SP: çizgi örnek aralığı
-  const C = (LV.C = { H_UP: 1.2, RAMP: 2.4, H_W: 0.55, RAMP_W: 1.4, FLAT: 0.9, JR: 1.05, JJ: 0.45, LO: 0.36, ROAD_W: 1.5, SP: 0.3, BX: 9.5, BZ: 15.5 });
+  const C = (LV.C = { H_UP: 1.2, RAMP: 2.4, H_W: 0.55, RAMP_W: 1.4, FLAT: 0.9, JR: 1.05, JJ: 0.45, LO: 0.36, ROAD_W: 1.5, SP: 0.3, BX: 9.5, BZ: 15.5, W: 20, D: 32 });
+  // tahta boyutu (bölümler ilerledikçe büyür): W × D metre; yollar kenardan 0,5 m içeride kalır
+  LV.setBoard = function (w, d) { C.W = w || 20; C.D = d || 32; C.BX = C.W / 2 - 0.5; C.BZ = C.D / 2 - 0.5; };
 
   /* ================= çizgi yardımcıları ================= */
   function stroke(id, pts) {

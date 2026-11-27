@@ -41,7 +41,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
 
   console.log('ANA EKRAN');
   ok(await page.locator('#menu').isVisible(), 'ana ekran görünür');
-  ok((await page.locator('#lv-grid .lv-btn').count()) === 10, 'ana ekranda 10 bölüm var');
+  ok((await page.locator('#lv-grid .lv-btn').count()) === 20, 'ana ekranda 20 karayolu bölümü var');
   ok(!(await page.locator('.lv-btn[data-lv="1"]').getAttribute('class')).includes('locked') && (await page.locator('.lv-btn[data-lv="2"]').getAttribute('class')).includes('locked'), 'ilk bölüm açık, sonrakiler kilitli');
   ok((await page.locator('#menu .free-btn').count()) === 3, 'serbest atölye düğmeleri duruyor: Karayolu, Demiryolu, Havalimanı');
   await page.waitForTimeout(600); await shot('00-ana-ekran');
@@ -228,15 +228,31 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   const all = await page.evaluate(() => RA.LV.LEVELS.map((L) => {
     const run = (naive) => {
       RA.app.openLevel(L.id); RA.app.manual = true; const g = RA.app.lv; g.hideCard();
-      let n = 0; for (const [tool, raw] of L.solution) if (g.addStroke(raw.map(([x, z]) => ({ x, z })), naive || tool === 'road' ? 'junction' : tool, true)) n++;
-      g.togglePlay(); let t = 0; for (; t < 400 && !g.ended; t += 0.5) RA.app.advance(0.5);
+      const n = g.playSolution(naive);
+      g.togglePlay(); let t = 0; for (; t < 500 && !g.ended; t += 0.5) RA.app.advance(0.5);
       return { n, ended: g.ended, del: g.sim.stats.delivered, peak: g.sim.stats.peak, len: Math.round(g.net.usage.len) };
     };
-    const sol = run(false), naive = [3, 4, 9, 10].includes(L.id) ? run(true) : null;
-    return { id: L.id, name: L.name, goal: L.goal, sol, naive };
+    const sol = run(false), naive = [3, 4, 9, 10, 14, 15, 17, 18, 19, 20].includes(L.id) ? run(true) : null;
+    return { id: L.id, name: L.name, goal: L.goal, board: (L.board || [20, 32]).join('×'), sol, naive };
   }));
-  for (const r of all) ok(r.sol.n > 0 && r.sol.ended === 'win', 'Bölüm ' + r.id + ' (' + r.name + '): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ' araç, ' + r.sol.len + ' m asfalt, evde en çok ' + r.sol.peak + ' kişi)');
+  for (const r of all) ok(r.sol.n > 0 && r.sol.ended === 'win', 'Bölüm ' + r.id + ' (' + r.name + ', ' + r.board + ' m): çözüm yoluyla kazanıldı (' + r.sol.del + '/' + r.goal + ' araç, ' + r.sol.len + ' m asfalt, evde en çok ' + r.sol.peak + ' kişi)');
   for (const r of all) if (r.naive) ok(r.naive.ended === 'lose', 'Bölüm ' + r.id + ': köprüsüz (hepsi kavşak) denemede kaybedildi (' + r.naive.del + '/' + r.goal + ')');
+  // haritalar büyür; tahtanın tamamı ekrana sığar, yakınlaştırılıp kaydırılabilir
+  const sizes = await page.evaluate(() => [1, 11, 14, 17].map((id) => {
+    RA.app.openLevel(id); const g = RA.app.lv; g.hideCard();
+    const hx = RA.LV.C.W / 2, hz = RA.LV.C.D / 2;
+    const fit = [[-hx, -hz], [hx, -hz], [-hx, hz], [hx, hz]].every(([x, z]) => { const q = RA.project(new THREE.Vector3(x, 0, z), g.camera, RA.app.w, RA.app.h); return q.x > -2 && q.x < RA.app.w + 2 && q.y > 40 && q.y < RA.app.h - 100; });
+    return { id, w: RA.LV.C.W, d: RA.LV.C.D, fit, zoomUI: getComputedStyle(document.querySelector('#lv .lv-zoom')).display !== 'none' };
+  }));
+  ok(sizes.map((q) => q.w + '×' + q.d).join(' → ') === '20×32 → 24×38 → 28×44 → 32×50' && sizes.every((q) => q.fit), 'bölümler ilerledikçe harita büyüyor ve tamamı ekrana sığıyor: ' + sizes.map((q) => q.w + '×' + q.d).join(' → '));
+  ok(!sizes[0].zoomUI && sizes[3].zoomUI, 'büyük haritalarda yakınlaştırma düğmeleri görünür');
+  await page.locator('#lv-zin').tap(); await page.locator('#lv-zin').tap();
+  const zm = await page.evaluate(() => ({ z: RA.app.lv.cam.zoom, x: RA.app.lv.cam.x }));
+  await page.mouse.move(120, 300); await page.mouse.wheel(0, 300); await page.waitForTimeout(50);
+  const zw = await page.evaluate(() => RA.app.lv.cam.zoom);
+  await page.locator('#lv-zfit').tap();
+  const zf = await page.evaluate(() => RA.app.lv.cam.zoom);
+  ok(zm.z > 1.9 && zw < zm.z && zf === 1, '+ ile yakınlaşıyor (' + zm.z.toFixed(2) + '×), fare tekerleğiyle uzaklaşıyor (' + zw.toFixed(2) + '×), ⛶ ile tüm tahta geri geliyor');
   await page.evaluate(() => RA.app.showMenu());
 
   console.log('\nDEMİRYOLU VE HAVALİMANI BÖLÜMLERİ');

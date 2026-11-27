@@ -49,6 +49,9 @@
     open(id) {
       const def = LV.find(id) || LV.LEVELS[0];
       LV.setMode(def.mode || 'road');
+      LV.setBoard(def.board ? def.board[0] : 20, def.board ? def.board[1] : 32);
+      this.cam = { zoom: 1, x: 0, z: 0 };
+      $('lv').dataset.board = def.board ? 'big' : 'base';
       this.mode = def.mode || 'road'; this.tx = LV.TXT[this.mode];
       RA.store.set('lv.set', this.mode); if (this.app.menu) this.app.menu.set = this.mode; // menüye dönünce bu sekme açık olsun
       clearTimeout(this.endT); clearTimeout(this.hintT); // önceki bölümden bekleyen kart / ipucu yeni bölüme düşmesin
@@ -559,6 +562,10 @@
       $('lv-play').addEventListener('click', () => this.togglePlay());
       $('lv-speed').addEventListener('click', () => { const S = [1, 2, 4, 8]; this.setSpeed(S[(S.indexOf(this.speed) + 1) % S.length]); });
       $('lv-hint').addEventListener('click', () => this.showHint());
+      const mid = () => ({ x: this.app.w / 2, y: this.app.h * 0.45 });
+      $('lv-zin').addEventListener('click', () => { const m = mid(); this.zoomAt(m.x, m.y, 0.7); });
+      $('lv-zout').addEventListener('click', () => { const m = mid(); this.zoomAt(m.x, m.y, 1.45); });
+      $('lv-zfit').addEventListener('click', () => { this.cam = { zoom: 1, x: 0, z: 0 }; this.applyCam(); this.closePick(); });
       $('lv-card').addEventListener('click', (e) => {
         const b = e.target.closest('[data-act]'); if (!b) return;
         const act = b.dataset.act;
@@ -830,17 +837,35 @@
     bindInput() {
       const st = this.app.stage;
       const local = (e) => { const r = st.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+      this.ptrs = new Map();
+      const two = () => { const [a, b] = Array.from(this.ptrs.values()); return { d: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }; };
+      st.addEventListener('contextmenu', (e) => { if (this.app.state === 'level') e.preventDefault(); });
+      st.addEventListener('wheel', (e) => {
+        if (this.app.state !== 'level' || !$('lv-card').hidden) return;
+        e.preventDefault(); const p = local(e);
+        this.zoomAt(p.x, p.y, Math.exp(RA.clamp(e.deltaY, -120, 120) * 0.0022));
+      }, { passive: false });
       st.addEventListener('pointerdown', (e) => {
         if (this.app.state !== 'level' || e.target.closest('button, .lv-bar, .lv-top, .lv-card, .lv-pick')) return;
-        if (!$('lv-card').hidden || this.ended) return;
+        if (!$('lv-card').hidden) return;
         RA.audio.unlock(); e.preventDefault();
         const p = local(e);
         try { st.setPointerCapture(e.pointerId); } catch (err) { /* yok */ }
+        this.ptrs.set(e.pointerId, p);
+        // ikinci parmak (ya da farenin sağ / orta tuşu): çizim iptal, görünüm hareketi
+        if (this.ptrs.size >= 2) { this.drag = null; this.view.preview(null); const t = two(); this.gesture = { kind: 'pinch', d0: t.d, mid: t.m }; return; }
+        if (e.button === 1 || e.button === 2) { this.gesture = { kind: 'pan', last: p, id: e.pointerId }; return; }
+        this.gesture = null;
+        if (this.ended) return;
         const g = this.ground(p.x, p.y);
         this.drag = { id: e.pointerId, x0: p.x, y0: p.y, moved: false, raw: g ? [{ x: g.x, z: g.z }] : [] };
         if (this.pickC && !this.markAt(p.x, p.y)) this.closePick();
       }, { passive: false });
       st.addEventListener('pointermove', (e) => {
+        if (this.ptrs.has(e.pointerId)) this.ptrs.set(e.pointerId, local(e));
+        const gs = this.gesture;
+        if (gs && gs.kind === 'pinch' && this.ptrs.size >= 2) { const t = two(); this.zoomAt(t.m.x, t.m.y, gs.d0 / t.d); this.panBy(gs.mid, t.m); gs.d0 = t.d; gs.mid = t.m; return; }
+        if (gs && gs.kind === 'pan' && e.pointerId === gs.id) { const p = local(e); this.panBy(gs.last, p); gs.last = p; return; }
         const d = this.drag; if (!d || e.pointerId !== d.id) return;
         const p = local(e);
         if (Math.hypot(p.x - d.x0, p.y - d.y0) > 9) d.moved = true;
@@ -854,6 +879,8 @@
         this.view.preview(d.raw, this.net.usage.len + L * 0.95 <= this.level.budget);
       });
       const end = (e) => {
+        this.ptrs.delete(e.pointerId);
+        if (this.gesture) { if (this.gesture.kind === 'pan' ? e.pointerId === this.gesture.id : this.ptrs.size < 2) this.gesture = this.ptrs.size ? { kind: 'none' } : null; if (!this.ptrs.size) this.gesture = null; return; }
         const d = this.drag; if (!d || e.pointerId !== d.id) return;
         this.drag = null; this.view.preview(null);
         if (e.type === 'pointercancel') return;
@@ -895,10 +922,34 @@
       const bb = bar && bar.offsetHeight ? sr.bottom - bar.getBoundingClientRect().top + 6 : 150;
       const tilt = T.MathUtils.degToRad(w / h > 0.75 ? 52 : 57);
       const dir = new T.Vector3(0, Math.sin(tilt), Math.cos(tilt));
-      const r = RA.fitCamera(this.camera, { dir, target: new T.Vector3(0, 0, 0), points: [[-10.4, 0, -16.4], [10.4, 0, -16.4], [-10.4, 0, 16.4], [10.4, 0, 16.4], [0, 2.2, -16]], margin: { top: tb / h, bottom: bb / h, left: 0.0, right: 0.0 } });
-      this.camera.position.copy(r.target).addScaledVector(dir, r.dist); this.camera.lookAt(r.target); this.camera.updateMatrixWorld(true);
-      const sun = this.lights.sun; sun.target.position.set(0, 0, 0); sun.position.set(-12, 26, 10);
-      const sc = sun.shadow.camera; sc.left = -20; sc.right = 20; sc.top = 20; sc.bottom = -20; sc.far = 120; sc.updateProjectionMatrix(); sun.target.updateMatrixWorld();
+      const hx = LV.C.W / 2 + 0.4, hz = LV.C.D / 2 + 0.4;
+      const r = RA.fitCamera(this.camera, { dir, target: new T.Vector3(0, 0, 0), points: [[-hx, 0, -hz], [hx, 0, -hz], [-hx, 0, hz], [hx, 0, hz], [0, 2.2, -hz + 0.4]], margin: { top: tb / h, bottom: bb / h, left: 0.0, right: 0.0 } });
+      this.camBase = { target: r.target.clone(), dist: r.dist, dir };
+      this.applyCam();
+      const sun = this.lights.sun, k = Math.max(1, LV.C.D / 32); sun.target.position.set(0, 0, 0); sun.position.set(-12 * k, 26 * k, 10 * k);
+      const sc = sun.shadow.camera, ext = Math.max(20, LV.C.D / 2 + 4); sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.far = 120 * k; sc.updateProjectionMatrix(); sun.target.updateMatrixWorld();
+    }
+    // yakınlaştırma / kaydırma: büyük haritalarda iki parmakla, fare tekerleğiyle ya da +/− düğmeleriyle
+    applyCam() {
+      const b = this.camBase; if (!b) return;
+      const c = this.cam || (this.cam = { zoom: 1, x: 0, z: 0 });
+      const mx = (LV.C.W / 2) * (1 - 1 / c.zoom), mz = (LV.C.D / 2) * (1 - 1 / c.zoom);
+      c.x = RA.clamp(c.x, -mx, mx); c.z = RA.clamp(c.z, -mz, mz);
+      const t = b.target.clone().add(new T.Vector3(c.x, 0, c.z));
+      this.camera.position.copy(t).addScaledVector(b.dir, b.dist / c.zoom); this.camera.lookAt(t); this.camera.updateMatrixWorld(true);
+    }
+    maxZoom() { return Math.max(2.2, LV.C.W / 9); }
+    zoomAt(sx, sy, f) {
+      const before = this.ground(sx, sy);
+      this.cam.zoom = RA.clamp(this.cam.zoom / f, 1, this.maxZoom());
+      this.applyCam();
+      const after = this.ground(sx, sy);
+      if (before && after) { this.cam.x += before.x - after.x; this.cam.z += before.z - after.z; this.applyCam(); }
+      this.closePick();
+    }
+    panBy(a, b) {
+      const g0 = this.ground(a.x, a.y), g1 = this.ground(b.x, b.y);
+      if (g0 && g1) { this.cam.x -= g1.x - g0.x; this.cam.z -= g1.z - g0.z; this.applyCam(); }
     }
   }
   LV.Game = LvGame;

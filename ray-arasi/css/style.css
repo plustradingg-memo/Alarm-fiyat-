@@ -198,6 +198,10 @@ button:focus-visible { outline: 3px solid var(--sign-yellow); outline-offset: 3p
 @media (max-width: 350px) { .ws-popn { display: none; } }
 
 /* yakınlaştırma / kaydırma */
+.lv-zoom { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 4; }
+.lv-zoom .round-btn { width: 40px; height: 40px; opacity: 0.92; }
+.lv-zoom .round-btn svg { width: 20px; height: 20px; }
+#lv[data-board="base"] .lv-zoom { display: none; }
 .ws-zoom { position: absolute; right: 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 130px); display: flex; flex-direction: row; gap: 8px; }
 .ws-zoom .round-btn { width: 40px; height: 40px; }
 .ws-zoom .round-btn svg { width: 20px; height: 20px; }

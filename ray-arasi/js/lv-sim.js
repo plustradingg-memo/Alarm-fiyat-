@@ -246,7 +246,7 @@
           g.position.set(F.x, y + 0.2, F.z);
           g.rotation.set(0, -Math.atan2(F.z - R.z, F.x - R.x), Math.atan2(alt(tr.s) - alt(tr.s - 0.6), 0.6));
           g.userData.gear.visible = y < 0.8; g.userData.landing.material.opacity = 0.9;
-          g.visible = Math.abs(F.x) < 10.6 && Math.abs(F.z) < 16.6;
+          g.visible = Math.abs(F.x) < LV.C.W / 2 + 0.6 && Math.abs(F.z) < LV.C.D / 2 + 0.6;
           if (tr.s - tr.len > L + 2) { this.scene.remove(g); this.trains.splice(this.trains.indexOf(tr), 1); }
           continue;
         }
@@ -262,7 +262,7 @@
           const x = (F.x + R.x) / 2, z = (F.z + R.z) / 2;
           u.g.position.set(x, (F.y + R.y) / 2 + 0.06, z);
           u.g.rotation.set(0, -Math.atan2(F.z - R.z, F.x - R.x), Math.atan2(F.y - R.y, Math.hypot(F.x - R.x, F.z - R.z)));
-          u.g.visible = Math.abs(x) < 10.3 && Math.abs(z) < 16.3;
+          u.g.visible = Math.abs(x) < LV.C.W / 2 + 0.3 && Math.abs(z) < LV.C.D / 2 + 0.3;
           if (u.g.visible) vis = true;
           if (u.g.userData.wheels) u.g.userData.wheels.forEach((w) => (w.rotation.y -= TRAIN_V * dt * 3));
         });
@@ -305,7 +305,7 @@
         const ext = s0 < 0 ? s0 : s0 > path.length ? s0 - path.length : 0;
         const y = Math.max(0, (0.45 - k) * 5.5);
         g.position.set(P.x + T0.x * ext, 0.2 + y, P.z + T0.z * ext); g.rotation.set(0, -Math.atan2(T0.z * dir, T0.x * dir), y > 0 ? -0.12 : 0);
-        g.userData.gear.visible = y < 1.2; g.visible = Math.abs(g.position.x) < 10.6;
+        g.userData.gear.visible = y < 1.2; g.visible = Math.abs(g.position.x) < LV.C.W / 2 + 0.6;
         if (k >= 1) { done(); return false; }
         return true;
       } });
@@ -320,7 +320,7 @@
         const u = 1.2 * f.t * f.t + 0.4 * f.t, s = s0 + dir * u, P = path.at(RA.clamp(s, 0, path.length)), T0 = path.tan(RA.clamp(s, 0, path.length));
         const y = Math.max(0, (u - 5) * 0.3);
         g.position.set(P.x, 0.2 + y, P.z); g.rotation.set(0, -Math.atan2(T0.z * dir, T0.x * dir), y > 0 ? 0.22 : 0);
-        g.userData.gear.visible = y < 0.6; g.userData.landing.material.opacity = 0.9; g.visible = Math.abs(P.x) < 10.6 && u < 26;
+        g.userData.gear.visible = y < 0.6; g.userData.landing.material.opacity = 0.9; g.visible = Math.abs(P.x) < LV.C.W / 2 + 0.6 && u < 26;
         return f.t < f.dur;
       } });
     }

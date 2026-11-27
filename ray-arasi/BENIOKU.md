@@ -99,9 +99,26 @@ bekletmemek. Bir bölümü bitirince sonraki açılır.
 | 8 | Nehir ve ray | Köprü ve alt geçidi birlikte kullanmak |
 | 9 | Göl | Göl çevresinde yol ve tek köprü |
 | 10 | Büyük kavşak | Dört akış, dört kesişim |
+| 11 | Nehir ve ray | 24×38 m tahta: nehir ve demiryolu birlikte, üç renk |
+| 12 | Tek köprü | Tek köprü hakkıyla iki yolu birleştirip nehri geçmek, raydan önce ayırmak |
+| 13 | Göl | Gölün üstünden köprü mü, etrafından dolaşmak mı? |
+| 14 | Dağ yolu | 28×44 m: dağın içinden tünelle geçen yol, dolambaçlı yeşil cadde |
+| 15 | İki ray | İki demiryolu, altı hemzemin geçit: hangileri alt geçit olsun? |
+| 16 | İki nehir | İki nehir, iki köprü: üç yolu ortak bir ana yolda toplamak |
+| 17 | Metropol | 32×50 m: beş renk, nehir ve demiryolu, altı kesişim |
+| 18 | Kavşak ağı | Altı renk, altı cadde, dokuz kesişim |
+| 19 | Dağ, nehir, ray | Hepsi bir arada: tünel, köprü, geçit |
+| 20 | Megakent | Altı renk, nehir, demiryolu ve dağ |
+
+**Haritalar büyür:** ilk 10 bölüm 20×32 m'lik tahtada, 11–13. bölümler 24×38 m, 14–16. bölümler 28×44 m, 17–20.
+bölümler 32×50 m'lik tahtada oynanır. Bölüm açılınca tahtanın tamamı ekrana sığar. Büyük haritalarda sağda
+**+ / − / ⛶** düğmeleri çıkar; **iki parmakla** sıkıştırıp açarak yakınlaştırır, iki parmakla sürükleyerek
+kaydırırsın (bilgisayarda fare tekerleği yakınlaştırır, sağ tuşla sürüklemek kaydırır). Tek parmak her zaman yol
+çizer. Yeni renkler: kırmızı, turkuaz, pembe. Karayolunda da dağ olabilir: dağın içinden geçen yol tünel olur
+(bir alt geçit hakkı kullanır).
 
 Her bölüm, kontrol betiğinde çözüm yoluyla baştan sona oynanıp kazanıldığı doğrulanmıştır; köprüsüz (hepsi kavşak)
-denemede 3, 4, 9 ve 10. bölümler kaybedilir.
+denemede 3, 4, 9, 10, 14, 15, 17, 18, 19 ve 20. bölümler kaybedilir.
 
 ## Demiryolu bölümleri
 
@@ -310,7 +327,7 @@ ray-arasi/
 ├── js/app.js               Oluşturucu, ekranlar ve döngü
 ├── js/vendor/three.min.js  three.js r149 (MIT lisansı: js/vendor/three.LICENSE)
 ├── assets/                 Uygulama ikonları
-├── ekran-goruntuleri/      Ana ekran (karayolu ve demiryolu sekmesi), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, köprü, demiryolu (nehir ve dağ, büyük gar), havalimanı (taksi köprüsü), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
+├── ekran-goruntuleri/      Ana ekran (karayolu ve demiryolu sekmesi), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, köprü, büyük haritalar (14 Dağ yolu, 20 Megakent), demiryolu (nehir ve dağ, büyük gar), havalimanı (taksi köprüsü), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 └── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği
 ```
