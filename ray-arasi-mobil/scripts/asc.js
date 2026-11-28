@@ -57,7 +57,11 @@ module.exports = async function asc() {
     });
     const text = await r.text();
     const j = text ? JSON.parse(text) : {};
-    if (!r.ok) throw new Error(`${method} ${path} → ${r.status}: ${(j.errors || []).map((e) => e.detail || e.title).join('; ') || text.slice(0, 300)}`);
+    if (!r.ok) {
+      // Apple bazı reddetmelerde asıl sebebi meta.associatedErrors içinde verir
+      const assoc = (j.errors || []).flatMap((e) => Object.values((e.meta && e.meta.associatedErrors) || {}).flat()).map((e) => e.detail || e.title || e.code);
+      throw new Error(`${method} ${path} → ${r.status}: ${(j.errors || []).map((e) => e.detail || e.title).join('; ') || text.slice(0, 300)}${assoc.length ? ' | ' + assoc.join(' | ') : ''}`);
+    }
     return j;
   }
   return {

@@ -151,11 +151,13 @@ async function patchTolerant(asc, url, type, id, attributes) {
   }
 
   // 4) fiyat (ücretsiz) ve ülkeler (hepsi) — yalnızca daha önce ayarlanmadıysa
+  let fiyatVar = false;
   try {
-    await asc.get(`/v1/apps/${app.id}/appPriceSchedule`);
-    log('fiyat zaten ayarlı');
-  } catch (e) {
-    if (!/404/.test(e.message)) throw e;
+    const ps = await asc.get(`/v1/apps/${app.id}/appPriceSchedule?include=manualPrices`);
+    fiyatVar = (ps.included || []).some((x) => x.type === 'appPrices'); // takvim boş da dönebiliyor
+  } catch (e) { if (!/404/.test(e.message)) throw e; }
+  if (fiyatVar) log('fiyat zaten ayarlı');
+  else {
     const free = (await asc.get(`/v1/apps/${app.id}/appPricePoints?filter[territory]=USA&limit=200`)).data.find((p) => Number(p.attributes.customerPrice) === 0);
     if (!free) throw new Error('ücretsiz fiyat noktası bulunamadı');
     await asc.post('/v1/appPriceSchedules', {
