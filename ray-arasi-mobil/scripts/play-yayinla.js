@@ -5,9 +5,11 @@
 // Not: Google, yeni bir uygulamanın İLK sürümünü yalnızca Play Console'dan elle yüklemeye izin verir.
 //
 //   NODE_USE_ENV_PROXY=1 node scripts/play-yayinla.js --aab <dosya.aab> --kanal internal|alpha|production [--gorselsiz] [--deneme]
+//   NODE_USE_ENV_PROXY=1 node scripts/play-yayinla.js --surum-kodu 2 --kanal alpha                 (yüklenmiş sürümü kanala taşı)
 //   NODE_USE_ENV_PROXY=1 node scripts/play-yayinla.js --yalniz-sayfa [--gorselsiz] [--deneme]   (AAB yok: yalnızca mağaza sayfası)
 //
 // --kanal         internal = dahili test, alpha = kapalı test, production = üretim (herkes)
+// --surum-kodu N  AAB yüklemeden, daha önce yüklenmiş N sürüm kodunu kanala koyar (ör. dahili testten kapalı teste)
 // --yalniz-sayfa  derleme yüklemeden yalnızca metinleri ve görselleri günceller
 // --deneme        her şeyi hazırla, sonunda kaydetme (düzenleme atılır)
 const fs = require('fs');
@@ -32,7 +34,8 @@ const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest
   const AAB = val('--aab');
   const TRACK = val('--kanal');
   const ONLY_PAGE = arg('--yalniz-sayfa');
-  if (!ONLY_PAGE && (!AAB || !TRACK)) throw new Error('--aab ve --kanal gerekli (ya da --yalniz-sayfa)');
+  const CODE = val('--surum-kodu');
+  if (!ONLY_PAGE && ((!AAB && !CODE) || !TRACK)) throw new Error('--aab (ya da --surum-kodu) ve --kanal gerekli (ya da --yalniz-sayfa)');
   const play = await require('./play')();
   const e = await play.edit(PKG);
   try {
@@ -45,9 +48,17 @@ const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest
 
     // 2) AAB, kanal ve sürüm notları
     if (!ONLY_PAGE) {
-      const up = await play.call('POST', `${UP}${PKG}/edits/${e.id}/bundles?uploadType=media`, fs.readFileSync(AAB), 'application/octet-stream');
-      const vc = String(up.versionCode);
-      log('AAB yüklendi, sürüm kodu', vc);
+      let vc;
+      if (AAB) {
+        const up = await play.call('POST', `${UP}${PKG}/edits/${e.id}/bundles?uploadType=media`, fs.readFileSync(AAB), 'application/octet-stream');
+        vc = String(up.versionCode);
+        log('AAB yüklendi, sürüm kodu', vc);
+      } else {
+        vc = String(CODE);
+        const known = ((await e.get('bundles')).bundles || []).map((b) => String(b.versionCode));
+        if (!known.includes(vc)) throw new Error(`sürüm kodu ${vc} Play'de yüklü değil (yüklü: ${known.join(', ') || 'yok'})`);
+        log('yüklü sürüm kanala taşınıyor, sürüm kodu', vc);
+      }
       const releaseNotes = [];
       for (const lang of langs) {
         const text = M.android_yenilikler[lang.startsWith('tr') ? 'tr' : 'en'];

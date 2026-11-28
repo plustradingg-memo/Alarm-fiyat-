@@ -9,6 +9,7 @@
 // --incelemedekini-degistir    İncelemede bekleyen eski sürüm varsa incelemeden çekilir, numarası bu sürüme çevrilir
 // --gorselsiz                  Ekran görüntülerine dokunma
 // --gonderme                   Her şeyi hazırla ama incelemeye gönderme
+// --iletisim-kaynak PAKET      İnceleme iletişim bilgisi yoksa sahibinin başka bir uygulamasından yalnızca okunur
 //
 // İlk sürümde (ve eksik kaldıkça) şunlar da kurulur: telif, kategori, yaş derecelendirmesi, içerik hakları, ücretsiz
 // fiyat, bütün ülkeler, inceleme notu. İnceleme iletişim bilgisi bir kez verilir (INCELEME_AD, INCELEME_SOYAD,
@@ -170,13 +171,26 @@ async function patchTolerant(asc, url, type, id, attributes) {
   let rd = null;
   try { rd = (await asc.get(`/v1/appStoreVersions/${ver.id}/appStoreReviewDetail`)).data; } catch (e) { if (!/404/.test(e.message)) throw e; }
   let contact = { contactFirstName: process.env.INCELEME_AD, contactLastName: process.env.INCELEME_SOYAD, contactPhone: process.env.INCELEME_TEL, contactEmail: process.env.INCELEME_EPOSTA };
-  if (!contact.contactEmail) {
-    for (const v of vs.filter((x) => x.id !== ver.id)) {
+  const copyFrom = async (versionList) => {
+    for (const v of versionList) {
       try {
         const p = (await asc.get(`/v1/appStoreVersions/${v.id}/appStoreReviewDetail`)).data;
-        if (p && p.attributes.contactEmail) { contact = Object.fromEntries(Object.keys(contact).map((k) => [k, p.attributes[k]])); break; }
-      } catch (e) { /* önceki sürümde inceleme bilgisi yok */ }
+        if (p && p.attributes.contactEmail) return Object.fromEntries(Object.keys(contact).map((k) => [k, p.attributes[k]]));
+      } catch (e) { /* bu sürümde inceleme bilgisi yok */ }
     }
+    return null;
+  };
+  if (!contact.contactEmail) contact = (await copyFrom(vs.filter((x) => x.id !== ver.id))) || contact;
+  // Sahibinin izniyle (28 Kasım 2026) ilk sürümde iletişim bilgisi başka bir uygulamasından YALNIZCA OKUNUR:
+  // --iletisim-kaynak <paket-kimliği>. O uygulamada hiçbir şey değiştirilmez; bilgi ekrana yazılmaz.
+  const src = val('--iletisim-kaynak');
+  if (!contact.contactEmail && src) {
+    const other = (await asc.get(`/v1/apps?filter[bundleId]=${src}`)).data[0];
+    if (other) {
+      const ovs = (await asc.get(`/v1/apps/${other.id}/appStoreVersions?filter[platform]=IOS&limit=10&fields[appStoreVersions]=versionString`)).data;
+      contact = (await copyFrom(ovs)) || contact;
+    }
+    log('inceleme iletişim bilgisi kaynağı:', src, contact.contactEmail ? '(okundu)' : '(bulunamadı)');
   }
   const have = rd && rd.attributes;
   const want = { ...(have && have.contactEmail ? {} : Object.fromEntries(Object.entries(contact).filter(([, v]) => v))), demoAccountRequired: false, notes: A.incelemeNotu };
