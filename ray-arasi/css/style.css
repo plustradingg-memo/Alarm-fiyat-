@@ -18,7 +18,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; margin: 0; background: var(--table); color: var(--paper); font-family: var(--font-sign); overflow: hidden; overscroll-behavior: none; }
+html, body { height: 100%; margin: 0; background: #87c3e1 linear-gradient(180deg, #87c3e1 0%, #a8cadc 40%, #d3dde2 85%, #8cc966 94%) fixed; color: var(--paper); font-family: var(--font-sign); overflow: hidden; overscroll-behavior: none; }
 body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 [hidden] { display: none !important; }
 #app {
@@ -404,3 +404,33 @@ svg.star { width: 20px; height: 20px; fill: #ffc531; stroke: #d99a00; stroke-wid
 /* oyun adı levhası iki yan düğmenin arasına sığar; yazı tek satır, sığmazsa küçülür (js/dil.js) */
 .menu-head .title-plate { max-width: calc(100% - 108px); box-sizing: border-box; }
 .title-plate h1 { white-space: nowrap; }
+
+
+/* ================= ANA EKRAN: OYNA DÜĞMESİ, SEKME SİMGELERİ, TEK ATÖLYE DÜĞMESİ ================= */
+.menu-banner { height: clamp(104px, 17vh, 160px); }
+.btn-oyna { flex: none; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 8px 16px 8px 10px; border: 0; border-radius: 18px;
+  background: linear-gradient(180deg, #3ed682, #1fa85a); color: #fff; font-family: inherit; text-align: left; cursor: pointer;
+  box-shadow: 0 5px 0 #14773f, 0 12px 22px rgba(20,119,63,0.28); -webkit-tap-highlight-color: transparent; }
+.btn-oyna:active { transform: translateY(3px); box-shadow: 0 2px 0 #14773f, 0 6px 12px rgba(20,119,63,0.25); }
+.btn-oyna .o-i { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.15); }
+.btn-oyna .o-i svg { width: 24px; height: 24px; fill: #1fa85a; margin-left: 3px; }
+.btn-oyna .o-x { display: flex; flex-direction: column; min-width: 0; }
+.btn-oyna b { font-size: 23px; font-weight: 900; line-height: 1.05; letter-spacing: 0.01em; text-shadow: 0 2px 0 rgba(0,0,0,0.15); }
+.btn-oyna em { font-style: normal; font-size: 13.5px; font-weight: 800; opacity: 0.92; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-oyna.ilk { animation: oynapulse 1.6s ease-in-out infinite; }
+@keyframes oynapulse { 50% { box-shadow: 0 5px 0 #14773f, 0 0 0 7px rgba(62,214,130,0.35), 0 12px 22px rgba(20,119,63,0.28); } }
+.lv-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.lv-tabs button svg { flex: none; width: 18px; height: 18px; fill: currentColor; }
+.lv-tabs button svg .c { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.lv-tabs button svg .c { stroke: #fff; } /* ayrıntı çizgileri gövdenin üstünde zıt renkte */
+.lv-tabs button[aria-selected="true"] svg .c { stroke: var(--ink); }
+.menu-foot { flex: none; }
+.free-one { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 50px; padding: 6px 12px 6px 8px; border: 0; border-radius: 15px; background: #fff; color: var(--ink);
+  font-family: inherit; text-align: left; cursor: pointer; box-shadow: 0 4px 0 rgba(30,80,120,0.2); -webkit-tap-highlight-color: transparent; }
+.free-one:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(30,80,120,0.2); }
+.free-one .f-i { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: #ffd65a; }
+.free-one .f-i svg { width: 21px; height: 21px; fill: none; stroke: #5a3d00; stroke-width: 1.9; stroke-linejoin: round; stroke-linecap: round; }
+.free-one .f-x { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.free-one b { font-size: 15.5px; font-weight: 900; line-height: 1.1; }
+.free-one em { font-style: normal; font-size: 12.5px; font-weight: 700; color: #4b5a63; }
+.free-one .f-o svg { width: 18px; height: 18px; fill: none; stroke: #8aa0ad; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }

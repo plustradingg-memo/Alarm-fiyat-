@@ -41,7 +41,10 @@ const KOPRU = `<script>
     ['showMenu', 'openLevel', 'openWorkshop'].forEach(function (k) { var f = app[k]; app[k] = function () { var r = f.apply(app, arguments); bildir(); return r; }; });
     bildir();
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bagla); else bagla();
+  // ilk kare çizilince uygulamaya "hazır" de: açılış ekranı o an yumuşakça kalkar (boş ekran ya da sıçrama olmaz)
+  function hazir() { requestAnimationFrame(function () { requestAnimationFrame(function () { if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('hazir'); }); }); }
+  function basla() { bagla(); hazir(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', basla); else basla();
   document.documentElement.classList.add('uygulama');
 })();
 </script>`;

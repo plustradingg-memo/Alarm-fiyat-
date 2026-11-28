@@ -22,7 +22,7 @@ Hepsi aynı serbest çizim, kesişim seçimi ve köprü / alt geçit düğmeleri
 
 ## Nasıl oynanır?
 
-1. Ana ekrandan bir **bölüm** seç. Açılan kartta hedef yazar (ör. *30 araç ulaştır*) ve elindeki malzeme: asfalt
+1. Ana ekrandaki büyük yeşil **Oyna** (oynadıkça **Devam et**) düğmesi sıradaki bölümü tek dokunuşla açar; istersen haritadan bir **bölüm** de seçebilirsin. Açılan kartta hedef yazar (ör. *30 araç ulaştır*) ve elindeki malzeme: asfalt
    (metre), köprü ve alt geçit hakkı.
 2. **Yol çiz** seçiliyken parmağını bir evin önündeki kesik çizgili halkadan başlatıp aynı renkteki iş yerinin önüne
    kadar sürükle. Çizgi kare kare değil, istediğin eğriyle çizilir; gerçek yol tasarımı gibi düz parçalara ve en az
@@ -327,7 +327,7 @@ tarayıcısız olarak örnek çözümle oynanıp kazanılır; köprünün gerçe
 
 ## Serbest atölye (ızgaralı kurma)
 
-Ana ekranın altındaki **Serbest atölye** düğmeleri (Karayolu, Demiryolu, Havalimanı) ızgaralı kurma modunu açar. Her biri sade, düz dört hatla açılır ve çizdiğin her şey o kart için ayrı kaydedilir:
+Ana ekranın altındaki **Serbest atölye** düğmesi, üstte seçili sekmenin (Karayolu, Demiryolu ya da Havalimanı) ızgaralı kurma modunu açar. Her biri sade, düz dört hatla açılır ve çizdiğin her şey o kart için ayrı kaydedilir:
 
 | Kart | Başlangıç (4 düz hat) | Bu kartın özel talebi |
 |---|---|---|

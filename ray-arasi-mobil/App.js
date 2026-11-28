@@ -7,7 +7,11 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { WebView } from 'react-native-webview';
 import OYUN from './oyun/oyun';
 
+// açılış ekranı: simgesiz, ana ekranın gökyüzü renginde; oyun ilk kareyi çizince yumuşakça kaybolur
 SplashScreen.preventAutoHideAsync().catch(() => {});
+try { SplashScreen.setOptions({ fade: true, duration: 250 }); } catch (e) {}
+let acildi = false; // oyun "hazır" diyemezse de (ör. WebGL yok) sayfa yüklendikten 2,5 sn sonra kapanır
+const acilisiGizle = () => { if (acildi) return; acildi = true; SplashScreen.hideAsync().catch(() => {}); };
 
 // oyunun sanal adresi: kayıtlar (yıldızlar, ayarlar) bu adrese bağlı yerel depoda tutulur — değiştirme
 const ADRES = 'https://oyun.rayarasi.local/'; // ilk çalışma adından kaldı; kayıtları korumak için aynen kalır
@@ -40,7 +44,8 @@ function Oyun() {
 
   const mesaj = useCallback((e) => {
     const m = e.nativeEvent.data || '';
-    if (m === 'cik') BackHandler.exitApp();
+    if (m === 'hazir') acilisiGizle();
+    else if (m === 'cik') BackHandler.exitApp();
     else if (m.startsWith('ekran:')) setEkran(m.slice(6));
   }, []);
 
@@ -56,7 +61,7 @@ function Oyun() {
         originWhitelist={['*']}
         onShouldStartLoadWithRequest={(q) => q.url === ADRES || q.url.startsWith('about:') || q.url.startsWith('data:')}
         onMessage={mesaj}
-        onLoadEnd={() => SplashScreen.hideAsync().catch(() => {})}
+        onLoadEnd={() => setTimeout(acilisiGizle, 2500)}
         onContentProcessDidTerminate={() => web.current && web.current.reload()}
         onRenderProcessGone={() => web.current && web.current.reload()}
         javaScriptEnabled

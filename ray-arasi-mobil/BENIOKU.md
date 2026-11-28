@@ -9,6 +9,8 @@ hiçbir istek göndermez; ilerleme cihazda saklanır.
 - Expo SDK 58 (React Native 0.88), `react-native-webview`, `expo-splash-screen`, `react-native-safe-area-context`
 - Dikey ekran, iPhone (iPad'de iPhone uyumluluk modunda açılır) ve Android telefon/tablet
 - Android geri tuşu: bölümde ya da atölyedeyken ana ekrana döner, ana ekranda uygulamadan çıkar
+- Açılış: simge yok, ana ekranın gökyüzü renginde (#87c3e1) açılır; oyun ilk kareyi çizince uygulamaya `hazir` der ve açılış
+  ekranı yumuşakça kalkar (yedek: sayfa yüklendikten 2,5 sn sonra)
 - Uygulama arka plana geçince ses kesilir, çalışan bölüm duraklar
 - Çentik ve alt çubuk alanı o anki ekranın rengini alır
 - Oyun cihazın diliyle açılır (Türkçe ya da İngilizce); uygulama cihaz dilini oyuna iletir

@@ -45,7 +45,14 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   ok(await page.locator('#menu').isVisible(), 'ana ekran görünür');
   ok((await page.locator('#lv-grid .lv-btn').count()) === 40, 'ana ekranda 40 karayolu bölümü var');
   ok(!(await page.locator('.lv-btn[data-lv="1"]').getAttribute('class')).includes('locked') && (await page.locator('.lv-btn[data-lv="2"]').getAttribute('class')).includes('locked'), 'ilk bölüm açık, sonrakiler kilitli');
-  ok((await page.locator('#menu .free-btn').count()) === 3, 'serbest atölye düğmeleri duruyor: Karayolu, Demiryolu, Havalimanı');
+  const oyna0 = await page.evaluate(() => ({ t: document.getElementById('oyna-t').textContent, d: document.getElementById('oyna-d').textContent, ilk: document.getElementById('btn-oyna').classList.contains('ilk'), at: document.querySelectorAll('#menu #btn-atolye').length, eski: document.querySelectorAll('#menu .free-btn').length }));
+  ok(oyna0.t === 'Oyna' && oyna0.d === 'Bölüm 1: İlk yol' && oyna0.ilk, 'büyük Oyna düğmesi ilk bölümü gösteriyor: "' + oyna0.t + ' · ' + oyna0.d + '"');
+  ok(oyna0.at === 1 && oyna0.eski === 0, 'alt kısımda tek "Serbest atölye" düğmesi var (tekrarlanan üç düğme kalktı)');
+  await page.locator('#btn-oyna').tap();
+  ok((await page.evaluate(() => RA.app.state + ' ' + RA.app.lv.level.id)) === 'level 1', 'Oyna düğmesi tek dokunuşla Bölüm 1\'i açtı');
+  await page.evaluate(() => RA.app.showMenu());
+  // serbest atölye: seçili sekmenin atölyesini açar (testte sekme kaydı değişmesin diye geri alınır)
+  const atolye = async (m) => { await page.evaluate((m) => { RA.app.menu.set = m; RA.app.menu.refresh(); }, m); await page.locator('#btn-atolye').tap(); await page.evaluate(() => { RA.app.menu.set = RA.store.get('lv.set', 'road') || 'road'; }); };
   await page.waitForTimeout(600); await shot('00-ana-ekran');
   await page.locator('.lv-btn[data-lv="2"]').tap();
   ok((await state()) === 'menu', 'kilitli bölüme dokununca açılmıyor');
@@ -376,7 +383,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   await page.evaluate(() => { RA.store.set('lv.set', 'road'); RA.app.showMenu(); });
 
   console.log('\nKARAYOLU — ŞEHİR 4 DÜZ YOLLA BAŞLAR');
-  await page.locator('.free-btn[data-mode="road"]').tap();
+  await atolye('road');
   ok((await state()) === 'workshop', 'karta dokununca atölye açıldı');
   await page.evaluate(() => { RA.app.manual = true; });
   const start = await page.evaluate(() => { const ws = RA.app.ws; let n = 0, other = 0; ws.grid.each((c) => c.pieces.forEach((q) => (q.type === 'road' ? n++ : other++))); return { size: [ws.grid.cols, ws.grid.rows], n, other, jc: ws.sim.jc.size, lots: ws.sim.lots.size, places: ws.city.places.length }; });
@@ -545,20 +552,20 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   console.log('\nKAYIT');
   const saved = await page.evaluate(() => JSON.stringify([RA.app.ws.grid.serialize(), RA.app.ws.city.places.map((p) => [p.type, p.i, p.j, p.conn])]));
   await page.reload(); await page.waitForFunction(() => window.RA && RA.app);
-  await page.locator('.free-btn[data-mode="road"]').tap();
+  await atolye('road');
   ok((await page.evaluate(() => JSON.stringify([RA.app.ws.grid.serialize(), RA.app.ws.city.places.map((p) => [p.type, p.i, p.j, p.conn])]))) === saved, 'çizim ve talepler kaydedildi: sayfa yenilenince aynı şehir geldi');
   await page.locator('#ws-menu').tap(); await page.locator('#ws-new').tap();
   const fresh = await page.evaluate(() => { const ws = RA.app.ws; let n = 0; ws.grid.each((c) => (n += c.pieces.length)); return { n, places: ws.city.places.length, undo: !document.getElementById('ws-undo').disabled }; });
   ok(fresh.n === start.n && fresh.places === 0 && fresh.undo, '⋯ › Yeni şehir: 4 düz yola döndü, talepler sıfırlandı, eski şehir ↶ ile geri alınabilir');
   // önceki sürümün kaydı: şehir 4 düz yolla başlar, eski çizim geri alınabilir
   await page.evaluate(() => { RA.app.showMenu(); const g = RA.WS.template('road').serialize(); g.v = 1; RA.store.set('ws.road', g); });
-  await page.locator('.free-btn[data-mode="road"]').tap();
+  await atolye('road');
   const mig = await page.evaluate(() => { const ws = RA.app.ws; let n = 0; ws.grid.each((c) => (n += c.pieces.length)); return { n, undo: !document.getElementById('ws-undo').disabled, toast: document.getElementById('ws-toast').textContent }; });
   ok(mig.n === start.n && mig.undo && /baştan başladı/.test(mig.toast), 'önceki sürümün kaydı varsa şehir 4 düz yolla başlar, eski çizim ↶ ile gelir');
 
   console.log('\nDEMİRYOLU VE HAVALİMANI');
   await page.evaluate(() => RA.app.showMenu());
-  await page.locator('.free-btn[data-mode="rail"]').tap();
+  await atolye('rail');
   await page.evaluate(CONNECT);
   const rail = await page.evaluate(() => { RA.app.manual = true; let closed = false; for (let k = 0; k < 360; k++) { RA.app.advance(0.5); if (k % 8 === 0) window.__connect(); for (const X of RA.app.ws.sim.xc.values()) if (X.state === 'closed') closed = true; } const s = RA.app.ws.sim; let rails = 0; RA.app.ws.grid.each((c) => c.pieces.forEach((q) => q.type === 'rail' && rails++)); return { trains: s.trains.length, trips: s.stats.trains, closed, rails, places: RA.app.ws.city.places.map((p) => p.type) }; });
   ok(rail.rails >= 40 && rail.trains > 0 && rail.trips > 0, 'demiryolu iki düz hatla başlar; trenler sefer yaptı (' + rail.trains + ' tren, ' + rail.trips + ' sefer)');
@@ -566,7 +573,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   ok(rail.places.includes('istasyon'), 'nüfus artınca demiryolunda istasyon talebi geldi (' + rail.places.join(', ') + ')');
   await page.waitForTimeout(150); await shot('06-demiryolu');
   await page.evaluate(() => RA.app.showMenu());
-  await page.locator('.free-btn[data-mode="air"]').tap();
+  await atolye('air');
   await page.evaluate(CONNECT);
   const air = await page.evaluate(() => { RA.app.manual = true; for (let k = 0; k < 180; k++) { RA.app.advance(1); if (k % 4 === 0) window.__connect(); } return Object.assign({ places: RA.app.ws.city.places.map((p) => p.type) }, RA.app.ws.sim.stats); });
   ok(air.land >= 2 && air.takeoff >= 1, 'havalimanı tek pist ve bir kapıyla başlar; kule iniş ve kalkışları sıraladı (' + air.land + ' iniş, ' + air.takeoff + ' kalkış)');

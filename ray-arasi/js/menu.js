@@ -163,7 +163,10 @@
       this.t = 0;
       this.scenes = { rail: railScene(), road: roadScene(), air: airScene() };
       this.views = Array.from(document.querySelectorAll('#menu [data-scene]'));
-      document.querySelectorAll('#menu .free-btn').forEach((b) => b.addEventListener('click', () => app.openWorkshop(b.dataset.mode)));
+      // alttaki tek düğme: seçili sekmenin serbest atölyesi
+      document.getElementById('btn-atolye').addEventListener('click', () => app.openWorkshop(this.set));
+      // büyük "Oyna / Devam et" düğmesi: sıradaki bölümü tek dokunuşla açar
+      document.getElementById('btn-oyna').addEventListener('click', () => { if (this.hedef) app.openLevel(this.hedef); });
       this.grid = document.getElementById('lv-grid');
       // sekmeler: karayolu / demiryolu / havalimanı bölümleri
       this.set = RA.store.get('lv.set', 'road') || 'road';
@@ -196,6 +199,17 @@
       const chapters = LV.CHAPTERS_M[set.mode] || LV.CHAPTERS;
       const W = Math.max(280, (this.grid.clientWidth || 362) - 4);
       const next = lv.find((L) => LV.progress.unlocked(L.id) && !LV.progress.stars(L.id));
+      // Oyna düğmesi: hiç oynanmadıysa "Oyna", sıradaki bölüm varsa "Devam et", kapı ya da bitiş varsa eksik yıldızlı bölüm
+      const eksik = lv.find((L) => LV.progress.unlocked(L.id) && LV.progress.stars(L.id) < 3);
+      const hedef = next || eksik || lv[lv.length - 1];
+      this.hedef = hedef.id;
+      const oT = !total ? 'Oyna' : next ? 'Devam et' : eksik ? 'Yıldız topla' : 'Tekrar oyna';
+      document.getElementById('oyna-t').textContent = RA.t(oT);
+      document.getElementById('oyna-d').textContent = RA.t('Bölüm {n}: {ad}', { n: hedef.n, ad: RA.lvYazi(hedef, 'name') });
+      const ob = document.getElementById('btn-oyna');
+      ob.classList.toggle('ilk', !total); ob.setAttribute('aria-label', RA.t(oT) + ', ' + document.getElementById('oyna-d').textContent);
+      const at = document.getElementById('btn-atolye'); at.dataset.mode = set.mode;
+      document.getElementById('atolye-d').textContent = RA.t({ road: 'Kendi şehrini kur', rail: 'Kendi demiryolu ağını kur', air: 'Kendi havalimanını kur' }[set.mode]);
       let html = '';
       chapters.forEach((ch, ci) => {
         const items = lv.filter((L) => L.n >= ch.from && L.n <= ch.to);
