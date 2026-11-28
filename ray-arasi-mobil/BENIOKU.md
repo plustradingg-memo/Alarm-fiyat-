@@ -42,58 +42,75 @@ npm start
 Oyunda bir değişiklik yaptıktan sonra `npm run paketle` uygulamadaki kopyayı yeniler (`npm start` bunu kendisi de yapar).
 Paket eklerken her zaman `npx expo install <paket>` kullan; SDK ile uyumlu sürümü seçer.
 
-## Derleme ve mağazaya gönderme (EAS)
+## Derleme ve mağazaya gönderme
 
-> **Kural:** Her derlemeden önce proje sahibine "geliştirmeye devam mı, derleyip mağazaya sunayım mı?" diye sorulur.
-> Derleme yalnızca onaydan sonra başlatılır.
+**Kurallar** (sahibinin isteği, 28 Kasım 2026):
 
-Gerekenler:
+- Bütün derlemeler Expo'da (EAS) yapılır. Ekip hesabı `plustradinggs-team` (Starter planı), proje `@plustradinggs-team/ray-arasi`.
+- **Derlemeden önce sahibine sorulur.** Küçük değişiklikler bir sonraki sürümle gidebilir; kararı sahibi verir.
+- Derlemeden sonra App Store ve Google Play adımları betiklerle yapılır, sahibine yalnızca sonuç yazılır. iPhone
+  sürümü onaylanınca kendiliğinden yayına girer. Reddedilirse sebebi okunup düzeltilir. İnceleme sonuçları
+  zamanlanmış kontrolle izlenir.
+- Anahtarlar Expo ekip hesabında durur ve her çalışmada oradan okunur, diske yazılmaz: Apple için App Manager
+  rolündeki App Store Connect API anahtarı, Google için Play Console'da yönetici olan hizmet hesabı.
+- Planet Merge (`plustradingg-memo/9-Kas-m-`) başka bir oturumda geliştirilir: o depoya ve o uygulamanın mağaza
+  sayfalarına dokunulmaz. Buradaki betikler oradakilerden uyarlanmıştır.
 
-1. **Expo hesabı** (ücretsiz) ve bir erişim anahtarı (`EXPO_TOKEN`). İlk seferde projeyi hesaba bağla:
-   `npx eas-cli@latest init` (app.json'a `extra.eas.projectId` ekler).
-2. **Google Play Console** geliştirici hesabı. Uygulamayı Play Console'da oluştur. **İlk AAB dosyasını Play Console'a
-   elle yükle** (Google, API ile ilk yüklemeye izin vermez). Sonraki sürümler için bir Google Cloud hizmet hesabı
-   anahtarı oluşturup Expo panosuna ekle; `eas submit` gerisini yapar.
-3. **Apple Developer Program** üyeliği. App Store Connect'te uygulamayı `com.rayarasi.oyun` paket kimliğiyle oluştur,
-   bir App Store Connect API anahtarı üret ve Expo panosuna ekle; imzalama sertifikalarını EAS kendisi yönetir.
+**Bir kez yapılanlar** (28 Kasım 2026): Apple'da `com.rayarasi.oyun` paket kimliği kaydedildi
+(`scripts/eas-ios-anahtar.js` App Store Connect anahtarını bu uygulamanın iOS kimlik bilgilerine bağladı,
+`scripts/eas-ios-imza.js` ekibin dağıtım sertifikasıyla bir App Store profili oluşturup Expo'ya bağladı). Bu sayede
+iOS derlemesi bilgisayarsız, etkileşimsiz yapılır. Android imza anahtarını EAS ilk derlemede oluşturdu.
 
-Komutlar:
+**Her sürümde:**
+
+1. Oyun değiştiyse `npm run paketle`. `app.json` içindeki `version` ile `magaza/metinler.json` içindeki `surum`
+   aynı olmalı; `yenilikler` (TR/EN) ve gerekiyorsa açıklama ve görseller güncellenir.
+2. Sahibine sorulur, onay gelirse derlenir:
 
 ```bash
-npm run derle:android
+npx eas-cli build --platform ios --profile production --non-interactive --no-wait
 ```
 
 ```bash
-npm run derle:ios
+npx eas-cli build --platform android --profile production --non-interactive --no-wait
+```
+
+3. **iPhone:** derleme App Store Connect'e yüklenir, sonra sürüm hazırlanıp incelemeye gönderilir. Betik
+   işlenmeyi bekler, sürümü açar, derlemeyi bağlar, metinleri ve değişmişse ekran görüntülerini yükler; ilk
+   sürümde telif, kategori, yaş derecelendirmesi, ücretsiz fiyat ve ülkeleri de ayarlar.
+
+```bash
+npx eas-cli submit --platform ios --id <derleme-kimliği> --profile production --non-interactive --no-wait
 ```
 
 ```bash
-npm run gonder:android
+NODE_USE_ENV_PROXY=1 node scripts/ios-yayinla.js --build <derleme-numarası>
 ```
+
+4. **Android:** AAB indirilir (`npx eas-cli build:view <kimlik> --json` → `artifacts.buildUrl`) ve yüklenir:
 
 ```bash
-npm run gonder:ios
+NODE_USE_ENV_PROXY=1 node scripts/play-yayinla.js --aab <dosya.aab> --kanal alpha
 ```
 
-Sürüm adı `app.json` içindeki `version` alanıdır (ör. 1.0.0 → 1.0.1). Derleme numaraları (`versionCode`,
-`buildNumber`) EAS sunucusunda tutulur ve her üretim derlemesinde kendiliğinden artar. Android gönderimleri önce
-**dahili test** kanalına taslak olarak gider; yayına almayı Play Console'dan yaparsın.
+5. Durum (yalnızca okur): `npm run durum`.
 
-`deneme` profili, telefona doğrudan kurulabilen bir Android APK'sı üretir (`eas build -p android --profile deneme`).
+Node'un `fetch`i bu ortamda vekil sunucuyu ancak `NODE_USE_ENV_PROXY=1` ile kullanır. Gereken ağ izinleri:
+`api.expo.dev`, `expo.dev`, `wf-artifacts.eascdn.net`, `api.appstoreconnect.apple.com`,
+`northamerica-1.object-storage.apple.com`, `androidpublisher.googleapis.com`, `oauth2.googleapis.com`.
+
+Google, yeni bir uygulamanın **ilk** sürümünü yalnızca Play Console'dan elle yüklemeye izin verir; Apple da uygulama
+kaydının ilk açılışını yalnızca App Store Connect sitesinden yaptırır. Sahibine kalan bu adımlar
+`magaza/YAPILACAKLAR.md` dosyasında.
 
 ## Mağaza materyalleri
 
-`magaza/metinler.md` iki mağazanın bütün metin alanlarını (ad, alt başlık, kısa ve tam açıklama, anahtar kelimeler,
-yaş sınırı, gizlilik yanıtları) içerir. `magaza/gorseller/` App Store 6,9" (1320 × 2868) ve Google Play
+`magaza/metinler.json` iki mağazanın bütün metinlerini (ad, alt başlık, açıklamalar, anahtar kelimeler, sürüm
+notları, inceleme notu, yaş derecelendirmesi yanıtları) tek dosyada tutar; betikler buradan okur.
+`magaza/metinler.md` aynı bilgilerin okunur hâli ve form yanıtlarıdır. `magaza/gorseller/` App Store 6,9" (1320 × 2868) ve Google Play
 (1080 × 1920) ekran görüntülerini, Play öne çıkan görselini (1024 × 500) ve 512 × 512 simgeyi içerir.
 Gizlilik politikası ve destek sayfası depoda (`magaza/gizlilik-politikasi.md`, `magaza/destek.md`) ve GitHub'da
-giriş istemeden açılır; adresleri `magaza/YAPILACAKLAR.md` dosyasında. App Store'un metin, ekran görüntüsü, kategori,
-yaş derecelendirmesi ve adres alanları `store.config.json` dosyasındadır; App Store Connect API anahtarı Expo'ya
-yüklendikten sonra tek komutla gönderilir:
-
-```bash
-npm run magaza:ios
-```
+giriş istemeden açılır; adresleri `magaza/metinler.json` ve `magaza/YAPILACAKLAR.md` dosyalarında.
 
 Sana kalan adımlar (hesap gerektiren işler) ve hazır form yanıtları: `magaza/YAPILACAKLAR.md`.
 

@@ -1,0 +1,82 @@
+{
+  "_not": "Ray Arası mağaza metinleri. ios-yayinla.js ve play-yayinla.js buradan okur. Her sürümde 'surum' (app.json ile aynı) ve 'yenilikler' güncellenir.",
+  "surum": "1.0.0",
+  "yenilikler": {
+    "tr": "İlk sürüm: karayolu, demiryolu ve havalimanında 120 bölüm, yıldız kapıları ve yoğun saatler.",
+    "en": "First release: 120 levels across roads, railways and airports, with star gates and rush hours."
+  },
+  "android_yenilikler": {
+    "tr": "İlk sürüm: karayolu, demiryolu ve havalimanında 120 bölüm, yıldız kapıları ve yoğun saatler.",
+    "en": "First release: 120 levels across roads, railways and airports, with star gates and rush hours."
+  },
+  "ios_bilgi": {
+    "tr": {
+      "name": "Ray Arası",
+      "subtitle": "Yol, ray ve pist bulmacası",
+      "privacyPolicyUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/gizlilik-politikasi.md"
+    }
+  },
+  "ios": {
+    "tr": {
+      "description": "Ray Arası, parmağınla yol çizdiğin sevimli bir 3B trafik bulmacası.\n\nEvleri aynı renkteki iş yerlerine bağla, ▶'ye bas ve arabaların akışını izle. Yollar kesişince karar senin: ışıklı kavşak mı, köprü mü, alt geçit mi? Köprü ve alt geçit hakların sınırlı, asfaltın da. Bir ev çok bekletilirse trafik tıkanır!\n\nÜÇ DÜNYA, 120 BÖLÜM\n• Karayolu: evler, iş yerleri, kavşaklar, nehirler, dağlar ve hemzemin geçitler.\n• Demiryolu: uzun trenler, makaslar, nehir köprüleri ve dağ tünelleri.\n• Havalimanı: uçakları indir, kapıya yanaştır, yolcuyu al ve kaldır; pist geçişlerinde sırayı bekle.\n\nHER BÖLGEDE YENİ BİR SINAV\n• Bölgeler ilerledikçe haritalar büyür, renkler ve kesişimler çoğalır.\n• Yoğun saatlerde trafik birden artar; ağın dayanıyor mu?\n• Yıldız kapıları: her bölgenin son bölümüne geçmek için yeterince yıldız topla.\n\nÇİZMESİ KOLAY\n• Eğri ya da düz, nasıl çizersen çiz; oyun yolunu toparlar, binalara ve yollara kendisi bağlar.\n• Köprüyü yol çizmeden önce de kurabilirsin; yapılabilecek yerler parlar.\n• İki parmakla yakınlaştır ve kaydır; trafiği 2×, 4× ya da 8× hızlandır.\n\nSERBEST ATÖLYE\nBölümlerin dışında ızgaralı atölyede kendi şehrini, demiryolunu ya da havalimanını büyüt.\n\nReklam yok, uygulama içi satın alma yok, internet gerekmez. İlerlemen yalnızca cihazında saklanır.",
+      "keywords": "trafik,bulmaca,yol,köprü,tren,demiryolu,havalimanı,uçak,kavşak,şehir,strateji,çizim,zeka",
+      "promotionalText": "Yolu parmağınla çiz, kesişimleri köprü ve alt geçitle ayır, trafiği tıkatmadan akıt! Karayolu, demiryolu ve havalimanında 120 bölüm seni bekliyor.",
+      "supportUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/destek.md"
+    }
+  },
+  "ios_ayarlar": {
+    "telif": "2026 Ray Arası",
+    "kategori": {
+      "birincil": "GAMES",
+      "alt1": "GAMES_PUZZLE",
+      "alt2": "GAMES_STRATEGY",
+      "ikincil": "ENTERTAINMENT"
+    },
+    "incelemeNotu": "Oyun tamamen çevrimdışıdır, hesap ya da giriş gerekmez. İlk bölüm açıktır; parmağınızı bir evin önündeki işaretten aynı renkteki binaya sürükleyip ▶ düğmesine basın. The game is fully offline and needs no account: drag from the marker in front of a house to the building of the same color, then tap ▶.",
+    "yas": {
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "gunsOrOtherWeapons": "NONE",
+      "gambling": false,
+      "unrestrictedWebAccess": false,
+      "lootBox": false,
+      "advertising": false,
+      "userGeneratedContent": false,
+      "messagingAndChat": false,
+      "parentalControls": false,
+      "healthOrWellnessTopics": false,
+      "ageAssurance": false,
+      "kidsAgeBand": null,
+      "ageRatingOverride": "NONE",
+      "koreaAgeRatingOverride": "NONE"
+    },
+    "icerikHaklari": "DOES_NOT_USE_THIRD_PARTY_CONTENT"
+  },
+  "play": {
+    "tr-TR": {
+      "title": "Ray Arası",
+      "shortDescription": "Yolu parmağınla çiz, kesişimleri köprüyle ayır, trafiği tıkatmadan akıt!",
+      "fullDescription": "Ray Arası, parmağınla yol çizdiğin sevimli bir 3B trafik bulmacası.\n\nEvleri aynı renkteki iş yerlerine bağla, ▶'ye bas ve arabaların akışını izle. Yollar kesişince karar senin: ışıklı kavşak mı, köprü mü, alt geçit mi? Köprü ve alt geçit hakların sınırlı, asfaltın da. Bir ev çok bekletilirse trafik tıkanır!\n\nÜÇ DÜNYA, 120 BÖLÜM\n• Karayolu: evler, iş yerleri, kavşaklar, nehirler, dağlar ve hemzemin geçitler.\n• Demiryolu: uzun trenler, makaslar, nehir köprüleri ve dağ tünelleri.\n• Havalimanı: uçakları indir, kapıya yanaştır, yolcuyu al ve kaldır; pist geçişlerinde sırayı bekle.\n\nHER BÖLGEDE YENİ BİR SINAV\n• Bölgeler ilerledikçe haritalar büyür, renkler ve kesişimler çoğalır.\n• Yoğun saatlerde trafik birden artar; ağın dayanıyor mu?\n• Yıldız kapıları: her bölgenin son bölümüne geçmek için yeterince yıldız topla.\n\nÇİZMESİ KOLAY\n• Eğri ya da düz, nasıl çizersen çiz; oyun yolunu toparlar, binalara ve yollara kendisi bağlar.\n• Köprüyü yol çizmeden önce de kurabilirsin; yapılabilecek yerler parlar.\n• İki parmakla yakınlaştır ve kaydır; trafiği 2×, 4× ya da 8× hızlandır.\n\nSERBEST ATÖLYE\nBölümlerin dışında ızgaralı atölyede kendi şehrini, demiryolunu ya da havalimanını büyüt.\n\nReklam yok, uygulama içi satın alma yok, internet gerekmez. İlerlemen yalnızca cihazında saklanır."
+    }
+  },
+  "gorseller": {
+    "ios": {
+      "tr": "magaza/gorseller/ios"
+    },
+    "play": {
+      "tr-TR": "magaza/gorseller/android"
+    },
+    "play_one_cikan": "magaza/gorseller/play-one-cikan-gorsel.png",
+    "play_simge": "magaza/gorseller/play-simge-512.png"
+  }
+}

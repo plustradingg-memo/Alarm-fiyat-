@@ -23,8 +23,8 @@
     "derle:ios": "eas build --platform ios --profile production",
     "gonder:android": "eas submit --platform android --profile production --latest",
     "gonder:ios": "eas submit --platform ios --profile production --latest",
-    "magaza:ios": "eas metadata:push",
-    "eas-build-post-install": "node scripts/paketle.cjs"
+    "eas-build-post-install": "node scripts/paketle.cjs",
+    "durum": "NODE_USE_ENV_PROXY=1 node scripts/durum.js"
   },
   "private": true
 }

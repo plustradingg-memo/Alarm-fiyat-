@@ -1,6 +1,8 @@
 # Ray Arası — mağaza metinleri (Türkçe)
 
-App Store Connect ve Google Play Console'a kopyala-yapıştır yapılacak metinler. Uzunluk sınırları parantez içinde.
+Metinlerin asıl kaynağı `metinler.json` dosyasıdır; mağazalara betikler oradan yükler (`scripts/ios-yayinla.js`,
+`scripts/play-yayinla.js`). Bu sayfa aynı metinlerin okunur hâlidir; bir metni değiştirirken ikisini birlikte güncelle.
+Uzunluk sınırları parantez içinde.
 
 ## Ortak
 
@@ -70,15 +72,15 @@ App Store simgesi derlemenin içinden gelir (`assets/icon.png`, 1024 × 1024).
 
 ## Doldurman gereken alanlar
 
-Adım adım sıra ve hazır form yanıtları: `YAPILACAKLAR.md`. App Store'un metin, görsel, kategori ve yaş
-derecelendirmesi alanları `store.config.json` dosyasında hazır; `npm run magaza:ios` ile yüklenir.
+Adım adım sıra ve hazır form yanıtları: `YAPILACAKLAR.md`. App Store'un metin, görsel, kategori, yaş
+derecelendirmesi, fiyat ve ülke alanlarını `scripts/ios-yayinla.js` yükler.
 
 
 - **Gizlilik politikası adresi** (iki mağaza da zorunlu tutar): https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/gizlilik-politikasi.md
   (giriş istemeden açılır; aynı içerik https://claude.ai/artifact/DxHtw1N5hzeWtr92DNNGgT adresinde de var, o sayfa
   Paylaş menüsünden herkese açık yapılırsa kullanılabilir)
 - **Destek adresi** (App Store): https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/destek.md
-- **Telif hakkı** (App Store): `store.config.json` içinde "2026 Ray Arası" yazılı; istersen adınla değiştir.
+- **Telif hakkı** (App Store): `metinler.json` içinde "2026 Ray Arası" yazılı.
 - **Geliştirici e-postası** (Google Play mağaza girişi).
 - **App Store › Uygulama Gizliliği:** "Veri toplamıyoruz" seç.
 - **Google Play › Veri güvenliği:** "Uygulama hiçbir kullanıcı verisi toplamıyor veya paylaşmıyor" seç; reklam içermiyor; hedef kitle 13 yaş ve üstü önerilir (çocuklara yönelik "Aileler" programı ek koşullar ister).

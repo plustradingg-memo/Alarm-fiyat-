@@ -26,9 +26,7 @@
         "track": "internal",
         "releaseStatus": "draft"
       },
-      "ios": {
-        "metadataPath": "./store.config.json"
-      }
+      "ios": {}
     }
   }
 }
