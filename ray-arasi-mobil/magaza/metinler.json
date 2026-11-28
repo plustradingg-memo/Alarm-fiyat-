@@ -37,6 +37,7 @@
   },
   "ios_ayarlar": {
     "telif": "2026 Trafik Ustası",
+    "haricUlkeler": ["CHN"],
     "kategori": {
       "birincil": "GAMES",
       "alt1": "GAMES_PUZZLE",

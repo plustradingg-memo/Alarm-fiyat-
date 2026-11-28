@@ -9,9 +9,15 @@ Hazır adresler (giriş istemeden açılır):
 - Gizlilik politikası: https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/gizlilik-politikasi.md
 - Destek: https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/destek.md
 
-## App Store (Apple) — tamamlandı
+## App Store (Apple) — tamamlandı, incelemede
 
-Uygulama kaydı ve App Privacy yapıldı; gerisi (sayfa, derleme, inceleme) bende.
+Uygulama kaydı ve App Privacy yapıldı. 1.0.0 incelemeye gönderildi (28 Kasım), onaylanınca kendiliğinden yayına girer.
+Çin anakarası satıştan çıkarıldı: Apple orada oyun lisansı ve ek belgeler istiyor ("App Compliance" sayfasındaki
+iki eksik bundandı). İstersen sonra eklenir.
+
+İsteğe bağlı, senin kararın: **App Compliance → Digital Services Act → Set Up**. AB'de satış için Apple "tacir"
+(trader) olup olmadığını soruyor. Ücretsiz, gelir getirmeyen bir oyun için genelde "tacir değilim" seçilir;
+seçince AB'de görünmeye devam eder. Bu beyan senin adına olduğu için ben yapmıyorum.
 
 <details><summary>Yapılmış adımlar</summary>
 
@@ -27,11 +33,14 @@ gönderme bende.
 
 </details>
 
-## Google Play — 15 dk
+## Google Play — kalan: 3. ve 4. adım (10 dk)
 
-1. **Uygulamayı oluştur:** Play Console → **Uygulama oluştur** → Ad **Trafik Ustası: Yol Çiz** · Dil **Türkçe** · **Oyun** ·
+Uygulama oluşturuldu, ilk sürüm dahili testte. Sürüm kapalı test kanalına da taslak olarak kondu; formlar bitince
+zamanlanmış kontrol onu kendiliğinden incelemeye gönderir.
+
+1. ~~**Uygulamayı oluştur:**~~ yapıldı. Play Console → **Uygulama oluştur** → Ad **Trafik Ustası: Yol Çiz** · Dil **Türkçe** · **Oyun** ·
    **Ücretsiz** → beyanları işaretle → Oluştur.
-2. **İlk sürümü yükle** (Google ilk yüklemeyi yalnızca elle kabul ediyor):
+2. ~~**İlk sürümü yükle**~~ yapıldı (Google ilk yüklemeyi yalnızca elle kabul ediyor):
    - Derleme dosyası (sürüm 1.0.0, kod 2, paket `com.trafikustasi.oyun`, Türkçe ve İngilizce):
      https://expo.dev/artifacts/eas/AwEmq2RKV5UJt6BvlIg69vEUhR00B9TPJn_9PQB8x94.aab
    - **Test** → **Dahili test** → **Yeni sürüm oluştur** → Google Play uygulama imzalamasını kabul et → .aab'yi

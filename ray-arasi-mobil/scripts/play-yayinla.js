@@ -30,7 +30,7 @@ const SHOT_RE = /^(\d+)-.+\.(png|jpe?g)$/i;
 const mime = (f) => (/\.png$/i.test(f) ? 'image/png' : 'image/jpeg');
 const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
 
-(async () => {
+const yayinla = async (taslak) => {
   const AAB = val('--aab');
   const TRACK = val('--kanal');
   const ONLY_PAGE = arg('--yalniz-sayfa');
@@ -67,13 +67,14 @@ const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest
       }
       const release = (status) => ({ track: TRACK, releases: [{ name: `${vc} (${M.surum})`, versionCodes: [vc], status, releaseNotes }] });
       try {
-        await play.call('PUT', `${PKG}/edits/${e.id}/tracks/${TRACK}`, release('completed'));
+        await play.call('PUT', `${PKG}/edits/${e.id}/tracks/${TRACK}`, release(taslak ? 'draft' : 'completed'));
       } catch (err) {
         // Henüz yayınlanmamış (taslak) uygulamada Google yalnızca taslak sürüme izin verir
-        if (!/draft/i.test(err.message)) throw err;
+        if (taslak || !/draft/i.test(err.message)) throw err;
         await play.call('PUT', `${PKG}/edits/${e.id}/tracks/${TRACK}`, release('draft'));
-        log('uygulama henüz taslak: sürüm taslak olarak kaydedildi');
+        taslak = true;
       }
+      if (taslak) log('uygulama henüz taslak: sürüm taslak olarak kaydediliyor (Play Console\'dan "yayınla" ile çıkar)');
       log('kanal', TRACK, '→', vc);
     }
 
@@ -109,12 +110,18 @@ const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest
       return;
     }
     await e.commit();
-    log('kaydedildi: Google Play incelemesine gönderildi');
+    log(taslak ? 'kaydedildi: sürüm taslak olarak kanalda bekliyor' : 'kaydedildi: Google Play incelemesine gönderildi');
   } catch (err) {
     await e.discard().catch(() => {});
+    // taslak uygulamada hata bazen ancak kaydederken gelir: baştan, sürüm taslak olarak
+    if (!taslak && !ONLY_PAGE && /status draft may be created on draft app/i.test(err.message)) {
+      log('uygulama henüz taslak: sürüm taslak olarak yeniden deneniyor');
+      return yayinla(true);
+    }
     throw err;
   }
-})().catch((err) => {
+};
+yayinla(false).catch((err) => {
   console.error('HATA', err.message);
   process.exit(1);
 });

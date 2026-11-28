@@ -13,7 +13,7 @@
 // --iletisim-kaynak PAKET      İnceleme iletişim bilgisi yoksa sahibinin başka bir uygulamasından yalnızca okunur
 //
 // İlk sürümde (ve eksik kaldıkça) şunlar da kurulur: telif, kategori, yaş derecelendirmesi, içerik hakları, ücretsiz
-// fiyat, bütün ülkeler, inceleme notu. İnceleme iletişim bilgisi bir kez verilir (INCELEME_AD, INCELEME_SOYAD,
+// fiyat, ülkeler (ios_ayarlar.haricUlkeler dışında hepsi), inceleme notu. İnceleme iletişim bilgisi bir kez verilir (INCELEME_AD, INCELEME_SOYAD,
 // INCELEME_TEL, INCELEME_EPOSTA ortam değişkenleri; depoya yazılmaz); sonraki sürümler öncekinden kopyalar.
 const fs = require('fs');
 const path = require('path');
@@ -150,7 +150,7 @@ async function patchTolerant(asc, url, type, id, attributes) {
     } catch (e) { log('UYARI: içerik hakları beyanı yapılamadı:', e.message); }
   }
 
-  // 4) fiyat (ücretsiz) ve ülkeler (hepsi) — yalnızca daha önce ayarlanmadıysa
+  // 4) fiyat (ücretsiz) ve ülkeler (hariç tutulanlar dışında hepsi) — yalnızca daha önce ayarlanmadıysa
   let fiyatVar = false;
   try {
     const ps = await asc.get(`/v1/apps/${app.id}/appPriceSchedule?include=manualPrices`);
@@ -166,19 +166,33 @@ async function patchTolerant(asc, url, type, id, attributes) {
     });
     log('fiyat: ücretsiz');
   }
+  // Satışa kapalı ülkeler (metinler.json → ios_ayarlar.haricUlkeler). Çin anakarası: oyun lisansı ve ek belgeler ister.
+  const haric = new Set(A.haricUlkeler || []);
+  let av = null;
   try {
-    await asc.get(`/v1/apps/${app.id}/appAvailabilityV2`);
-    log('ülkeler zaten ayarlı');
-  } catch (e) {
-    if (!/404/.test(e.message)) throw e;
+    av = (await asc.get(`/v1/apps/${app.id}/appAvailabilityV2`)).data;
+  } catch (e) { if (!/404/.test(e.message)) throw e; }
+  if (av) {
+    let next = `/v2/appAvailabilities/${av.id}/territoryAvailabilities?include=territory&limit=200`;
+    const mevcut = [];
+    while (next) { const r = await asc.get(next); mevcut.push(...r.data); next = r.links && r.links.next; }
+    for (const t of mevcut) {
+      const id = (t.relationships.territory.data || {}).id;
+      if (haric.has(id) && t.attributes.available) {
+        await asc.patch(`/v1/territoryAvailabilities/${t.id}`, { data: { type: 'territoryAvailabilities', id: t.id, attributes: { available: false } } });
+        log('satıştan çıkarıldı:', id);
+      }
+    }
+    log('ülkeler zaten ayarlı' + (haric.size ? ` (hariç: ${[...haric].join(', ')})` : ''));
+  } else {
     const terr = [];
     let next = '/v1/territories?limit=200';
     while (next) { const r = await asc.get(next); terr.push(...r.data); next = r.links && r.links.next; }
     await asc.post('/v2/appAvailabilities', {
       data: { type: 'appAvailabilities', attributes: { availableInNewTerritories: true }, relationships: { app: { data: { type: 'apps', id: app.id } }, territoryAvailabilities: { data: terr.map((t) => ({ type: 'territoryAvailabilities', id: '${' + t.id + '}' })) } } },
-      included: terr.map((t) => ({ type: 'territoryAvailabilities', id: '${' + t.id + '}', attributes: { available: true }, relationships: { territory: { data: { type: 'territories', id: t.id } } } })),
+      included: terr.map((t) => ({ type: 'territoryAvailabilities', id: '${' + t.id + '}', attributes: { available: !haric.has(t.id) }, relationships: { territory: { data: { type: 'territories', id: t.id } } } })),
     });
-    log('ülkeler: hepsi (' + terr.length + ')');
+    log(`ülkeler: ${terr.length - haric.size} / ${terr.length}` + (haric.size ? ` (hariç: ${[...haric].join(', ')})` : ''));
   }
 
   // 5) inceleme bilgisi: iletişim + not (iletişim ilk seferde ortam değişkeninden, sonra önceki sürümden)
