@@ -229,10 +229,10 @@
     makeCar(trip, s, v) {
       const r = this.rnd();
       const type = r < 0.1 ? 'bus' : r < 0.32 ? 'taxi' : 'car';
-      const g = type === 'bus' ? M.bus(this.pick([0x2a7fb8, 0x1c9a6a, 0xe0662a])) : type === 'taxi' ? M.taxi() : M.car(this.pick(CAR_COLORS));
-      RA.compact(g);
+      // model havuzdan gelir (her çıkışta yeniden kurmak telefonda takılma yapıyordu); rastgele sayı sırası aynı kalır
+      const col = type === 'bus' ? this.pick([0x2a7fb8, 0x1c9a6a, 0xe0662a]) : type === 'taxi' ? 0 : this.pick(CAR_COLORS);
+      const g = RA.havuz.al('ws-' + type + col, () => { const m = type === 'bus' ? M.bus(col) : type === 'taxi' ? M.taxi() : M.car(col); RA.compact(m); m.traverse((o) => { if (o.isMesh) o.castShadow = false; }); return m; });
       g.scale.setScalar(SC);
-      g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
       this.scene.add(g);
       const P = CAR[type];
       const mv = trip.route.shift();
@@ -249,7 +249,7 @@
     }
     killCar(c, quick) {
       if (!c.parked) this.setDest(c, null);
-      if (quick) { this.scene.remove(c.g); const n = this.cars.indexOf(c); if (n >= 0) this.cars.splice(n, 1); return; }
+      if (quick) { this.scene.remove(c.g); RA.havuz.birak(c.g); const n = this.cars.indexOf(c); if (n >= 0) this.cars.splice(n, 1); return; }
       c.fade = 0.0001;
     }
     // Bir başlangıçtan ulaşılabilen hedefler (otopark ya da şehir dışı) ve en kısa yollar. U dönüşü yok, otoparkların içinden geçilmez.
@@ -367,9 +367,9 @@
       for (const c of this.cars) { const k = c.mv.pk; if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(c); }
       for (let n = this.cars.length - 1; n >= 0; n--) {
         const c = this.cars[n];
-        if (c.fade) { c.fade += dt; c.g.scale.setScalar(SC * Math.max(0.01, 1 - c.fade / 0.4)); if (c.fade > 0.4) { this.scene.remove(c.g); this.cars.splice(n, 1); } continue; }
+        if (c.fade) { c.fade += dt; c.g.scale.setScalar(SC * Math.max(0.01, 1 - c.fade / 0.4)); if (c.fade > 0.4) { this.scene.remove(c.g); RA.havuz.birak(c.g); this.cars.splice(n, 1); } continue; }
         if (c.appear) { c.appear += dt; c.g.scale.setScalar(SC * Math.min(1, 0.25 + (c.appear / 0.4) * 0.75)); if (c.appear >= 0.4) { c.appear = 0; c.g.scale.setScalar(SC); } }
-        if (c.mv.exitV) { c.s += c.v * dt; this.placeCar(c); if (c.s > 1.6) { this.finishTrip(c); this.scene.remove(c.g); this.cars.splice(n, 1); } continue; }
+        if (c.mv.exitV) { c.s += c.v * dt; this.placeCar(c); if (c.s > 1.6) { this.finishTrip(c); this.scene.remove(c.g); RA.havuz.birak(c.g); this.cars.splice(n, 1); } continue; }
         const P = c.P;
         let gap = 1e9, dv = 0;
         const rem = c.mv.len - c.s;
@@ -558,9 +558,10 @@
 
     /* ================= TRENLER ================= */
     makeTrain(segs, s) {
-      const units = M.train(this.rnd() < 0.5 ? 'passenger' : 'freight', RA.rng(Math.floor(this.rnd() * 1e9)), 1 + Math.floor(this.rnd() * 2));
+      const kind = this.rnd() < 0.5 ? 'passenger' : 'freight', seed = Math.floor(this.rnd() * 1e9), nCar = 1 + Math.floor(this.rnd() * 2);
+      const units = RA.havuz.al('ws-tren:' + kind + nCar, () => { const us = M.train(kind, RA.rng(seed), nCar); us.forEach((u) => { u.len0 = u.len; RA.compact(u.g); u.g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); }); return us; });
       let off = 0;
-      units.forEach((u, n) => { RA.compact(u.g); u.g.scale.setScalar(SC); u.len *= SC; u.off = off + u.len / 2; off += u.len + (n < units.length - 1 ? 0.09 : 0); u.g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); this.scene.add(u.g); });
+      units.forEach((u, n) => { u.g.scale.setScalar(SC); u.g.visible = true; u.len = u.len0 * SC; u.off = off + u.len / 2; off += u.len + (n < units.length - 1 ? 0.09 : 0); this.scene.add(u.g); });
       const tr = { kind: 'train', id: uid++, units, len: off, dwell: 0, wheelA: 0, fade: 0, revT: 0 };
       tr.mv = new Mover(this, tr, off);
       tr.mv.segs = segs; tr.mv.s = s; tr.mv.v = 0.6;
@@ -571,7 +572,7 @@
     }
     killTrain(tr, quick) {
       // kaybolurken bloklarını tutar; tamamen kaybolunca bırakır
-      if (quick) { tr.mv.releaseAll(); tr.units.forEach((u) => this.scene.remove(u.g)); const n = this.trains.indexOf(tr); if (n >= 0) this.trains.splice(n, 1); return; }
+      if (quick) { tr.mv.releaseAll(); tr.units.forEach((u) => this.scene.remove(u.g)); RA.havuz.birak(tr.units); const n = this.trains.indexOf(tr); if (n >= 0) this.trains.splice(n, 1); return; }
       tr.fade = 0.0001;
     }
     chooseRail(tr, from) {
@@ -688,12 +689,17 @@
 
     /* ================= UÇAKLAR ================= */
     makePlane() {
-      const g = M.plane(this.pick([0x2f6fd6, 0xe0402f, 0x1f9d61, 0x7a4fc2, 0xf08a24]));
-      const gearSet = new Set(); g.userData.gear.traverse((o) => gearSet.add(o));
-      RA.compact(g, (o) => gearSet.has(o));
+      const pc = this.pick([0x2f6fd6, 0xe0402f, 0x1f9d61, 0x7a4fc2, 0xf08a24]);
+      const g = RA.havuz.al('ws-plane' + pc, () => {
+        const m = M.plane(pc);
+        const gearSet = new Set(); m.userData.gear.traverse((o) => gearSet.add(o));
+        RA.compact(m, (o) => gearSet.has(o));
+        m.traverse((o) => { if (o.isMesh && !o.material.transparent) o.castShadow = true; });
+        m.userData.golge = RA.blobShadow(1.5, 1.3, 0.4);
+        return m;
+      });
       g.scale.setScalar(PSC);
-      g.traverse((o) => { if (o.isMesh && !o.material.transparent) o.castShadow = true; });
-      const shadow = RA.blobShadow(1.5, 1.3, 0.4);
+      const shadow = g.userData.golge; shadow.material.opacity = 0.4; shadow.visible = true;
       this.scene.add(g, shadow);
       const p = { kind: 'plane', id: uid++, code: 'RA ' + (this.codeN++), g, shadow, state: 'inbound', x: 0, z: 0, alt: 3, head: 0, roll: 0, pitch: 0, t: 0, fade: 0 };
       this.planes.push(p);
@@ -705,7 +711,7 @@
       if (p.mv) p.mv.releaseAll();
       for (const [k, o] of this.res) if (o === p) this.res.delete(k);
       if (p.gateKey && this.claim) this.claim.delete(p.gateKey);
-      this.scene.remove(p.g, p.shadow); const n = this.planes.indexOf(p); if (n >= 0) this.planes.splice(n, 1);
+      this.scene.remove(p.g, p.shadow); RA.havuz.birak(p.g); const n = this.planes.indexOf(p); if (n >= 0) this.planes.splice(n, 1);
     }
     // inişten sonra kapıya giden yol
     landingPlan(rw, dir) {

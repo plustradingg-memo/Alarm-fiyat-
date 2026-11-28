@@ -15,9 +15,14 @@ Uygulama kaydı ve App Privacy yapıldı. 1.0.0 incelemeye gönderildi (28 Kası
 Çin anakarası satıştan çıkarıldı: Apple orada oyun lisansı ve ek belgeler istiyor ("App Compliance" sayfasındaki
 iki eksik bundandı). İstersen sonra eklenir.
 
-İsteğe bağlı, senin kararın: **App Compliance → Digital Services Act → Set Up**. AB'de satış için Apple "tacir"
-(trader) olup olmadığını soruyor. Ücretsiz, gelir getirmeyen bir oyun için genelde "tacir değilim" seçilir;
-seçince AB'de görünmeye devam eder. Bu beyan senin adına olduğu için ben yapmıyorum.
+**AB'deki 27 ülke için gerekli (senin beyanın):** App Store Connect → **Business** (ya da uygulamada **App Compliance**)
+→ **Digital Services Act → Set Up**. Apple "tacir" (trader) olup olmadığını soruyor; bu beyan verilmeden oyun AB'de
+satışa çıkmaz (Apple'ın verdiği durum: `TRADER_STATUS_NOT_PROVIDED`, 27 ülke). Ücretsiz, reklamsız, satın almasız ve
+gelir getirmeyen bir oyun için genelde **"tacir değilim"** seçilir; tacir seçilirse adın, adresin, telefonun ve
+e-postan AB mağazasında herkese gösterilir. Hukuki beyan olduğu için bunu ben yapmıyorum.
+
+Çin anakarası kapalı kalıyor: orada oyun yayınlamak için devletin oyun lisansı (ISBN) gerekiyor; bireysel geliştirici
+olarak alınamıyor. Diğer 174 ülkenin hepsi açık (AB, beyandan sonra).
 
 <details><summary>Yapılmış adımlar</summary>
 
@@ -33,33 +38,37 @@ gönderme bende.
 
 </details>
 
-## Google Play — kalan: 3. ve 4. adım (10 dk)
+## Google Play — kalan: kurulum formları, ülkeler, test kullanıcıları (~15 dk)
 
-Uygulama oluşturuldu, ilk sürüm dahili testte. Sürüm kapalı test kanalına da taslak olarak kondu; formlar bitince
-zamanlanmış kontrol onu kendiliğinden incelemeye gönderir.
+Uygulama oluşturuldu; sürüm dahili testte (son: sürüm kodu 3) ve kapalı test kanalında taslak olarak bekliyor.
+**Veri güvenliği** formunu API ile ben doldurdum (veri toplanmıyor / paylaşılmıyor). Aşağıdakiler Google'ın
+API'sinde yok; Play Console → **Kontrol paneli → Oyununuzun kurulumunu tamamlayın** listesinden sırayla:
 
-1. ~~**Uygulamayı oluştur:**~~ yapıldı. Play Console → **Uygulama oluştur** → Ad **Trafik Ustası: Yol Çiz** · Dil **Türkçe** · **Oyun** ·
-   **Ücretsiz** → beyanları işaretle → Oluştur.
-2. ~~**İlk sürümü yükle**~~ yapıldı (Google ilk yüklemeyi yalnızca elle kabul ediyor):
-   - Derleme dosyası (sürüm 1.0.0, kod 2, paket `com.trafikustasi.oyun`, Türkçe ve İngilizce):
-     https://expo.dev/artifacts/eas/AwEmq2RKV5UJt6BvlIg69vEUhR00B9TPJn_9PQB8x94.aab
-   - **Test** → **Dahili test** → **Yeni sürüm oluştur** → Google Play uygulama imzalamasını kabul et → .aab'yi
-     yükle → sürüm notu: `İlk sürüm` → **Kaydet** → **İncele** → **Dahili teste yayınla**.
-3. **Uygulama içeriği formları** (API'de yok) — hazır yanıtlar:
-
-| Form | Yanıt |
+| Adım | Yanıt |
 |---|---|
-| Gizlilik politikası | https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/gizlilik-politikasi.md |
-| Uygulama erişimi | Tüm işlevler özel erişim olmadan kullanılabilir |
-| Reklamlar | Hayır, reklam içermiyor |
-| İçerik derecelendirmesi | Kategori **Oyun**; şiddet, cinsellik, küfür, uyuşturucu, kumar, kullanıcı etkileşimi, konum paylaşımı, dijital satın alma sorularının **hepsine Hayır** (sonuç: PEGI 3 / Herkes) |
-| Hedef kitle | **13–15, 16–17, 18+** |
-| Veri güvenliği | "Uygulamanız kullanıcı verisi topluyor veya paylaşıyor mu?" → **Hayır** |
-| Haber / Devlet / Finans / Sağlık | Hayır / hiçbiri |
-| Mağaza ayarları | Kategori **Oyun › Bulmaca**; iletişim e-postası (herkese görünür) |
+| Gizlilik politikasını ayarlayın | https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/gizlilik-politikasi.md |
+| Oturum açma bilgileri | **Tüm işlevler özel erişim gerektirmeden kullanılabilir** |
+| Reklam | **Hayır**, uygulamam reklam içermiyor |
+| İçerik derecelendirme | E-posta adresin · Kategori **Oyun** · bütün sorulara **Hayır** (şiddet, korku, cinsellik, küfür, uyuşturucu, kumar, kullanıcı etkileşimi/paylaşım, konum paylaşımı, dijital satın alma) → Kaydet → **Derecelendirmeyi gönder** |
+| Hedef kitle | **13–15, 16–17, 18 ve üzeri** · çocuklara hitap etmiyor → Hayır |
+| Veri güvenliği | ✓ yapıldı (API) — listede hâlâ açık görünürse içine girip yalnızca **Gönder**'e bas |
+| Resmi kurum uygulamaları | **Hayır** |
+| Finans ile ilgili özellikler | **Uygulamam finansal özellik sunmuyor** |
+| Sağlık | **Sağlık özelliği yok** |
+| Kategori ve iletişim bilgileri | Uygulama türü **Oyun**, kategori **Bulmaca** · iletişim e-postası (mağazada herkese görünür) |
 
-4. **Kapalı test kullanıcıları:** hesabın kişisel olduğu için Google üretime geçmeden önce en az 12 kişiyle 14 gün
-   kapalı test istiyor (Planet Merge'deki gibi). **Test** → **Kapalı test** → **Test kullanıcıları** bölümünde
-   Planet Merge için kullandığın e-posta listesini seç. Kapalı teste sürümü ben gönderirim.
+**Ülkeler (tüm ülkeler):** **Test → Kapalı test → Ülkeler/bölgeler → Ülke/bölge ekle → hepsini seç** (üretime
+geçerken **Üretim → Ülkeler/bölgeler** için de aynısı). Google bunu da API'ye açmıyor.
 
-İlk yüklemeden sonra mağaza metni, ekran görüntüleri, öne çıkan görsel, simge ve bütün sonraki sürümler bende.
+**Kapalı test kullanıcıları:** hesap kişisel olduğu için Google üretime geçmeden önce en az 12 kişiyle 14 gün kapalı
+test istiyor (Planet Merge'deki gibi). **Test → Kapalı test → Test kullanıcıları**: Planet Merge için kullandığın
+e-posta listesini seç. Kapalı teste sürümü ben gönderirim (zamanlanmış kontrol formlar bitince kendiliğinden yapar).
+
+<details><summary>Yapılmış adımlar</summary>
+
+1. Uygulama oluşturuldu (Trafik Ustası: Yol Çiz · Türkçe · Oyun · Ücretsiz).
+2. İlk sürüm elle yüklendi (Google ilk yüklemeyi yalnızca elle kabul ediyor); sonrakiler API ile.
+3. Mağaza metni (TR/EN), ekran görüntüleri, öne çıkan görsel, simge: API ile.
+4. Veri güvenliği: API ile (`scripts/play-veri-guvenligi.js`).
+
+</details>

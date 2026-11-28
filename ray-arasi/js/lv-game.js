@@ -1019,6 +1019,8 @@
     /* ---------- döngü ---------- */
     update(dt) { for (let k = 0; k < this.speed && this.running; k++) this.sim.update(dt); }
     frame(dt) {
+      // trafik dururken (yol çizilirken) bölümün araçları kare başına ~4 ms ile önceden hazırlanır
+      if (!this.running && this.sim && this.sim.hazirla && !this.app.manual) this.sim.hazirla(4);
       this.view.frame(this.sim, performance.now() / 1000, this.running);
       const now = performance.now();
       if (!this.lastHud || now - this.lastHud > 200) { this.lastHud = now; this.hud(false); }

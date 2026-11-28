@@ -31,7 +31,13 @@ ray-arasi-mobil/
 └── scripts/
     ├── paketle.cjs         Oyunu ../ray-arasi'den paketler (npm install sonrası kendiliğinden çalışır)
     ├── simge.cjs           Simgeleri SVG'den üretir (Playwright gerekir)
-    └── magaza.cjs          Mağaza ekran görüntülerini üretir (Playwright gerekir)
+    ├── magaza.cjs          Mağaza ekran görüntülerini üretir (Playwright gerekir)
+    ├── asc.js, play.js     App Store Connect ve Google Play API yardımcıları (anahtarlar her çalışmada Expo'dan)
+    ├── ios-yayinla.js      iPhone sürümünü hazırlar ve incelemeye gönderir
+    ├── ios-inceleme-eki.js İncelemeye dosya ekler (ör. Apple'ın istediği ekran kaydı)
+    ├── play-yayinla.js     Android sürümünü, mağaza metnini ve görselleri Google Play'e yükler
+    ├── play-veri-guvenligi.js  Google Play "Veri güvenliği" formunu doldurur (veri toplanmıyor)
+    └── durum.js            İki mağazanın durumunu okur (yalnızca okur)
 ```
 
 ## Geliştirme

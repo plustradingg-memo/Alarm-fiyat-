@@ -48,7 +48,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   const oyna0 = await page.evaluate(() => ({ t: document.getElementById('oyna-t').textContent, d: document.getElementById('oyna-d').textContent, ilk: document.getElementById('btn-oyna').classList.contains('ilk'), at: document.querySelectorAll('#menu #btn-atolye').length, eski: document.querySelectorAll('#menu .free-btn').length }));
   ok(oyna0.t === 'Oyna' && oyna0.d === 'Bölüm 1: İlk yol' && oyna0.ilk, 'büyük Oyna düğmesi ilk bölümü gösteriyor: "' + oyna0.t + ' · ' + oyna0.d + '"');
   ok(oyna0.at === 1 && oyna0.eski === 0, 'alt kısımda tek "Serbest atölye" düğmesi var (tekrarlanan üç düğme kalktı)');
-  await page.locator('#btn-oyna').tap();
+  await page.locator('#btn-oyna').tap({ force: true }); // nabız animasyonu yüzünden "durağan" beklemesi atlanır
   ok((await page.evaluate(() => RA.app.state + ' ' + RA.app.lv.level.id)) === 'level 1', 'Oyna düğmesi tek dokunuşla Bölüm 1\'i açtı');
   await page.evaluate(() => RA.app.showMenu());
   // serbest atölye: seçili sekmenin atölyesini açar (testte sekme kaydı değişmesin diye geri alınır)

@@ -495,6 +495,32 @@
     return g;
   };
 
+  /* ---------- araç havuzu ---------- */
+  // Araçlar (araba, otobüs, tren birimleri, uçaklar) her çıkışta yeniden kurulup birleştirilirse telefonda takılma
+  // yapar ve eski modeller bellekte birikir. Yoldan çıkan model havuza girer; aynı türden yeni araç oradan alınır.
+  // al(anahtar, kur): havuzda varsa onu, yoksa kur() ile yenisini verir. birak(nesne): havuza geri koyar.
+  RA.havuz = (function () {
+    const H = new Map(), SINIR = 40;
+    return {
+      al(key, kur) {
+        const p = H.get(key), o = p && p.pop();
+        if (o) { if (o.isObject3D) o.visible = true; return o; }
+        const n = kur();
+        if (n.isObject3D) n.userData.havuz = key; else n.havuz = key;
+        return n;
+      },
+      birak(o) {
+        const key = o && (o.isObject3D ? o.userData.havuz : o.havuz); if (!key) return;
+        let p = H.get(key); if (!p) H.set(key, (p = []));
+        if (p.length < SINIR && !p.includes(o)) p.push(o);
+      },
+      boyut() { let n = 0; H.forEach((p) => (n += p.length)); return n; },
+      // önceden hazırlık: havuzda bu anahtardan kaç tane bekliyor
+      say(key) { const p = H.get(key); return p ? p.length : 0; },
+      ekle(key, o) { if (o.isObject3D) o.userData.havuz = key; else o.havuz = key; this.birak(o); },
+    };
+  })();
+
   /* ---------- kamera sığdırma ---------- */
   // Kamerayı verilen yönden hedefe bakarken, noktalar ekranın izin verilen bölgesine sığacak şekilde konumlar.
   RA.fitCamera = function (camera, opts) {

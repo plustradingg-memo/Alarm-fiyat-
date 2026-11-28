@@ -14,6 +14,19 @@
   const TS = 0.52, PS = 0.56, RPS = 0.62;
   const LAND = 2.4; // iniş süresi (pist çıkışına varış)
   let uid = 1;
+  // araç modelleri (havuz anahtarı + kurucu); kurulan model havuza girer, yoldan çıkınca geri döner
+  const golgesiz = (m) => { m.traverse((o) => { if (o.isMesh) o.castShadow = false; }); return m; };
+  const KUR = {
+    car: (hex) => ['car' + hex, () => golgesiz(RA.compact(M.car(hex)))],
+    bus: (hex) => ['bus' + hex, () => golgesiz(RA.compact(M.bus(hex)))],
+    loco: (hex) => ['loco' + hex, () => golgesiz(RA.compact(M.loco(hex, 0xf6e7b8, 1.2)))],
+    coach: (hex) => ['coach' + hex, () => golgesiz(RA.compact(M.coach(hex, 1.0)))],
+    hopper: () => ['hopper', () => golgesiz(RA.compact(M.hopper(0x5a5048, 1.0)))],
+    plane: (hex) => ['plane' + hex, () => M.plane(hex)],
+    // hattan geçen tren (hemzemin geçitli bölümler): birimleri birlikte havuza girer
+    tren: (kind, cars, seed) => ['tren:' + kind + ':' + cars, () => { const us = M.train(kind, RA.rng(seed), cars); us.forEach((u) => RA.compact(u.g)); return us; }],
+  };
+  const arac = (k) => RA.havuz.al(k[0], k[1]);
 
   class LvSim {
     constructor(game) {
@@ -31,12 +44,43 @@
       this.houses = level.blds.filter((b) => b.kind === 'house' || b.role === 'gate').map((b, k) => ({ b, pending: 0, timer: b.role === 'gate' ? Infinity : 1.2 + k * 0.9, warnNoRoute: 0, k: 0, queue: [], dep: b.role === 'gate', landing: 0 }));
       this.railT = (level.rails || []).map((r, k) => ({ t: (r.first != null ? r.first : 3) + k * 2, dir: 1 }));
       this.setNet(net);
+      this.hazirlikKur(level);
+    }
+    // Bölümde gerekecek araçlar oyuncu yol çizerken (simülasyon dururken) azar azar önceden kurulur:
+    // trafik başlayınca yeni model kurulmaz, telefonda takılma olmaz.
+    hazirlikKur(level) {
+      const L = [], ekle = (k, n) => { const v = L.find((q) => q[0][0] === k[0]); if (v) v[1] = Math.max(v[1], n); else L.push([k, n]); };
+      const renkler = (b) => (b.colors && b.colors.length ? b.colors : [b.color]).map((c) => (LV.COLORS[c] || { hex: 0x7a8794 }).hex);
+      const ev = {}; // renk başına üretici sayısı
+      for (const h of this.houses) for (const hex of renkler(h.b)) ev[hex] = (ev[hex] || 0) + 1;
+      for (const hx of Object.keys(ev)) {
+        const hex = +hx, n = ev[hx];
+        // sayılar 120 bölümde ölçülen en kalabalık anlara göre (üretici başına aynı anda yolda olan araç)
+        if (this.mode === 'road') { ekle(KUR.car(hex), Math.min(30, 9 * n)); ekle(KUR.bus(hex), Math.min(6, 2 * n)); }
+        else if (this.mode === 'rail') { ekle(KUR.loco(hex), Math.min(20, 8 * n)); ekle(KUR.coach(hex), Math.min(40, 16 * n)); }
+        else ekle(KUR.plane(hex), Math.min(12, 4 * n));
+      }
+      if (this.mode === 'rail' && level.blds.some((b) => b.kind === 'dest' && b.type === 'maden')) ekle(KUR.hopper(), 30);
+      (level.rails || []).forEach((r, k) => { if (!r.runway) ekle(KUR.tren(r.kind || 'passenger', r.cars || 3, k * 31), 2); });
+      if ((level.rails || []).some((r) => r.runway)) for (const pc of [0xd8432f, 0x2f7fe0, 0x22a45a, 0x9050d8, 0x34495e]) ekle(KUR.plane(pc), 1);
+      this.hazirlik = L;
+    }
+    // ms süresi dolana dek havuzda eksik olan modelleri kurar; iş bitince false döner
+    hazirla(ms) {
+      const L = this.hazirlik; if (!L || !L.length) return false;
+      const t0 = performance.now();
+      while (L.length && performance.now() - t0 < ms) {
+        const [k, n] = L[0];
+        if (RA.havuz.say(k[0]) >= n) { L.shift(); continue; }
+        RA.havuz.ekle(k[0], k[1]());
+      }
+      return L.length > 0;
     }
     clear() {
       for (const c of this.cars) this.vehOut(c);
-      for (const f of this.fx || []) this.scene.remove(f.g);
+      for (const f of this.fx || []) { this.scene.remove(f.g); RA.havuz.birak(f.g); }
       this.fx = [];
-      for (const tr of this.trains) tr.units.forEach((u) => this.scene.remove(u.g));
+      for (const tr of this.trains) this.trainOut(tr);
       this.cars = []; this.trains = [];
     }
     // ağ değişti (çizim/silme): ışıklar yeniden kurulur, yoldaki araçlar en yakın şeride taşınır
@@ -132,10 +176,10 @@
     }
     makeCar(h, r) {
       const col = LV.COLORS[h.b.color];
-      const g = this.rnd() < 0.12 ? M.bus(col.hex) : M.car(col.hex);
+      const bus = this.rnd() < 0.12;
+      const g = arac(bus ? KUR.bus(col.hex) : KUR.car(col.hex));
       const isBus = g.userData.L > 2;
-      RA.compact(g); g.scale.setScalar(SC);
-      g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+      g.scale.setScalar(SC);
       this.scene.add(g);
       const c = { id: uid++, color: h.b.color, house: h, g, segs: r.segs, idx: 0, seg: r.segs[0], s: 0, v: 0.6, L: isBus ? 3.3 * SC : CARP.L, P: isBus ? Object.assign({}, CARP, { v0: 2.3, a: 1.8 }) : CARP, still: 0, appear: 0.0001, fade: 0 };
       g.scale.setScalar(SC * 0.3);
@@ -150,13 +194,13 @@
       if (this.mode === 'rail') {
         const dst = this.level.blds.find((b) => b.kind === 'dest' && b.color === color);
         const freight = dst && dst.type === 'maden';
-        const us = [{ g: M.loco(col.hex, 0xf6e7b8, 1.2), len: 1.2 }];
-        for (let i = 0; i < 2; i++) us.push(freight ? { g: M.hopper(0x5a5048, 1.0), len: 1.0 } : { g: M.coach(col.hex, 1.0), len: 1.0 });
+        const us = [{ g: arac(KUR.loco(col.hex)), len: 1.2 }];
+        for (let i = 0; i < 2; i++) us.push(freight ? { g: arac(KUR.hopper()), len: 1.0 } : { g: arac(KUR.coach(col.hex)), len: 1.0 });
         let off = 0;
-        for (const u of us) { RA.compact(u.g); u.g.traverse((o) => { if (o.isMesh) o.castShadow = false; }); u.off = off; u.len *= TS; off += u.len + 0.1 * TS; this.scene.add(u.g); }
+        for (const u of us) { u.off = off; u.len *= TS; off += u.len + 0.1 * TS; this.scene.add(u.g); }
         c.units = us; c.sc = TS; c.L = off; c.P = VEH.rail; c.long = true;
       } else {
-        const g = M.plane(col.hex); g.userData.gear.visible = true; g.userData.landing.material.opacity = 0;
+        const g = arac(KUR.plane(col.hex)); g.userData.gear.visible = true; g.userData.landing.material.opacity = 0;
         this.scene.add(g);
         c.g = g; c.sc = PS; c.L = 2.05 * PS; c.P = VEH.air; c.long = true; c.yOff = 0.33 * PS;
       }
@@ -166,7 +210,9 @@
       return c;
     }
     setScale(c, f) { if (c.units) c.units.forEach((u) => u.g.scale.setScalar(c.sc * f)); else c.g.scale.setScalar((c.sc || SC) * f); }
-    vehOut(c) { if (c.units) c.units.forEach((u) => this.scene.remove(u.g)); else this.scene.remove(c.g); }
+    vehOut(c) { if (c.units) c.units.forEach((u) => { this.scene.remove(u.g); RA.havuz.birak(u.g); }); else { this.scene.remove(c.g); RA.havuz.birak(c.g); } }
+    // pist uçakları ve hattan geçen trenler de havuza döner
+    trainOut(tr) { if (tr.units.havuz) { tr.units.forEach((u) => this.scene.remove(u.g)); RA.havuz.birak(tr.units); } else tr.units.forEach((u) => { this.scene.remove(u.g); RA.havuz.birak(u.g); }); }
     // baştan geriye d metre: araç rotası boyunca (rota başından önceyse ilk parçanın gerisine uzatılır)
     posBack(c, d, out) {
       let s = c.s - d, k = c.idx;
@@ -231,12 +277,13 @@
           const dir = st.dir; st.dir = -st.dir;
           if (r.runway) {
             // pist trafiği: sırayla iniş ve kalkış (bekleme çizgisindeki uçaklar bunu bekler)
-            const pl = M.plane(RA.pick([0xd8432f, 0x2f7fe0, 0x22a45a, 0x9050d8, 0x34495e], this.rnd)); pl.scale.setScalar(RPS); this.scene.add(pl);
+            const pc = RA.pick([0xd8432f, 0x2f7fe0, 0x22a45a, 0x9050d8, 0x34495e], this.rnd);
+            const pl = arac(KUR.plane(pc)); pl.scale.setScalar(RPS); this.scene.add(pl);
             const land = (st.n = (st.n || 0) + 1) % 2 === 1;
             this.trains.push({ k, dir, path, s: -1, len: 1.3, units: [{ g: pl, off: 0.65 / 0.85, len: 1.3 }], runway: true, land, v: 6.5 });
           } else {
-            const units = M.train(r.kind || 'passenger', RA.rng(k * 31 + Math.floor(this.t)), r.cars || 3);
-            let off = 0; units.forEach((u) => { u.off = off + u.len / 2; off += u.len + 0.12; RA.compact(u.g); u.g.scale.setScalar(0.85); this.scene.add(u.g); });
+            const units = arac(KUR.tren(r.kind || 'passenger', r.cars || 3, k * 31 + Math.floor(this.t)));
+            let off = 0; units.forEach((u) => { u.off = off + u.len / 2; off += u.len + 0.12; u.g.scale.setScalar(0.85); u.g.visible = true; this.scene.add(u.g); });
             this.trains.push({ k, dir, path, s: -1, len: off * 0.85, units });
           }
         }
@@ -254,7 +301,7 @@
           g.rotation.set(0, -Math.atan2(F.z - R.z, F.x - R.x), Math.atan2(alt(tr.s) - alt(tr.s - 0.6), 0.6));
           g.userData.gear.visible = y < 0.8; g.userData.landing.material.opacity = 0.9;
           g.visible = Math.abs(F.x) < LV.C.W / 2 + 0.6 && Math.abs(F.z) < LV.C.D / 2 + 0.6;
-          if (tr.s - tr.len > L + 2) { this.scene.remove(g); this.trains.splice(this.trains.indexOf(tr), 1); }
+          if (tr.s - tr.len > L + 2) { this.trainOut(tr); this.trains.splice(this.trains.indexOf(tr), 1); }
           continue;
         }
         tr.s += TRAIN_V * dt;
@@ -273,7 +320,7 @@
           if (u.g.visible) vis = true;
           if (u.g.userData.wheels) u.g.userData.wheels.forEach((w) => (w.rotation.y -= TRAIN_V * dt * 3));
         });
-        if (tr.s - tr.len > L + 2) { tr.units.forEach((u) => this.scene.remove(u.g)); this.trains.splice(this.trains.indexOf(tr), 1); }
+        if (tr.s - tr.len > L + 2) { this.trainOut(tr); this.trains.splice(this.trains.indexOf(tr), 1); }
       }
       // geçit: tren yaklaşırken kapanır, geçince açılır
       for (const g of net.gates) {
@@ -303,7 +350,8 @@
       if (!rn) { done(); return; }
       const path = new RA.Path(rn.r.pts), sEnd = rn.q.s, dir = sEnd > path.length / 2 ? 1 : -1;
       const cols = b.colors || [], cc = cols.length ? LV.COLORS[cols[(h.k + h.pending + h.landing - 1) % cols.length]] : null;
-      const g = M.plane(cc ? cc.hex : 0x7a8794);
+      const lc = cc ? cc.hex : 0x7a8794;
+      const g = arac(KUR.plane(lc)); g.userData.landing.material.opacity = 0;
       g.scale.setScalar(RPS); this.scene.add(g);
       const dist = 15, sStart = sEnd - dir * dist;
       this.fx.push({ g, t: 0, dur: LAND, step: (f) => {
@@ -322,7 +370,8 @@
       if (!dn) return;
       const rn = this.runwayNear(dn.x, dn.z); if (!rn) return;
       const path = new RA.Path(rn.r.pts), s0 = rn.q.s, dir = s0 < path.length / 2 ? 1 : -1;
-      const g = M.plane((LV.COLORS[color] || { hex: 0x7a8794 }).hex); g.scale.setScalar(RPS); this.scene.add(g);
+      const tc = (LV.COLORS[color] || { hex: 0x7a8794 }).hex;
+      const g = arac(KUR.plane(tc)); g.scale.setScalar(RPS); this.scene.add(g);
       this.fx.push({ g, t: 0, dur: 4, step: (f) => {
         const u = 1.2 * f.t * f.t + 0.4 * f.t, s = s0 + dir * u, P = path.at(RA.clamp(s, 0, path.length)), T0 = path.tan(RA.clamp(s, 0, path.length));
         const y = Math.max(0, (u - 5) * 0.3);
@@ -332,7 +381,7 @@
       } });
     }
     updateFx(dt) {
-      for (let i = this.fx.length - 1; i >= 0; i--) { const f = this.fx[i]; f.t += dt; if (!f.step(f)) { this.scene.remove(f.g); this.fx.splice(i, 1); } }
+      for (let i = this.fx.length - 1; i >= 0; i--) { const f = this.fx[i]; f.t += dt; if (!f.step(f)) { this.scene.remove(f.g); RA.havuz.birak(f.g); this.fx.splice(i, 1); } }
     }
 
     /* ---------- araçlar ---------- */
