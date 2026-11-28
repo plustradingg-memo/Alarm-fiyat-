@@ -1,4 +1,4 @@
-// Ray Arası Android sürümünü Google Play'e yükler (Google Play Developer API): AAB, sürüm notları, mağaza metni,
+// Trafik Ustası (Traffic Maestro) Android sürümünü Google Play'e yükler (Google Play Developer API): AAB, sürüm notları, mağaza metni,
 // ekran görüntüleri, öne çıkan görsel ve simge (aynıysa dokunulmaz). Metinler: magaza/metinler.json.
 // Planet Merge'ün betiğinden uyarlandı (plustradingg-memo/9-Kas-m-, gezegen-ios/scripts/play-yayinla.js).
 // Hizmet hesabı anahtarı her çalışmada Expo'dan okunur (scripts/play.js), diske yazılmaz.
@@ -89,7 +89,8 @@ const sha = (f) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest
           for (const f of files) await play.call('POST', `${UP}${PKG}/edits/${e.id}/listings/${lang}/phoneScreenshots?uploadType=media`, fs.readFileSync(path.join(dir, f)), mime(f));
           log('ekran görüntüleri yüklendi:', lang, files.length);
         } else log('ekran görüntüleri zaten güncel:', lang);
-        for (const [kind, rel2] of [['featureGraphic', M.gorseller.play_one_cikan], ['icon', M.gorseller.play_simge]]) {
+        const dilli = (v) => (v && typeof v === 'object' ? v[lang] : v); // dile göre ayrı görsel olabilir
+        for (const [kind, rel2] of [['featureGraphic', dilli(M.gorseller.play_one_cikan)], ['icon', dilli(M.gorseller.play_simge)]]) {
           if (!rel2) continue;
           const f = path.join(ROOT, rel2);
           const curImg = ((await e.get(`listings/${lang}/${kind}`)).images || []).map((i) => i.sha256);

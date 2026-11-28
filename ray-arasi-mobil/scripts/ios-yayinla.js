@@ -1,4 +1,4 @@
-// Ray Arası iPhone sürümünü App Store'da yayına hazırlar ve incelemeye gönderir (App Store Connect API).
+// Trafik Ustası (Traffic Maestro) iPhone sürümünü App Store'da yayına hazırlar ve incelemeye gönderir (App Store Connect API).
 // Planet Merge'ün betiğinden uyarlandı (plustradingg-memo/9-Kas-m-, gezegen-ios/scripts/ios-yayinla.js).
 // Metinler: magaza/metinler.json. Önce derleme EAS'ta yapılıp App Store Connect'e yüklenmiş olmalı (eas submit).
 // Anahtar her çalışmada Expo'dan okunur (scripts/asc.js), diske yazılmaz.
@@ -109,7 +109,12 @@ async function patchTolerant(asc, url, type, id, attributes) {
     const ilocs = (await asc.get(`/v1/appInfos/${info.id}/appInfoLocalizations`)).data;
     for (const [locale, t] of Object.entries(M.ios_bilgi)) {
       const l = ilocs.find((x) => x.attributes.locale === locale);
-      if (!l) { log('UYARI: uygulama bilgisinde dil yok:', locale); continue; }
+      if (!l) {
+        // yeni dil (ör. İngilizce): mağaza sayfası o dilde de açılır
+        await asc.post('/v1/appInfoLocalizations', { data: { type: 'appInfoLocalizations', attributes: { locale, ...t }, relationships: { appInfo: { data: { type: 'appInfos', id: info.id } } } } });
+        log('uygulama bilgisine dil eklendi:', locale);
+        continue;
+      }
       const diff = Object.fromEntries(Object.entries(t).filter(([k, v]) => l.attributes[k] !== v));
       if (!Object.keys(diff).length) continue;
       await asc.patch(`/v1/appInfoLocalizations/${l.id}`, { data: { type: 'appInfoLocalizations', id: l.id, attributes: diff } });

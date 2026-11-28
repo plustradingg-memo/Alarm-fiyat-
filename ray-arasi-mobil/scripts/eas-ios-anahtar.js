@@ -1,4 +1,4 @@
-// Expo ekip hesabındaki App Store Connect API anahtarını (App Manager) Ray Arası'nın iOS kimlik bilgilerine bağlar:
+// Expo ekip hesabındaki App Store Connect API anahtarını (App Manager) uygulamanın (app.json) iOS kimlik bilgilerine bağlar:
 // EAS iOS derlemesi ve App Store'a gönderim bilgisayarsız, etkileşimsiz yapılabilsin. Anahtarın kendisi Expo'da kalır,
 // bu betik onu okumaz ve diske yazmaz. Bir kez çalıştırmak yeter; yeniden çalıştırmak zararsızdır.
 //   NODE_USE_ENV_PROXY=1 node scripts/eas-ios-anahtar.js

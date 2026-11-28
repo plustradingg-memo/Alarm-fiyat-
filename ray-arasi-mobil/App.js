@@ -1,4 +1,4 @@
-// RAY ARASI — mobil uygulama kabuğu: oyun (tek HTML, çevrimdışı) tam ekran WebView içinde çalışır.
+// Trafik Ustası / Traffic Maestro — mobil uygulama kabuğu: oyun (tek HTML, çevrimdışı) tam ekran WebView içinde çalışır.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, BackHandler, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -10,7 +10,9 @@ import OYUN from './oyun/oyun';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // oyunun sanal adresi: kayıtlar (yıldızlar, ayarlar) bu adrese bağlı yerel depoda tutulur — değiştirme
-const ADRES = 'https://oyun.rayarasi.local/';
+const ADRES = 'https://oyun.rayarasi.local/'; // ilk çalışma adından kaldı; kayıtları korumak için aynen kalır
+// cihaz dili oyuna iletilir: Türkçe cihazda oyun Türkçe, diğerlerinde İngilizce açılır (oyun içinden değiştirilebilir)
+const CIHAZ_DILI = (() => { try { return Intl.DateTimeFormat().resolvedOptions().locale || ''; } catch (e) { return ''; } })();
 // her ekranın üst (çentik) ve alt (sistem çubuğu) rengi
 const RENK = {
   menu: { ust: '#87c3e1', alt: '#8cc966', yazi: 'dark' },
@@ -50,6 +52,7 @@ function Oyun() {
         ref={web}
         style={[styles.web, { marginLeft: kenar.left, marginRight: kenar.right, marginBottom: kenar.bottom }]}
         source={{ html: OYUN, baseUrl: ADRES }}
+        injectedJavaScriptBeforeContentLoaded={'window.__cihazDili = ' + JSON.stringify(CIHAZ_DILI) + '; true;'}
         originWhitelist={['*']}
         onShouldStartLoadWithRequest={(q) => q.url === ADRES || q.url.startsWith('about:') || q.url.startsWith('data:')}
         onMessage={mesaj}

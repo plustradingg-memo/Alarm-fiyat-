@@ -1,0 +1,4 @@
+{
+  "ios": { "CFBundleDisplayName": "Traffic Maestro" },
+  "android": { "app_name": "Traffic Maestro" }
+}

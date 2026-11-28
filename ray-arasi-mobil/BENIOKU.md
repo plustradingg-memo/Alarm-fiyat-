@@ -1,6 +1,7 @@
-# Ray Arası — mobil uygulama (Expo)
+# Trafik Ustası / Traffic Maestro — mobil uygulama (Expo)
 
-Bu klasör, `../ray-arasi` içindeki oyunu **App Store** ve **Google Play** için bir Expo (React Native) uygulamasına
+Bu klasör, `../ray-arasi` içindeki oyunu (mağaza adı Türkçe "Trafik Ustası: Yol Çiz", İngilizce "Traffic Maestro: Draw
+Roads"; ilk çalışma adı Ray Arası idi) **App Store** ve **Google Play** için bir Expo (React Native) uygulamasına
 sarar. Oyun kodu değişmez: `scripts/paketle.cjs` oyunun HTML, CSS, JS dosyalarını ve yazı tiplerini tek bir HTML'e
 gömer (`oyun/oyun.js`), uygulama da bunu tam ekran bir WebView içinde **çevrimdışı** çalıştırır. Oyun dışarıya
 hiçbir istek göndermez; ilerleme cihazda saklanır.
@@ -10,13 +11,15 @@ hiçbir istek göndermez; ilerleme cihazda saklanır.
 - Android geri tuşu: bölümde ya da atölyedeyken ana ekrana döner, ana ekranda uygulamadan çıkar
 - Uygulama arka plana geçince ses kesilir, çalışan bölüm duraklar
 - Çentik ve alt çubuk alanı o anki ekranın rengini alır
+- Oyun cihazın diliyle açılır (Türkçe ya da İngilizce); uygulama cihaz dilini oyuna iletir
 
 ## Klasörler
 
 ```
 ray-arasi-mobil/
 ├── App.js                  Uygulama kabuğu (WebView, geri tuşu, arka plan, güvenli alan)
-├── app.json                Ad, paket kimliği (com.rayarasi.oyun), simgeler, açılış ekranı, izinler
+├── app.json                Ad, paket kimliği (com.trafikustasi.oyun), simgeler, açılış ekranı, izinler
+├── locales/                Telefonda görünen ad: Türkçe "Trafik Ustası", diğer diller "Traffic Maestro"
 ├── eas.json                EAS derleme ve mağazaya gönderme profilleri
 ├── oyun/
 │   ├── oyun.js             Üretilir (git'e girmez): tek HTML olarak paketlenmiş oyun
@@ -56,7 +59,7 @@ Paket eklerken her zaman `npx expo install <paket>` kullan; SDK ile uyumlu sür�
 - Planet Merge (`plustradingg-memo/9-Kas-m-`) başka bir oturumda geliştirilir: o depoya ve o uygulamanın mağaza
   sayfalarına dokunulmaz. Buradaki betikler oradakilerden uyarlanmıştır.
 
-**Bir kez yapılanlar** (28 Kasım 2026): Apple'da `com.rayarasi.oyun` paket kimliği kaydedildi
+**Bir kez yapılanlar** (28 Kasım 2026): Apple'da `com.trafikustasi.oyun` paket kimliği kaydedildi
 (`scripts/eas-ios-anahtar.js` App Store Connect anahtarını bu uygulamanın iOS kimlik bilgilerine bağladı,
 `scripts/eas-ios-imza.js` ekibin dağıtım sertifikasıyla bir App Store profili oluşturup Expo'ya bağladı). Bu sayede
 iOS derlemesi bilgisayarsız, etkileşimsiz yapılır. Android imza anahtarını EAS ilk derlemede oluşturdu.

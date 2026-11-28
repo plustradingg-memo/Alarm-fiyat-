@@ -1,5 +1,5 @@
 {
-  "_not": "Ray Arası mağaza metinleri. ios-yayinla.js ve play-yayinla.js buradan okur. Her sürümde 'surum' (app.json ile aynı) ve 'yenilikler' güncellenir.",
+  "_not": "Trafik Ustası (TR) / Traffic Maestro (EN) mağaza metinleri. ios-yayinla.js ve play-yayinla.js buradan okur. Her sürümde 'surum' (app.json ile aynı) ve 'yenilikler' güncellenir.",
   "surum": "1.0.0",
   "yenilikler": {
     "tr": "İlk sürüm: karayolu, demiryolu ve havalimanında 120 bölüm, yıldız kapıları ve yoğun saatler.",
@@ -11,21 +11,32 @@
   },
   "ios_bilgi": {
     "tr": {
-      "name": "Ray Arası",
-      "subtitle": "Yol, ray ve pist bulmacası",
-      "privacyPolicyUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/gizlilik-politikasi.md"
+      "name": "Trafik Ustası: Yol Çiz",
+      "subtitle": "Köprü, tren ve uçak bulmacası",
+      "privacyPolicyUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/gizlilik-politikasi.md"
+    },
+    "en-US": {
+      "name": "Traffic Maestro: Draw Roads",
+      "subtitle": "Bridges, trains and planes",
+      "privacyPolicyUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/gizlilik-politikasi.md"
     }
   },
   "ios": {
     "tr": {
-      "description": "Ray Arası, parmağınla yol çizdiğin sevimli bir 3B trafik bulmacası.\n\nEvleri aynı renkteki iş yerlerine bağla, ▶'ye bas ve arabaların akışını izle. Yollar kesişince karar senin: ışıklı kavşak mı, köprü mü, alt geçit mi? Köprü ve alt geçit hakların sınırlı, asfaltın da. Bir ev çok bekletilirse trafik tıkanır!\n\nÜÇ DÜNYA, 120 BÖLÜM\n• Karayolu: evler, iş yerleri, kavşaklar, nehirler, dağlar ve hemzemin geçitler.\n• Demiryolu: uzun trenler, makaslar, nehir köprüleri ve dağ tünelleri.\n• Havalimanı: uçakları indir, kapıya yanaştır, yolcuyu al ve kaldır; pist geçişlerinde sırayı bekle.\n\nHER BÖLGEDE YENİ BİR SINAV\n• Bölgeler ilerledikçe haritalar büyür, renkler ve kesişimler çoğalır.\n• Yoğun saatlerde trafik birden artar; ağın dayanıyor mu?\n• Yıldız kapıları: her bölgenin son bölümüne geçmek için yeterince yıldız topla.\n\nÇİZMESİ KOLAY\n• Eğri ya da düz, nasıl çizersen çiz; oyun yolunu toparlar, binalara ve yollara kendisi bağlar.\n• Köprüyü yol çizmeden önce de kurabilirsin; yapılabilecek yerler parlar.\n• İki parmakla yakınlaştır ve kaydır; trafiği 2×, 4× ya da 8× hızlandır.\n\nSERBEST ATÖLYE\nBölümlerin dışında ızgaralı atölyede kendi şehrini, demiryolunu ya da havalimanını büyüt.\n\nReklam yok, uygulama içi satın alma yok, internet gerekmez. İlerlemen yalnızca cihazında saklanır.",
+      "description": "Trafik Ustası, parmağınla yol çizdiğin sevimli bir 3B trafik bulmacası.\n\nEvleri aynı renkteki iş yerlerine bağla, ▶'ye bas ve arabaların akışını izle. Yollar kesişince karar senin: ışıklı kavşak mı, köprü mü, alt geçit mi? Köprü ve alt geçit hakların sınırlı, asfaltın da. Bir ev çok bekletilirse trafik tıkanır!\n\nÜÇ DÜNYA, 120 BÖLÜM\n• Karayolu: evler, iş yerleri, kavşaklar, nehirler, dağlar ve hemzemin geçitler.\n• Demiryolu: uzun trenler, makaslar, nehir köprüleri ve dağ tünelleri.\n• Havalimanı: uçakları indir, kapıya yanaştır, yolcuyu al ve kaldır; pist geçişlerinde sırayı bekle.\n\nHER BÖLGEDE YENİ BİR SINAV\n• Bölgeler ilerledikçe haritalar büyür, renkler ve kesişimler çoğalır.\n• Yoğun saatlerde trafik birden artar; ağın dayanıyor mu?\n• Yıldız kapıları: her bölgenin son bölümüne geçmek için yeterince yıldız topla.\n\nÇİZMESİ KOLAY\n• Eğri ya da düz, nasıl çizersen çiz; oyun yolunu toparlar, binalara ve yollara kendisi bağlar.\n• Köprüyü yol çizmeden önce de kurabilirsin; yapılabilecek yerler parlar.\n• İki parmakla yakınlaştır ve kaydır; trafiği 2×, 4× ya da 8× hızlandır.\n\nSERBEST ATÖLYE\nBölümlerin dışında ızgaralı atölyede kendi şehrini, demiryolunu ya da havalimanını büyüt.\n\nReklam yok, uygulama içi satın alma yok, internet gerekmez. İlerlemen yalnızca cihazında saklanır. Türkçe ya da İngilizce oynayabilirsin.",
       "keywords": "trafik,bulmaca,yol,köprü,tren,demiryolu,havalimanı,uçak,kavşak,şehir,strateji,çizim,zeka",
       "promotionalText": "Yolu parmağınla çiz, kesişimleri köprü ve alt geçitle ayır, trafiği tıkatmadan akıt! Karayolu, demiryolu ve havalimanında 120 bölüm seni bekliyor.",
-      "supportUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/destek.md"
+      "supportUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/destek.md"
+    },
+    "en-US": {
+      "description": "Traffic Maestro is a cute 3D traffic puzzle where you draw the roads with your finger.\n\nConnect each house to the workplace of the same color, tap ▶ and watch the traffic flow. When roads cross, you decide: a junction with traffic lights, a bridge or an underpass? Bridges, underpasses and asphalt are limited, and if anyone waits too long, traffic jams up!\n\nTHREE WORLDS, 120 LEVELS\n• Roads: houses, workplaces, junctions, rivers, mountains and level crossings.\n• Railways: long trains, switches, river bridges and mountain tunnels.\n• Airport: land the planes, park them at their gates and get them back in the air; wait your turn at runway crossings.\n\nA NEW CHALLENGE IN EVERY REGION\n• Maps grow as you progress, with more colors and more crossings.\n• Rush hours suddenly flood the streets. Will your network hold?\n• Star gates: collect enough stars to unlock the last level of each region.\n\nEASY TO DRAW\n• Draw curvy or straight; the game tidies your road and snaps it to buildings and roads.\n• Place a bridge before you even draw the road; the possible spots light up.\n• Pinch to zoom and pan; speed up the traffic 2×, 4× or 8×.\n\nFREE BUILD\nOutside the levels, grow your own city, railway or airport on a grid.\n\nNo ads, no in-app purchases, no internet needed. Your progress stays on your device. Play in English or Turkish.",
+      "keywords": "traffic,puzzle,road,draw,bridge,train,railway,airport,city,junction,strategy,builder,flow,plane",
+      "promotionalText": "Draw roads with your finger, split crossings with bridges and underpasses, and keep traffic flowing! 120 levels across roads, railways and airports.",
+      "supportUrl": "https://github.com/plustradingg-memo/Alarm-fiyat-/blob/033080797c338ccd850ced94bedb28251297b95c/ray-arasi-mobil/magaza/destek.md"
     }
   },
   "ios_ayarlar": {
-    "telif": "2026 Ray Arası",
+    "telif": "2026 Trafik Ustası",
     "kategori": {
       "birincil": "GAMES",
       "alt1": "GAMES_PUZZLE",
@@ -64,19 +75,29 @@
   },
   "play": {
     "tr-TR": {
-      "title": "Ray Arası",
+      "title": "Trafik Ustası: Yol Çiz",
       "shortDescription": "Yolu parmağınla çiz, kesişimleri köprüyle ayır, trafiği tıkatmadan akıt!",
-      "fullDescription": "Ray Arası, parmağınla yol çizdiğin sevimli bir 3B trafik bulmacası.\n\nEvleri aynı renkteki iş yerlerine bağla, ▶'ye bas ve arabaların akışını izle. Yollar kesişince karar senin: ışıklı kavşak mı, köprü mü, alt geçit mi? Köprü ve alt geçit hakların sınırlı, asfaltın da. Bir ev çok bekletilirse trafik tıkanır!\n\nÜÇ DÜNYA, 120 BÖLÜM\n• Karayolu: evler, iş yerleri, kavşaklar, nehirler, dağlar ve hemzemin geçitler.\n• Demiryolu: uzun trenler, makaslar, nehir köprüleri ve dağ tünelleri.\n• Havalimanı: uçakları indir, kapıya yanaştır, yolcuyu al ve kaldır; pist geçişlerinde sırayı bekle.\n\nHER BÖLGEDE YENİ BİR SINAV\n• Bölgeler ilerledikçe haritalar büyür, renkler ve kesişimler çoğalır.\n• Yoğun saatlerde trafik birden artar; ağın dayanıyor mu?\n• Yıldız kapıları: her bölgenin son bölümüne geçmek için yeterince yıldız topla.\n\nÇİZMESİ KOLAY\n• Eğri ya da düz, nasıl çizersen çiz; oyun yolunu toparlar, binalara ve yollara kendisi bağlar.\n• Köprüyü yol çizmeden önce de kurabilirsin; yapılabilecek yerler parlar.\n• İki parmakla yakınlaştır ve kaydır; trafiği 2×, 4× ya da 8× hızlandır.\n\nSERBEST ATÖLYE\nBölümlerin dışında ızgaralı atölyede kendi şehrini, demiryolunu ya da havalimanını büyüt.\n\nReklam yok, uygulama içi satın alma yok, internet gerekmez. İlerlemen yalnızca cihazında saklanır."
+      "fullDescription": "Trafik Ustası, parmağınla yol çizdiğin sevimli bir 3B trafik bulmacası.\n\nEvleri aynı renkteki iş yerlerine bağla, ▶'ye bas ve arabaların akışını izle. Yollar kesişince karar senin: ışıklı kavşak mı, köprü mü, alt geçit mi? Köprü ve alt geçit hakların sınırlı, asfaltın da. Bir ev çok bekletilirse trafik tıkanır!\n\nÜÇ DÜNYA, 120 BÖLÜM\n• Karayolu: evler, iş yerleri, kavşaklar, nehirler, dağlar ve hemzemin geçitler.\n• Demiryolu: uzun trenler, makaslar, nehir köprüleri ve dağ tünelleri.\n• Havalimanı: uçakları indir, kapıya yanaştır, yolcuyu al ve kaldır; pist geçişlerinde sırayı bekle.\n\nHER BÖLGEDE YENİ BİR SINAV\n• Bölgeler ilerledikçe haritalar büyür, renkler ve kesişimler çoğalır.\n• Yoğun saatlerde trafik birden artar; ağın dayanıyor mu?\n• Yıldız kapıları: her bölgenin son bölümüne geçmek için yeterince yıldız topla.\n\nÇİZMESİ KOLAY\n• Eğri ya da düz, nasıl çizersen çiz; oyun yolunu toparlar, binalara ve yollara kendisi bağlar.\n• Köprüyü yol çizmeden önce de kurabilirsin; yapılabilecek yerler parlar.\n• İki parmakla yakınlaştır ve kaydır; trafiği 2×, 4× ya da 8× hızlandır.\n\nSERBEST ATÖLYE\nBölümlerin dışında ızgaralı atölyede kendi şehrini, demiryolunu ya da havalimanını büyüt.\n\nReklam yok, uygulama içi satın alma yok, internet gerekmez. İlerlemen yalnızca cihazında saklanır. Türkçe ya da İngilizce oynayabilirsin."
+    },
+    "en-US": {
+      "title": "Traffic Maestro: Draw Roads",
+      "shortDescription": "Draw roads, split crossings with bridges and keep the traffic flowing!",
+      "fullDescription": "Traffic Maestro is a cute 3D traffic puzzle where you draw the roads with your finger.\n\nConnect each house to the workplace of the same color, tap ▶ and watch the traffic flow. When roads cross, you decide: a junction with traffic lights, a bridge or an underpass? Bridges, underpasses and asphalt are limited, and if anyone waits too long, traffic jams up!\n\nTHREE WORLDS, 120 LEVELS\n• Roads: houses, workplaces, junctions, rivers, mountains and level crossings.\n• Railways: long trains, switches, river bridges and mountain tunnels.\n• Airport: land the planes, park them at their gates and get them back in the air; wait your turn at runway crossings.\n\nA NEW CHALLENGE IN EVERY REGION\n• Maps grow as you progress, with more colors and more crossings.\n• Rush hours suddenly flood the streets. Will your network hold?\n• Star gates: collect enough stars to unlock the last level of each region.\n\nEASY TO DRAW\n• Draw curvy or straight; the game tidies your road and snaps it to buildings and roads.\n• Place a bridge before you even draw the road; the possible spots light up.\n• Pinch to zoom and pan; speed up the traffic 2×, 4× or 8×.\n\nFREE BUILD\nOutside the levels, grow your own city, railway or airport on a grid.\n\nNo ads, no in-app purchases, no internet needed. Your progress stays on your device. Play in English or Turkish."
     }
   },
   "gorseller": {
     "ios": {
-      "tr": "magaza/gorseller/ios"
+      "tr": "magaza/gorseller/ios",
+      "en-US": "magaza/gorseller/ios-en"
     },
     "play": {
-      "tr-TR": "magaza/gorseller/android"
+      "tr-TR": "magaza/gorseller/android",
+      "en-US": "magaza/gorseller/android-en"
     },
-    "play_one_cikan": "magaza/gorseller/play-one-cikan-gorsel.png",
+    "play_one_cikan": {
+      "tr-TR": "magaza/gorseller/play-one-cikan-gorsel.png",
+      "en-US": "magaza/gorseller/play-one-cikan-gorsel-en.png"
+    },
     "play_simge": "magaza/gorseller/play-simge-512.png"
   }
 }

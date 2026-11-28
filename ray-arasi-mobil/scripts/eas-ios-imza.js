@@ -1,5 +1,5 @@
-// Ray Arası'nın App Store imza bilgilerini hazırlar: Expo ekip hesabındaki geçerli dağıtım sertifikasıyla Apple'da
-// com.rayarasi.oyun için bir App Store profili oluşturur, Expo'ya yükler ve uygulamanın derleme kimlik bilgilerine
+// Uygulamanın (app.json'daki paket kimliği) App Store imza bilgilerini hazırlar: Expo ekip hesabındaki geçerli dağıtım sertifikasıyla Apple'da
+// o paket kimliği için bir App Store profili oluşturur, Expo'ya yükler ve uygulamanın derleme kimlik bilgilerine
 // bağlar. Böylece `eas build --platform ios --non-interactive` bilgisayarsız çalışır. Sertifikanın özel anahtarı
 // okunmaz; profil yalnızca bellekte tutulur, diske yazılmaz. Yeniden çalıştırmak zararsızdır.
 //   NODE_USE_ENV_PROXY=1 node scripts/eas-ios-imza.js
@@ -44,7 +44,7 @@ async function q(query, variables) {
   // Apple'da App Store profili
   const bid = (await asc.get(`/v1/bundleIds?filter[identifier]=${BUNDLE}`)).data.find((b) => b.attributes.identifier === BUNDLE);
   if (!bid) throw new Error('Apple\'da paket kimliği kayıtlı değil: ' + BUNDLE);
-  const prof = (await asc.post('/v1/profiles', { data: { type: 'profiles', attributes: { name: `Ray Arasi App Store ${now.toISOString().slice(0, 10)}`, profileType: 'IOS_APP_STORE' },
+  const prof = (await asc.post('/v1/profiles', { data: { type: 'profiles', attributes: { name: `${BUNDLE} App Store ${now.toISOString().slice(0, 10)}`, profileType: 'IOS_APP_STORE' },
     relationships: { bundleId: { data: { type: 'bundleIds', id: bid.id } }, certificates: { data: [{ type: 'certificates', id: appleCert.id }] } } } })).data;
   console.log('Apple profili oluşturuldu', prof.attributes.name);
 

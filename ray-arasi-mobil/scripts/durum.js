@@ -1,6 +1,6 @@
-// Ray Arası'nın App Store Connect ve Google Play'deki durumunu yazar (yalnızca okur, hiçbir şeyi değiştirmez).
+// Uygulamanın App Store Connect ve Google Play'deki durumunu yazar (yalnızca okur, hiçbir şeyi değiştirmez).
 //   NODE_USE_ENV_PROXY=1 node scripts/durum.js
-const BUNDLE = 'com.rayarasi.oyun';
+const BUNDLE = require('../app.json').expo.ios.bundleIdentifier;
 (async () => {
   try {
     const asc = await require('./asc')();

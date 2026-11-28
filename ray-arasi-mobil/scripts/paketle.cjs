@@ -49,4 +49,4 @@ html = html.replace('</body>', KOPRU + '\n</body>');
 
 const cikti = path.join(KOK, 'oyun', 'oyun.js');
 fs.writeFileSync(cikti, '// Kendiliğinden üretilir (scripts/paketle.cjs) — elle düzenleme; kaynak: ../ray-arasi\nexport default ' + JSON.stringify(html) + ';\n');
-console.log('Ray Arası paketlendi: ' + n + ' dosya gömüldü, ' + Math.round(html.length / 1024) + ' KB → oyun/oyun.js');
+console.log('Oyun paketlendi: ' + n + ' dosya gömüldü, ' + Math.round(html.length / 1024) + ' KB → oyun/oyun.js');

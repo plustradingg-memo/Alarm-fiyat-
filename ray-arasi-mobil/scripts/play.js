@@ -1,6 +1,6 @@
 // Google Play Developer API yardımcısı. Hizmet hesabı anahtarı Expo hesabında saklıdır (Play Console'da yetkili);
 // her çalışmada Expo'dan okunur, diske yazılmaz. EXPO_TOKEN gerekir. Node fetch vekil için NODE_USE_ENV_PROXY=1 ister.
-// Kullanım: const play = await require('./play')(); const e = await play.edit('com.rayarasi.oyun'); ...
+// Kullanım: const play = await require('./play')(); const e = await play.edit('com.trafikustasi.oyun'); ...
 const crypto = require('crypto');
 
 const EXPO = 'https://api.expo.dev/graphql';

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Ray Arasi",
+    "name": "Traffic Maestro",
     "slug": "ray-arasi",
     "owner": "plustradinggs-team",
     "version": "1.0.0",
@@ -9,17 +9,21 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#87c3e1",
     "ios": {
-      "bundleIdentifier": "com.rayarasi.oyun",
+      "bundleIdentifier": "com.trafikustasi.oyun",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
       },
       "infoPlist": {
-        "CFBundleDisplayName": "Ray Arası"
+        "CFBundleDevelopmentRegion": "en",
+        "CFBundleLocalizations": [
+          "en",
+          "tr"
+        ]
       }
     },
     "android": {
-      "package": "com.rayarasi.oyun",
+      "package": "com.trafikustasi.oyun",
       "adaptiveIcon": {
         "backgroundColor": "#87c3e1",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -44,18 +48,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#bfe3f7"
         }
-      ],
-      [
-        "./plugins/uygulama-adi",
-        {
-          "ad": "Ray Arası"
-        }
       ]
     ],
     "extra": {
       "eas": {
         "projectId": "675d0462-3457-4cc0-95d5-4fce3856355a"
       }
+    },
+    "locales": {
+      "tr": "./locales/tr.json",
+      "en": "./locales/en.json"
     }
   }
 }
