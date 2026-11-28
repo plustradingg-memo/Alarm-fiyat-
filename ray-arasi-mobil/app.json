@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Ray Arası",
+    "name": "Ray Arasi",
     "slug": "ray-arasi",
     "owner": "plustradinggs-team",
     "version": "1.0.0",
@@ -13,6 +13,9 @@
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleDisplayName": "Ray Arası"
       }
     },
     "android": {
@@ -40,6 +43,12 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#bfe3f7"
+        }
+      ],
+      [
+        "./plugins/uygulama-adi",
+        {
+          "ad": "Ray Arası"
         }
       ]
     ],
