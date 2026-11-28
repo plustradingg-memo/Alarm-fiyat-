@@ -1,11 +1,11 @@
-# Ray Arası — Destek
+# Trafik Ustası (Traffic Maestro) — Destek
 
-Ray Arası, evleri iş yerlerine, istasyonları garlara ve uçakları kapılara bağladığın bir trafik bulmacasıdır. Oyun çevrimdışı çalışır; hesap ya da giriş gerekmez.
+Trafik Ustası, evleri iş yerlerine, istasyonları garlara ve uçakları kapılara bağladığın bir trafik bulmacasıdır. Oyun çevrimdışı çalışır; hesap ya da giriş gerekmez.
 
 ## Sorun bildir ya da soru sor
 
-- **Sorun bildirimi:** [GitHub üzerinden yeni bir kayıt aç](https://github.com/plustradingg-memo/Alarm-fiyat-/issues/new) (ücretsiz bir GitHub hesabı gerekir). Başlığa "Ray Arası" yaz; telefon modelini, sürümü ve sorunun hangi bölümde olduğunu ekle.
-- **E-posta:** App Store ya da Google Play'deki Ray Arası sayfasında yazan geliştirici iletişim adresine yazabilirsin.
+- **Sorun bildirimi:** [GitHub üzerinden yeni bir kayıt aç](https://github.com/plustradingg-memo/Alarm-fiyat-/issues/new) (ücretsiz bir GitHub hesabı gerekir). Başlığa "Trafik Ustası" yaz; telefon modelini, sürümü ve sorunun hangi bölümde olduğunu ekle.
+- **E-posta:** App Store ya da Google Play'deki Trafik Ustası sayfasında yazan geliştirici iletişim adresine yazabilirsin.
 
 ## Sık sorulanlar
 
@@ -33,6 +33,9 @@ Trafik başlayınca alttaki **1×** düğmesi görünür; dokundukça 2×, 4× v
 **Haritayı nasıl yakınlaştırırım?**
 İki parmakla sıkıştırıp aç; iki parmakla sürükleyerek kaydır. Sağdaki **+ / − / ⛶** düğmeleri de çalışır.
 
+**Oyunu İngilizce oynayabilir miyim?**
+Evet. Oyun telefonun diliyle açılır (Türkçe telefonda Türkçe, diğerlerinde İngilizce). Ana ekranın sol üstündeki **TR / EN** düğmesiyle istediğin an değiştirebilirsin.
+
 **Android'de geri tuşu ne yapar?**
 Bir bölümdeyken ana ekrana döner; ana ekrandayken uygulamadan çıkar.
 
@@ -44,4 +47,4 @@ Oyun hiçbir kişisel veri toplamaz. Ayrıntılar: [Gizlilik politikası](gizlil
 
 ## Support (English)
 
-Ray Arası is an offline traffic puzzle game; no account is needed. To report a problem, [open an issue on GitHub](https://github.com/plustradingg-memo/Alarm-fiyat-/issues/new) or write to the developer contact address shown on the app's App Store or Google Play page. The game collects no personal data; see the [privacy policy](gizlilik-politikasi.md).
+Traffic Maestro (Trafik Ustası) is an offline traffic puzzle game; no account is needed. It opens in your phone's language (Turkish or English); switch any time with the TR / EN button at the top left of the home screen. To report a problem, [open an issue on GitHub](https://github.com/plustradingg-memo/Alarm-fiyat-/issues/new) or write to the developer contact address shown on the app's App Store or Google Play page. The game collects no personal data; see the [privacy policy](gizlilik-politikasi.md).
