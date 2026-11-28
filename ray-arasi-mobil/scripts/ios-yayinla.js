@@ -290,7 +290,9 @@ async function patchTolerant(asc, url, type, id, attributes) {
     log('hazır; incelemeye gönderilmedi (--gonderme)');
     return;
   }
-  let sub = (await asc.get(`/v1/reviewSubmissions?filter[app]=${app.id}&filter[state]=READY_FOR_REVIEW`)).data[0];
+  // Apple bilgi istediyse ya da reddettiyse gönderim "UNRESOLVED_ISSUES" durumunda kalır: aynı gönderim yeniden gönderilir
+  let sub = (await asc.get(`/v1/reviewSubmissions?filter[app]=${app.id}&filter[state]=UNRESOLVED_ISSUES,READY_FOR_REVIEW&filter[platform]=IOS`)).data[0];
+  if (sub) log('açık gönderim kullanılıyor:', sub.attributes.state);
   if (!sub) sub = (await asc.post('/v1/reviewSubmissions', { data: { type: 'reviewSubmissions', attributes: { platform: 'IOS' }, relationships: { app: { data: { type: 'apps', id: app.id } } } } })).data;
   const items = (await asc.get(`/v1/reviewSubmissions/${sub.id}/items`)).data;
   if (!items.length) await asc.post('/v1/reviewSubmissionItems', { data: { type: 'reviewSubmissionItems', relationships: { reviewSubmission: { data: { type: 'reviewSubmissions', id: sub.id } }, appStoreVersion: { data: { type: 'appStoreVersions', id: ver.id } } } } });
