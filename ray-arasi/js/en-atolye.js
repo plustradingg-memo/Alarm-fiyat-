@@ -40,6 +40,7 @@
     'Boş tahta: çizmeye başla': 'Empty board: start drawing',
     // şehir şeridi: memnuniyet, aşama, talep düğmesi
     '%{n}': '{n}%',
+    '%85': '85%', // index.html'deki ilk değer (ilk karede güncellenir)
     '{ad} için {n} kişi': 'Next: {ad} at {n} people',
     'En büyük aşama': 'Top stage',
     '{n:talep:talep}': '{n:request:requests}',

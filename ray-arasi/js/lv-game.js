@@ -72,8 +72,9 @@
       this.view.plans(null);
       this.view.hint(null);
       this.sim.setup(this.level, this.net);
-      $('lv-title').textContent = this.levelTag(def) + ' · ' + def.name;
-      $('lv-drawlbl').textContent = this.tx.draw; $('lv-matlbl').textContent = this.tx.Mat;
+      const w = this.wd();
+      $('lv-title').textContent = this.levelTag(def) + ' · ' + RA.lvYazi(def, 'name');
+      $('lv-drawlbl').textContent = w.draw; $('lv-matlbl').textContent = w.Mat;
       $('lv-tunlbl').textContent = this.tunName(true);
       $('lv').dataset.mode = this.mode;
       $('lv').style.setProperty('--ch', this.chColor(def));
@@ -90,10 +91,10 @@
       let res = LV.buildNet(this.level, strokes, choices, { check });
       if (res.ok && !this.level.free) {
         const L = this.level;
-        if (res.usage.bridges + this.planCount(plans, 'bridge') > (L.bridges || 0)) res = { ok: false, msg: 'Köprü hakkın bitti (' + (L.bridges || 0) + ').' };
-        else if (res.usage.tunnels + this.planCount(plans, 'tunnel') > (L.tunnels || 0)) res = { ok: false, msg: (this.mode === 'rail' ? 'Tünel' : 'Alt geçit') + ' hakkın bitti (' + (L.tunnels || 0) + ').' };
+        if (res.usage.bridges + this.planCount(plans, 'bridge') > (L.bridges || 0)) res = LV.fail('Köprü hakkın bitti ({n}).', { n: L.bridges || 0 });
+        else if (res.usage.tunnels + this.planCount(plans, 'tunnel') > (L.tunnels || 0)) res = LV.fail(this.mode === 'rail' ? 'Tünel hakkın bitti ({n}).' : 'Alt geçit hakkın bitti ({n}).', { n: L.tunnels || 0 });
       }
-      if (!res.ok) { this.lastFail = res; if (!silent) { this.toast(res.msg, true); RA.audio.play('denied'); RA.vibrate([20, 40, 20]); if (res.at) this.flash(res.at); } return false; }
+      if (!res.ok) { this.lastFail = res; if (!silent) { this.toast(this.failText(res), true); RA.audio.play('denied'); RA.vibrate([20, 40, 20]); if (res.at) this.flash(res.at); } return false; }
       // yolların kavuştuğu yeni noktalar (kavşak, birleşme, bina girişi): öpüşme animasyonu
       const old = this.net, kisses = [];
       for (const n of res.nodes) {
@@ -119,7 +120,7 @@
       if (!res.ok) return;
       this.strokes = s.strokes; this.choices = s.choices; this.nextId = Math.max(this.nextId, s.nextId); this.net = res; this.plans = s.plans || [];
       this.view.buildRoads(this.level, res); this.view.plans(this.plans); this.sim.setNet(res); this.hud(true);
-      this.toast('Geri alındı.');
+      this.toast(this.txt('Geri alındı.'));
       if (this.spotKind) this.refreshSpots(true);
     }
 
@@ -205,9 +206,9 @@
       };
       const nR = raw.length;
       const a = snapEnd(raw[0], raw[Math.min(4, nR - 1)]), b = snapEnd(raw[nR - 1], raw[Math.max(0, nR - 5)]);
-      if (a.b && b.b && a.b === b.b) { if (!quiet) this.toast('Yolun iki ucu aynı binada kaldı: bir binadan başka bir binaya ya da yola çiz.'); return false; }
+      if (a.b && b.b && a.b === b.b) { if (!quiet) this.toast(this.txt('Yolun iki ucu aynı binada kaldı: bir binadan başka bir binaya ya da yola çiz.')); return false; }
       const head = a.pt || raw[0], tail = b.pt || raw[raw.length - 1];
-      if (Math.hypot(head.x - tail.x, head.z - tail.z) < 1.0) { if (!quiet) this.toast(a.pt && b.pt ? 'Bu iki nokta zaten bağlı.' : 'Yol çok kısa: biraz daha uzun çiz.'); return false; }
+      if (Math.hypot(head.x - tail.x, head.z - tail.z) < 1.0) { if (!quiet) this.toast(this.txt(a.pt && b.pt ? 'Bu iki nokta zaten bağlı.' : 'Yol çok kısa: biraz daha uzun çiz.')); return false; }
       // binaya bağlanan uçta binanın üstünden / önünden geçen fazlalık atılır (yol girişten başlar)
       const nearB = (p, B) => { const dx = p.x - B.x, dz = p.z - B.z, al = dx * B.ux + dz * B.uz, pe = -dx * B.uz + dz * B.ux; return (Math.abs(al) < B.d / 2 + 0.9 && Math.abs(pe) < B.w / 2 + 0.9) || Math.hypot(p.x - B.ex, p.z - B.ez) < 1.4; };
       let i0 = 0, i1 = nR - 1;
@@ -314,7 +315,7 @@
         if ((s0 > 0 || s1 < st.len) && s1 - s0 > 1.5) st = G.stroke(0, G.slicePts(st, s0, s1));
         return Object.assign({}, pt, { pts: st.pts });
       }).filter((pt) => G.stroke(0, pt.pts).len >= 1.2);
-      if (!parts.length) { if (!quiet) this.toast('Bu yol zaten var olan yolun üstünde; yeni bir yol gerekmedi.'); return false; }
+      if (!parts.length) { if (!quiet) this.toast(this.txt('Bu yol zaten var olan yolun üstünde; yeni bir yol gerekmedi.')); return false; }
 
       // 4) son rötuş: tahtada kal, ilmek yapma, başka yola yapışık gitme, yola/raya yatık girme
       const BXm = LV.C.BX - 0.05, BZm = LV.C.BZ - 0.05;
@@ -487,7 +488,7 @@
       // iki yol arasında kalan çok kısa bağlantı (yollar zaten yan yana): anlamsız, atılır
       const atRoad = (p) => !!onRoad(p) || net.nodes.some((n) => n.deg > 0 && n.kind !== 'b' && Math.hypot(n.x - p.x, n.z - p.z) < 0.2);
       parts = parts.filter((pt) => !(G.stroke(0, pt.pts).len < 3.6 && atRoad(pt.pts[0]) && atRoad(pt.pts[pt.pts.length - 1])));
-      if (!parts.length) { if (!quiet) this.toast('Bu yol zaten var olan yolun üstünde; yeni bir yol gerekmedi.'); return false; }
+      if (!parts.length) { if (!quiet) this.toast(this.txt('Bu yol zaten var olan yolun üstünde; yeni bir yol gerekmedi.')); return false; }
       // kural dışı kalırsa hata göstermeden onar: sorunun olduğu yere göre yolu değiştirip yeniden dene
       const T0 = performance.now();
       const fix = (ps) => {
@@ -528,22 +529,22 @@
       const used = add;
       if (!ok) {
         const r = this.lastFail;
-        if (r && RES.test(r.msg)) { this.toast(r.msg, true); RA.audio.play('denied'); return false; }
-        if (!quiet) { this.toast('Bu yolu buraya yerleştiremedim; biraz daha açık bir yerden çizmeyi dene.'); RA.audio.play('tap'); }
+        if (r && RES.test(r.msg)) { this.toast(this.failText(r), true); RA.audio.play('denied'); return false; }
+        if (!quiet) { this.toast(this.txt('Bu yolu buraya yerleştiremedim; biraz daha açık bir yerden çizmeyi dene.')); RA.audio.play('tap'); }
         return false;
       }
       this.nextId = Math.max(this.nextId, ...used.map((q) => q.id + 1));
       for (const np of used) this.view.sweep(np.pts);
       if (!quiet) {
         const conn = [a.b, b.b].filter(Boolean), nb = this.net.crossings.filter((c) => c.type === 'pending').length - before, partsMsg = [];
-        if (conn.length) partsMsg.push(conn.map((x) => this.bldName(x)).join(' ve ') + ' bağlandı');
-        if (this.usedPlans && this.usedPlans.size) partsMsg.push('kurduğun ' + (Array.from(this.usedPlans)[0].type === 'bridge' ? 'köprüden' : this.tunName() + 'ten') + ' geçiyor');
-        if (nb > 0) partsMsg.push(nb + ' kesişim: türünü seçmek için turuncu ? işaretine dokun');
-        const msg = partsMsg.length ? partsMsg.join(' · ') + '.' : this.tx.Way + ' eklendi.';
-        this.toast(msg.charAt(0).toLocaleUpperCase('tr-TR') + msg.slice(1));
+        if (conn.length) partsMsg.push(conn.length > 1 ? this.txt('{a} ve {b} bağlandı', { a: this.bldName(conn[0]), b: this.bldName(conn[1]) }) : this.txt('{a} bağlandı', { a: this.bldName(conn[0]) }));
+        if (this.usedPlans && this.usedPlans.size) partsMsg.push(Array.from(this.usedPlans)[0].type === 'bridge' ? this.txt('kurduğun köprüden geçiyor') : this.txt('kurduğun {tun}ten geçiyor', { tun: this.tunName() }));
+        if (nb > 0) partsMsg.push(this.txt('{n} kesişim: türünü seçmek için turuncu ? işaretine dokun', { n: nb }));
+        const msg = partsMsg.length ? partsMsg.join(' · ') + '.' : this.txt('{Way} eklendi.');
+        this.toast(msg.charAt(0).toLocaleUpperCase(this.loc()) + msg.slice(1));
       }
       // trafik akarken belirsiz kesişim oluştu: durdur ve seçtir
-      if (this.net.pending && this.running) { this.running = false; this.updPlay(); this.openPick(this.net.crossings.find((c) => c.type === 'pending')); this.toast('Trafik durdu: yeni kesişimin türünü seç.'); }
+      if (this.net.pending && this.running) { this.running = false; this.updPlay(); this.openPick(this.net.crossings.find((c) => c.type === 'pending')); this.toast(this.txt('Trafik durdu: yeni kesişimin türünü seç.')); }
       return true;
     }
     // kesişim seçim kutusu
@@ -557,23 +558,23 @@
     }
     openPick(c) {
       if (!c) return;
-      if (c.kind === 'runway') { this.toast('Pist geçişi: uçaklar pistte trafik varken bekleme çizgisinde durur. Pist köprü ya da tünel olamaz.'); return; }
+      if (c.kind === 'runway') { this.toast(this.txt('Pist geçişi: uçaklar pistte trafik varken bekleme çizgisinde durur. Pist köprü ya da tünel olamaz.')); return; }
       this.pickC = c;
       const el = $('lv-pick'), L = this.level, u = this.net.usage;
       const order = CYCLE[c.kind];
       const left = { bridge: (L.bridges || 0) - u.bridges + (c.type === 'bridge' ? 1 : 0), tunnel: (L.tunnels || 0) - u.tunnels + (c.type === 'tunnel' ? 1 : 0) };
       el.querySelectorAll('[data-pick]').forEach((b, k) => {
         const t = order[k]; b.dataset.pick = t;
-        b.querySelector('span').textContent = t === 'level' ? 'Hemzemin' : t === 'junction' ? this.tx.Jn : t === 'bridge' ? 'Köprü' : this.tunName(true);
+        b.querySelector('span').textContent = t === 'level' ? RA.t('Hemzemin') : t === 'junction' ? this.wd().Jn : t === 'bridge' ? RA.t('Köprü') : this.tunName(true);
         const n = t === 'bridge' || t === 'tunnel' ? left[t] : null;
         // bu seçenek burada olur mu? (rampa yeri, yakın kavşak…) olmayan seçenek baştan kapalı
         const fits = t === c.type || !!this.fitChoice(c, t);
-        b.querySelector('b').textContent = n != null && n <= 0 ? 'hak yok' : !fits ? 'yer yok' : n == null ? '' : n + ' hak';
+        b.querySelector('b').textContent = n != null && n <= 0 ? RA.t('hak yok') : !fits ? RA.t('yer yok') : n == null ? '' : RA.t('{n} hak', { n });
         b.disabled = (n != null && n <= 0) || !fits;
         b.classList.toggle('on', c.type === t);
         b.dataset.kind = t;
       });
-      el.querySelector('p').textContent = c.kind === 'rail' ? 'Yol rayı nasıl geçsin?' : 'Bu kesişim ne olsun?';
+      el.querySelector('p').textContent = this.txt(c.kind === 'rail' ? 'Yol rayı nasıl geçsin?' : 'Bu kesişim ne olsun?');
       el.hidden = false;
       // işaretin yanına yerleştir
       const q = RA.project(new T.Vector3(c.x, 2.0, c.z), this.camera, this.app.w, this.app.h);
@@ -586,7 +587,7 @@
     choose(t) {
       const c = this.pickC; if (!c) return;
       const choices = this.fitChoice(c, t) || Object.assign({}, this.choices, { [c.key]: t });
-      if (this.tryCommit(this.strokes, choices, 'Kesişim: ' + this.tname(t) + '.')) { this.closePick(); if (t !== 'junction' && t !== 'level') this.view.kiss(c.x, c.z, 1.4); }
+      if (this.tryCommit(this.strokes, choices, this.txt('Kesişim: {t}.', { t: this.tname(t) }))) { this.closePick(); if (t !== 'junction' && t !== 'level') this.view.kiss(c.x, c.z, 1.4); }
     }
     eraseAt(p) {
       let best = null, bd = 1.0;
@@ -595,7 +596,7 @@
         if (n.s < e.s0 - 0.01 || n.s > e.s1 + 0.01) continue;
         if (n.d < bd) { bd = n.d; best = e; }
       }
-      if (!best) { this.toast('Silmek için bir yolun üstüne dokun.'); return; }
+      if (!best) { this.toast(this.txt('Silmek için bir yolun üstüne dokun.')); return; }
       const st = this.strokes.find((s) => s.id === best.st.id);
       const S = G.stroke(st.id, st.pts);
       const parts = [];
@@ -603,7 +604,7 @@
       if (S.len - best.s1 > 1.2) parts.push(G.slicePts(S, best.s1, S.len));
       const strokes = this.strokes.filter((s) => s !== st);
       for (const pts of parts) strokes.push({ id: this.nextId++, pts });
-      this.tryCommit(strokes, this.choices, this.tx.Way + ' silindi.');
+      this.tryCommit(strokes, this.choices, this.txt('{Way} silindi.'));
     }
 
     /* ---------- arayüz ---------- */
@@ -632,7 +633,7 @@
     // hız: 1× 2× 4× 8× (her karede simülasyon adımı o kadar kez çalışır; adım küçük kaldığı için araçlar doğru davranır)
     setSpeed(v) {
       this.speed = v;
-      const b = $('lv-speed'); b.textContent = v + '×'; b.dataset.v = v; b.setAttribute('aria-label', 'Hız: ' + v + ' kat (değiştirmek için dokun)');
+      const b = $('lv-speed'); b.textContent = v + '×'; b.dataset.v = v; b.setAttribute('aria-label', RA.t('Hız: {v} kat (değiştirmek için dokun)', { v }));
     }
     setTool(t) {
       if (t === 'bridge' || t === 'tunnel') { if (this.tool === t || !this.enterSpots(t)) t = 'road'; else this.closePick(); }
@@ -699,15 +700,15 @@
       return out;
     }
     enterSpots(kind) {
-      const L = this.level, name = kind === 'bridge' ? 'köprü' : this.tunName(), Name = kind === 'bridge' ? 'Köprü' : this.tunName(true);
-      if (!((kind === 'bridge' ? L.bridges : L.tunnels) || 0)) { this.toast('Bu bölümde ' + name + ' hakkın yok.'); return false; }
+      const L = this.level, kw = this.kindWords(kind);
+      if (!((kind === 'bridge' ? L.bridges : L.tunnels) || 0)) { this.toast(this.txt(kind === 'bridge' ? 'Bu bölümde köprü hakkın yok.' : this.mode === 'rail' ? 'Bu bölümde tünel hakkın yok.' : 'Bu bölümde alt geçit hakkın yok.')); return false; }
       const { out, left } = this.spotsFor(kind);
       const add = out.filter((s) => s.act === 'set' || s.act === 'merge');
-      if (left <= 0 && !out.some((s) => s.act === 'plan')) { this.toast(Name + ' hakkın bitti. Birini kaldırmak için ' + name + ' işaretine dokunup Kavşak seç.'); return false; }
+      if (left <= 0 && !out.some((s) => s.act === 'plan')) { this.toast(this.txt('{Name} hakkın bitti. Birini kaldırmak için {name} işaretine dokunup Kavşak seç.', kw)); return false; }
       this.spotKind = kind; this.spotList = out; this.view.spots(out, kind);
-      if (left <= 0) this.toast(Name + ' hakkın bitti. Kurduğun bir ' + name + 'yü kaldırmak için × işaretine dokun.');
-      else if (add.length) this.toast(Name + ' yapabileceğin ' + add.length + ' kesişim parlıyor: birine dokun. Boş bir yere dokunursan (sürükleyerek yön verirsin) ' + name + ' önceden kurulur. (' + left + ' hakkın var)');
-      else this.toast(Name + ' kurmak istediğin yere dokun; yönünü vermek için sürükle. Sonra oradan geçen yolları çiz. (' + left + ' hakkın var)');
+      if (left <= 0) this.toast(this.txt('{Name} hakkın bitti. Kurduğun bir {name}yü kaldırmak için × işaretine dokun.', kw));
+      else if (add.length) this.toast(this.txt('{Name} yapabileceğin {n} kesişim parlıyor: birine dokun. Boş bir yere dokunursan (sürükleyerek yön verirsin) {name} önceden kurulur. ({left} hakkın var)', Object.assign({ n: add.length, left }, kw)));
+      else this.toast(this.txt('{Name} kurmak istediğin yere dokun; yönünü vermek için sürükle. Sonra oradan geçen yolları çiz. ({left} hakkın var)', Object.assign({ left }, kw)));
       RA.audio.play('tap');
       return true;
     }
@@ -728,16 +729,16 @@
     }
     // boş yere köprü / alt geçit kur (yol yokken bile): dir verilmezse yakındaki yolun yönü ya da dikey
     placePlan(P, dir) {
-      const kind = this.spotKind, L = this.level, name = kind === 'bridge' ? 'köprü' : this.tunName(), Name = kind === 'bridge' ? 'Köprü' : this.tunName(true);
+      const kind = this.spotKind, L = this.level, kw = this.kindWords(kind);
       if (!P) return;
       const { left } = this.spotsFor(kind);
-      if (left <= 0) { this.toast(Name + ' hakkın bitti.', true); return; }
-      if (Math.abs(P.x) > LV.C.BX - 2 || Math.abs(P.z) > LV.C.BZ - 2) { this.toast('Tahtanın kenarına çok yakın.'); return; }
-      if (L.blds.some((b) => { const dx = P.x - b.x, dz = P.z - b.z; return Math.abs(dx * b.ux + dz * b.uz) < b.d / 2 + 2 && Math.abs(-dx * b.uz + dz * b.ux) < b.w / 2 + 1.2; })) { this.toast('Binaya çok yakın; biraz öteye kur.'); return; }
-      if ((L.water || []).some((q) => LV.geo.inPoly(q, P.x, P.z))) { this.toast('Suyun üstünden geçen yol zaten kendiliğinden köprü olur.'); return; }
-      if ((L.hills || []).some((q) => LV.geo.inPoly(q, P.x, P.z))) { this.toast('Dağın içinden geçen yol zaten tünel olur.'); return; }
-      if ((this.plans || []).some((q) => Math.hypot(q.x - P.x, q.z - P.z) < 4)) { this.toast('Burada zaten kurulmuş bir köprü var.'); return; }
-      if (this.net.nodes.some((n) => n.kind !== 'b' && n.deg >= 3 && Math.hypot(n.x - P.x, n.z - P.z) < 3)) { this.toast('Kavşağın dibine kurulamaz; kavşağı köprüye çevirmek için kavşağa dokun.'); return; }
+      if (left <= 0) { this.toast(this.txt('{Name} hakkın bitti.', kw), true); return; }
+      if (Math.abs(P.x) > LV.C.BX - 2 || Math.abs(P.z) > LV.C.BZ - 2) { this.toast(this.txt('Tahtanın kenarına çok yakın.')); return; }
+      if (L.blds.some((b) => { const dx = P.x - b.x, dz = P.z - b.z; return Math.abs(dx * b.ux + dz * b.uz) < b.d / 2 + 2 && Math.abs(-dx * b.uz + dz * b.ux) < b.w / 2 + 1.2; })) { this.toast(this.txt('Binaya çok yakın; biraz öteye kur.')); return; }
+      if ((L.water || []).some((q) => LV.geo.inPoly(q, P.x, P.z))) { this.toast(this.txt('Suyun üstünden geçen yol zaten kendiliğinden köprü olur.')); return; }
+      if ((L.hills || []).some((q) => LV.geo.inPoly(q, P.x, P.z))) { this.toast(this.txt('Dağın içinden geçen yol zaten tünel olur.')); return; }
+      if ((this.plans || []).some((q) => Math.hypot(q.x - P.x, q.z - P.z) < 4)) { this.toast(this.txt('Burada zaten kurulmuş bir köprü var.')); return; }
+      if (this.net.nodes.some((n) => n.kind !== 'b' && n.deg >= 3 && Math.hypot(n.x - P.x, n.z - P.z) < 3)) { this.toast(this.txt('Kavşağın dibine kurulamaz; kavşağı köprüye çevirmek için kavşağa dokun.', kw)); return; }
       if (!dir) {
         let best = null;
         for (const st of this.net.S) { const q = LV.geo.nearest(st, P.x, P.z); if (q.d < 2.2 && (!best || q.d < best.q.d)) best = { st, q }; }
@@ -746,40 +747,41 @@
       }
       const l = Math.hypot(dir.x, dir.z) || 1;
       const pl = { id: (this.planId = (this.planId || 0) + 1), x: P.x, z: P.z, dx: dir.x / l, dz: dir.z / l, type: kind };
-      if (this.tryCommit(this.strokes, this.choices, Name + ' kuruldu! Şimdi buradan geçen yolları çiz: ' + (kind === 'bridge' ? 'köprü yönündeki yol üstten, onu kesen yol alttan geçer.' : 'alt geçit yönündeki yol alttan, onu kesen yol üstten geçer.'), null, false, (this.plans || []).concat([pl]))) {
+      if (this.tryCommit(this.strokes, this.choices, this.txt(kind === 'bridge' ? '{Name} kuruldu! Şimdi buradan geçen yolları çiz: köprü yönündeki yol üstten, onu kesen yol alttan geçer.' : '{Name} kuruldu! Şimdi buradan geçen yolları çiz: alt geçit yönündeki yol alttan, onu kesen yol üstten geçer.', kw), null, false, (this.plans || []).concat([pl]))) {
         this.view.kiss(P.x, P.z, 1.3); RA.vibrate(15); RA.audio.play('point');
       }
     }
     useSpot(sp) {
-      const kind = this.spotKind, Name = kind === 'bridge' ? 'Köprü' : this.tunName(true);
-      if (sp.act === 'plan') { this.tryCommit(this.strokes, this.choices, 'Kurduğun ' + (kind === 'bridge' ? 'köprü' : this.tunName()) + ' kaldırıldı.', null, false, this.plans.filter((p) => p !== sp.plan)); return; }
+      const kind = this.spotKind, kw = this.kindWords(kind);
+      if (sp.act === 'plan') { this.tryCommit(this.strokes, this.choices, this.txt('Kurduğun {name} kaldırıldı.', kw), null, false, this.plans.filter((p) => p !== sp.plan)); return; }
       if (sp.act === 'set' || sp.act === 'merge') {
         const strokes = sp.act === 'merge' ? sp.strokes : this.strokes;
         if (sp.act === 'merge') this.nextId = Math.max(this.nextId, sp.nextId);
         const left = ((kind === 'bridge' ? this.level.bridges : this.level.tunnels) || 0) - (kind === 'bridge' ? this.net.usage.bridges : this.net.usage.tunnels) - this.planCount(this.plans, kind) - 1;
-        if (this.tryCommit(strokes, sp.choices, Name + ' yapıldı' + (sp.act === 'merge' ? ': iki yol birleşip ' + (kind === 'bridge' ? 'üstten' : 'alttan') + ' geçiyor' : '') + '. ' + (left > 0 ? 'Kalan hak: ' + left + '.' : 'Hakkın bitti.'))) {
+        const done = sp.act !== 'merge' ? '{Name} yapıldı.' : kind === 'bridge' ? '{Name} yapıldı: iki yol birleşip üstten geçiyor.' : '{Name} yapıldı: iki yol birleşip alttan geçiyor.';
+        if (this.tryCommit(strokes, sp.choices, this.txt(done, kw) + ' ' + (left > 0 ? this.txt('Kalan hak: {n}.', { n: left }) : this.txt('Hakkın bitti.')))) {
           this.view.kiss(sp.x, sp.z, 1.4); RA.vibrate(15);
         }
         return;
       }
       // var olanı kaldır: kavşak (rayda hemzemin) olur; sığmazsa türü sorulur (?)
       const back = sp.c.kind === 'rail' ? 'level' : 'junction';
-      for (const t of [back, 'pending']) if (this.tryCommit(this.strokes, ((ch) => { delete ch[sp.c.key + '^']; return ch; })(Object.assign({}, this.choices, { [sp.c.key]: t })), Name + ' kaldırıldı: ' + (t === 'pending' ? 'kesişimin türünü seç (?).' : this.tname(t) + ' oldu.'), null, true)) return;
+      for (const t of [back, 'pending']) if (this.tryCommit(this.strokes, ((ch) => { delete ch[sp.c.key + '^']; return ch; })(Object.assign({}, this.choices, { [sp.c.key]: t })), t === 'pending' ? this.txt('{Name} kaldırıldı: kesişimin türünü seç (?).', kw) : this.txt('{Name} kaldırıldı: {t} oldu.', Object.assign({ t: this.tname(t) }, kw)), null, true)) return;
     }
     togglePlay() {
       if (this.ended) return;
-      if (!this.running && this.net.pending) { this.toast('Önce kesişimleri belirle: turuncu ? işaretine dokun.'); this.openPick(this.net.crossings.find((c) => c.type === 'pending')); return; }
+      if (!this.running && this.net.pending) { this.toast(this.txt('Önce kesişimleri belirle: turuncu ? işaretine dokun.')); this.openPick(this.net.crossings.find((c) => c.type === 'pending')); return; }
       if (!this.started) {
-        if (!this.net.bNodes.some((n) => n.bld.kind === 'house' && n.deg > 0)) { this.toast(this.tx.first, true); return; }
+        if (!this.net.bNodes.some((n) => n.bld.kind === 'house' && n.deg > 0)) { this.toast(this.wd().first, true); return; }
         this.started = true; this.running = true; this.view.hint(null);
-        this.toast((this.mode === 'rail' ? 'Trenler yola çıktı!' : this.mode === 'air' ? 'Uçuşlar başladı!' : 'Trafik başladı!') + ' Çizmeye devam edebilirsin; sıkışan yeri köprü ya da yeni ' + this.tx.way + 'la rahatlat.');
+        this.toast(this.txt(this.mode === 'rail' ? 'Trenler yola çıktı!' : this.mode === 'air' ? 'Uçuşlar başladı!' : 'Trafik başladı!') + ' ' + this.txt('Çizmeye devam edebilirsin; sıkışan yeri köprü ya da yeni {way}la rahatlat.'));
       } else this.running = !this.running;
       this.updPlay();
     }
     updPlay() {
       const b = $('lv-play');
       b.classList.toggle('run', this.running);
-      b.querySelector('span').textContent = !this.started ? 'Başlat' : this.running ? 'Duraklat' : 'Devam';
+      b.querySelector('span').textContent = RA.t(!this.started ? 'Başlat' : this.running ? 'Duraklat' : 'Devam');
       $('lv-speed').hidden = !this.started;
     }
     restart(keep) {
@@ -787,12 +789,12 @@
       this.open(this.level.id);
       this.hideCard();
       if (s && (s.strokes.length || s.plans.length)) { const res = LV.buildNet(this.level, s.strokes, s.choices, {}); if (res.ok) { this.strokes = s.strokes; this.choices = s.choices; this.nextId = s.nextId; this.net = res; this.plans = s.plans; this.view.buildRoads(this.level, res); this.view.plans(this.plans); this.sim.setNet(res); this.hud(true); } }
-      this.toast(keep ? 'Yolların duruyor. Düzelt ve ▶ ile yeniden başlat.' : 'Bölüm baştan başladı.');
+      this.toast(this.txt(keep ? 'Yolların duruyor. Düzelt ve ▶ ile yeniden başlat.' : 'Bölüm baştan başladı.'));
     }
     showHint() {
       const paths = this.level.solution.filter((q) => q[0] !== 'set').map(([, raw]) => { const b0 = this.level.blds.find((b) => Math.hypot(b.ex - raw[0][0], b.ez - raw[0][1]) < 0.4), b1 = this.level.blds.find((b) => Math.hypot(b.ex - raw[raw.length - 1][0], b.ez - raw[raw.length - 1][1]) < 0.4); return LV.smoothStroke(raw.map(([x, z]) => ({ x, z })), b0 && { x: b0.ux, z: b0.uz }, b1 && { x: b1.ux, z: b1.uz }); });
       this.view.hint(paths);
-      this.toast('İpucu: ' + this.level.tip);
+      this.toast(RA.t('İpucu: {tip}', { tip: RA.lvYazi(this.level, 'tip') }));
       clearTimeout(this.hintT); this.hintT = setTimeout(() => this.view.hint(null), 6000);
     }
     // çözüm yollarını sırayla çiz (testler ve ipucu için)
@@ -810,68 +812,80 @@
       }
       return this.strokes.length;
     }
-    tname(t) { return t === 'junction' ? this.tx.jn : t === 'tunnel' ? this.tunName() : TNAME[t]; }
+    tname(t) { return t === 'junction' ? this.wd().jn : t === 'tunnel' ? this.tunName() : RA.t(TNAME[t]); }
+    // moda göre sözcükler: Türkçede LV.TXT, İngilizcede RA.LV_TXT_EN (js/en-bolum.js; eksik sözcük Türkçe kalır)
+    wd() { const tr = this.tx || LV.TXT[this.mode]; const en = RA.dil === 'en' && RA.LV_TXT_EN && RA.LV_TXT_EN[this.mode]; return en ? Object.assign({}, tr, en) : tr; }
+    // çeviri: moda göre sözcükler ({way}, {Way}, {jn}…) her metne değişken olarak verilir; İngilizcede gereken
+    // çoğul biçimler ({ways}, {Jns}…) yalnızca İngilizce sözcük tablosunda olduğundan Türkçe metinlerde kullanılmaz
+    txt(s, v) { return RA.t(s, Object.assign({}, this.wd(), v)); }
+    failText(res) { return this.txt(res.key || res.msg, res.v); }
+    loc() { return RA.dil === 'tr' ? 'tr-TR' : 'en-US'; }
+    // köprü / alt geçit / tünel adı (bildirimlerde {name}, {Name})
+    kindWords(kind) { return kind === 'bridge' ? { name: RA.t('köprü'), Name: RA.t('Köprü') } : { name: this.tunName(), Name: this.tunName(true) }; }
     // sonraki bölüm yıldız kapısıyla kilitliyse kazanma kartında not
     gateNote() {
       const nx = this.nextLevel(); if (!nx) return '';
       const need = LV.progress.need(nx.id); if (!need) return '';
       const have = LV.progress.before(nx.id);
-      return have >= need ? '<p class="lv-gate ok">⭐ Yıldız kapısı açıldı: ' + have + ' / ' + need + '</p>' : '<p class="lv-gate">🔒 ' + this.levelTag(nx) + ' için toplam <b>' + need + '</b> yıldız gerekiyor; sende <b>' + have + '</b> var. Önceki bölümleri daha iyi bitirerek yıldız topla.</p>';
+      return have >= need ? '<p class="lv-gate ok">' + RA.t('⭐ Yıldız kapısı açıldı: {have} / {need}', { have, need }) + '</p>' : '<p class="lv-gate">' + RA.t('🔒 {tag} için toplam <b>{need}</b> yıldız gerekiyor; sende <b>{have}</b> var. Önceki bölümleri daha iyi bitirerek yıldız topla.', { tag: this.levelTag(nx), need, have }) + '</p>';
     }
     onRush(on) {
       $('lv').dataset.rush = on ? '1' : '';
-      if (on) { this.toast(this.mode === 'rail' ? 'Yoğun saat! İstasyonlardan seferler sıklaşıyor.' : this.mode === 'air' ? 'Yoğun saat! Uçaklar daha sık iniyor.' : 'Yoğun saat! Evlerden araçlar daha sık çıkıyor.', true); RA.audio.play('denied'); }
-      else this.toast('Yoğun saat bitti.');
+      if (on) { this.toast(RA.t(this.mode === 'rail' ? 'Yoğun saat! İstasyonlardan seferler sıklaşıyor.' : this.mode === 'air' ? 'Yoğun saat! Uçaklar daha sık iniyor.' : 'Yoğun saat! Evlerden araçlar daha sık çıkıyor.'), true); RA.audio.play('denied'); }
+      else this.toast(RA.t('Yoğun saat bitti.'));
     }
-    levelTag(L) { return (L.mode === 'rail' ? 'Demiryolu ' : L.mode === 'air' ? 'Havalimanı ' : 'Bölüm ') + (L.n || L.id); }
+    levelTag(L) { return RA.t(L.mode === 'rail' ? 'Demiryolu {n}' : L.mode === 'air' ? 'Havalimanı {n}' : 'Bölüm {n}', { n: L.n || L.id }); }
     nextLevel() { const set = LV.setOf(this.level.id), k = set.levels.findIndex((l) => l.id === this.level.id); return set.levels[k + 1] || null; }
-    tunName(cap) { return this.mode === 'rail' ? (cap ? 'Tünel' : 'tünel') : cap ? 'Alt geçit' : 'alt geçit'; }
+    tunName(cap) { return RA.t(this.mode === 'rail' ? (cap ? 'Tünel' : 'tünel') : cap ? 'Alt geçit' : 'alt geçit'); }
     // hedef ve kaybetme kuralı (moda göre)
-    goalText(n) { return this.mode === 'rail' ? n + ' tren seferi tamamla' : this.mode === 'air' ? n + ' uçağı indir, kapıya yanaştır ve kaldır' : n + ' araç ulaştır'; }
-    doneText(n) { return this.mode === 'rail' ? n + ' sefer tamamlandı' : this.mode === 'air' ? n + ' uçak kalktı' : n + ' araç ulaştı'; }
-    ruleText() { return this.mode === 'rail' ? 'Bir istasyonda ' + LV.Sim.PENDING_CAP + ' sefer birikirse kaybedersin.' : this.mode === 'air' ? 'Havada ya da bir kapıda ' + LV.Sim.PENDING_CAP + ' uçak beklerse kaybedersin.' : 'Bir ev ' + LV.Sim.PENDING_CAP + ' kişiyi bekletirse kaybedersin.'; }
+    goalText(n) { return RA.t(this.mode === 'rail' ? '{n} tren seferi tamamla' : this.mode === 'air' ? '{n} uçağı indir, kapıya yanaştır ve kaldır' : '{n} araç ulaştır', { n }); }
+    doneText(n) { return RA.t(this.mode === 'rail' ? '{n} sefer tamamlandı' : this.mode === 'air' ? '{n} uçak kalktı' : '{n} araç ulaştı', { n }); }
+    ruleText() { return RA.t(this.mode === 'rail' ? 'Bir istasyonda {n} sefer birikirse kaybedersin.' : this.mode === 'air' ? 'Havada ya da bir kapıda {n} uçak beklerse kaybedersin.' : 'Bir ev {n} kişiyi bekletirse kaybedersin.', { n: LV.Sim.PENDING_CAP }); }
     // binanın adı (bildirimlerde)
     bldName(b) {
-      if (b.role === 'arr') return 'iniş noktası';
-      if (b.role === 'dep') return 'kalkış noktası';
-      if (b.role === 'gate') return 'kapı ' + (LV.GATE_L[b.color] || '');
-      const cn = (LV.COLORS[b.color] || { name: '' }).name.toLocaleLowerCase('tr-TR');
-      if (this.mode === 'rail') return cn + ' ' + (b.kind === 'house' ? 'istasyon' : ({ liman: 'liman', maden: 'maden' }[b.type] || 'gar'));
-      return cn + ' ' + (b.kind === 'house' ? 'ev' : 'iş yeri');
+      if (b.role === 'arr') return RA.t('iniş noktası');
+      if (b.role === 'dep') return RA.t('kalkış noktası');
+      if (b.role === 'gate') return RA.t('kapı {g}', { g: LV.GATE_L[b.color] || '' });
+      const cn = RA.t((LV.COLORS[b.color] || { name: '' }).name).toLocaleLowerCase(this.loc());
+      if (this.mode === 'rail') return cn + ' ' + RA.t(b.kind === 'house' ? 'istasyon' : ({ liman: 'liman', maden: 'maden' }[b.type] || 'gar'));
+      return cn + ' ' + RA.t(b.kind === 'house' ? 'ev' : 'iş yeri');
     }
     loseText(h) {
       const cap = LV.Sim.PENDING_CAP;
       if (this.mode === 'air') {
-        if (h.b.role === 'gate') return 'Kapı ' + (LV.GATE_L[h.b.color] || '') + (LV.GATE_L[h.b.color] === 'A' ? '\'da ' : '\'de ') + cap + ' uçak kalkış bekledi' + (h.noRoute ? ': kapıdan kalkış noktasına taksi yolu yok.' : '; taksi yolları uçakları taşıyamadı.') + ' Kalkışa giden yolu kısalt, kesişimleri köprüyle ayır.';
-        return 'Havada ' + cap + ' uçak iniş bekledi' + (h.noRoute ? ': inen uçağın kapısına taksi yolu yok (her kapıya yol çiz).' : '; pist çıkışı tıkandı.') + ' Kapılara giden yolları ayır, kesişimleri köprüyle rahatlat.';
+        // Türkçe ek ('da / 'de) yalnızca Türkçe metinde kullanılır
+        const g = LV.GATE_L[h.b.color] || '', v = { g, n: cap, da: g === 'A' ? '\'da' : '\'de' };
+        if (h.b.role === 'gate') return RA.t(h.noRoute ? 'Kapı {g}{da} {n} uçak kalkış bekledi: kapıdan kalkış noktasına taksi yolu yok.' : 'Kapı {g}{da} {n} uçak kalkış bekledi; taksi yolları uçakları taşıyamadı.', v) + ' ' + RA.t('Kalkışa giden yolu kısalt, kesişimleri köprüyle ayır.');
+        return RA.t(h.noRoute ? 'Havada {n} uçak iniş bekledi: inen uçağın kapısına taksi yolu yok (her kapıya yol çiz).' : 'Havada {n} uçak iniş bekledi; pist çıkışı tıkandı.', v) + ' ' + RA.t('Kapılara giden yolları ayır, kesişimleri köprüyle rahatlat.');
       }
-      if (this.mode === 'rail') return LV.COLORS[h.b.color].name + ' istasyonda ' + cap + ' sefer birikti' + (h.noRoute ? ': gidecekleri gara hat yok.' : '; hatlar trenleri taşıyamadı.') + ' Sıkışan yeri köprü, tünel ya da ikinci bir hatla rahatlat.';
-      return LV.COLORS[h.b.color].name + ' evdekiler ' + cap + ' kişi bekledi' + (h.noRoute ? ': gidecekleri iş yerine yol yok.' : '; yollar onları taşıyamadı.') + ' Sıkışan yeri köprü, alt geçit ya da ikinci bir yolla rahatlat.';
+      const c = RA.t(LV.COLORS[h.b.color].name), v = { c, cl: c.toLocaleLowerCase(this.loc()), n: cap };
+      if (this.mode === 'rail') return RA.t(h.noRoute ? '{c} istasyonda {n} sefer birikti: gidecekleri gara hat yok.' : '{c} istasyonda {n} sefer birikti; hatlar trenleri taşıyamadı.', v) + ' ' + RA.t('Sıkışan yeri köprü, tünel ya da ikinci bir hatla rahatlat.');
+      return RA.t(h.noRoute ? '{c} evdekiler {n} kişi bekledi: gidecekleri iş yerine yol yok.' : '{c} evdekiler {n} kişi bekledi; yollar onları taşıyamadı.', v) + ' ' + RA.t('Sıkışan yeri köprü, alt geçit ya da ikinci bir yolla rahatlat.');
     }
     showCard(kind, extra) {
-      const L = this.level, c = $('lv-card');
-      const res = (L.budget ? '<li><b>' + L.budget + ' m</b> ' + this.tx.mat + '</li>' : '') + (L.bridges ? '<li><b>' + L.bridges + '</b> köprü</li>' : '') + (L.tunnels ? '<li><b>' + L.tunnels + '</b> ' + this.tunName() + '</li>' : '') + (L.rush ? '<li class="rush"><b>Yoğun saat</b> dalgaları</li>' : '') + (L.board ? '<li><b>' + L.board[0] + '×' + L.board[1] + '</b> m harita</li>' : '');
+      const L = this.level, c = $('lv-card'), w = this.wd(), t = RA.t;
+      const res = (L.budget ? '<li><b>' + L.budget + ' m</b> ' + w.mat + '</li>' : '') + (L.bridges ? '<li>' + t('<b>{n}</b> köprü', { n: L.bridges }) + '</li>' : '') + (L.tunnels ? '<li>' + t(this.mode === 'rail' ? '<b>{n}</b> tünel' : '<b>{n}</b> alt geçit', { n: L.tunnels }) + '</li>' : '') + (L.rush ? '<li class="rush">' + t('<b>Yoğun saat</b> dalgaları') + '</li>' : '') + (L.board ? '<li>' + t('<b>{w}×{h}</b> m harita', { w: L.board[0], h: L.board[1] }) + '</li>' : '');
       let html = '';
       if (kind === 'intro') {
-        html = '<p class="lv-kicker">' + this.levelTag(L) + '</p><h2>' + L.name + '</h2><p>' + L.intro + '</p>' +
-          '<div class="lv-goalbox"><span>Hedef</span><b>' + this.goalText(L.goal) + '</b><small>' + this.ruleText() + '</small></div>' +
-          '<ul class="lv-res">' + res + '</ul><div class="lv-btns"><button data-act="start" class="primary" type="button">Kurmaya başla</button></div>';
+        html = '<p class="lv-kicker">' + this.levelTag(L) + '</p><h2>' + RA.lvYazi(L, 'name') + '</h2><p>' + RA.lvYazi(L, 'intro') + '</p>' +
+          '<div class="lv-goalbox"><span>' + t('Hedef') + '</span><b>' + this.goalText(L.goal) + '</b><small>' + this.ruleText() + '</small></div>' +
+          '<ul class="lv-res">' + res + '</ul><div class="lv-btns"><button data-act="start" class="primary" type="button">' + t('Kurmaya başla') + '</button></div>';
       } else if (kind === 'win') {
         const s = extra;
-        html = '<p class="lv-kicker">' + this.levelTag(L) + ' tamam</p><h2>Harika!</h2><div class="lv-stars">' + [1, 2, 3].map((k) => '<i class="' + (k <= s.stars ? 'on' : '') + '">★</i>').join('') + '</div>' +
-          '<ul class="lv-crit"><li class="ok">' + this.doneText(L.goal) + '</li><li class="' + (s.c2 ? 'ok' : '') + '">En çok ' + L.star2 + ' m ' + this.tx.mat + ' (' + Math.round(s.len) + ' m)</li><li class="' + (s.c3 ? 'ok' : '') + '">' + (this.mode === 'rail' ? 'Hiçbir istasyonda 3 seferden fazla birikmedi' : this.mode === 'air' ? 'Hiçbir yerde 3 uçaktan fazla beklemedi' : 'Hiçbir ev 3 kişiden fazla bekletmedi') + ' (en çok ' + s.peak + ')</li></ul>' +
+        html = '<p class="lv-kicker">' + t('{tag} tamam', { tag: this.levelTag(L) }) + '</p><h2>' + t('Harika!') + '</h2><div class="lv-stars">' + [1, 2, 3].map((k) => '<i class="' + (k <= s.stars ? 'on' : '') + '">★</i>').join('') + '</div>' +
+          '<ul class="lv-crit"><li class="ok">' + this.doneText(L.goal) + '</li><li class="' + (s.c2 ? 'ok' : '') + '">' + this.txt('En çok {n} m {mat} ({len} m)', { n: L.star2, len: Math.round(s.len) }) + '</li><li class="' + (s.c3 ? 'ok' : '') + '">' + t(this.mode === 'rail' ? 'Hiçbir istasyonda 3 seferden fazla birikmedi (en çok {n})' : this.mode === 'air' ? 'Hiçbir yerde 3 uçaktan fazla beklemedi (en çok {n})' : 'Hiçbir ev 3 kişiden fazla bekletmedi (en çok {n})', { n: s.peak }) + '</li></ul>' +
           this.gateNote() +
-          '<div class="lv-btns">' + (this.nextLevel() && LV.progress.unlocked(this.nextLevel().id) ? '<button data-act="next" class="primary" type="button">Sonraki bölüm</button>' : this.nextLevel() ? '<button data-act="retry" class="primary" type="button">Daha çok yıldız al</button>' : '<button data-act="menu" class="primary" type="button">Bütün bölümler bitti!</button>') + (this.nextLevel() && !LV.progress.unlocked(this.nextLevel().id) ? '' : '<button data-act="retry" type="button">Daha iyisini dene</button>') + '<button data-act="menu" type="button">Bölümler</button></div>';
+          '<div class="lv-btns">' + (this.nextLevel() && LV.progress.unlocked(this.nextLevel().id) ? '<button data-act="next" class="primary" type="button">' + t('Sonraki bölüm') + '</button>' : this.nextLevel() ? '<button data-act="retry" class="primary" type="button">' + t('Daha çok yıldız al') + '</button>' : '<button data-act="menu" class="primary" type="button">' + t('Bütün bölümler bitti!') + '</button>') + (this.nextLevel() && !LV.progress.unlocked(this.nextLevel().id) ? '' : '<button data-act="retry" type="button">' + t('Daha iyisini dene') + '</button>') + '<button data-act="menu" type="button">' + t('Bölümler') + '</button></div>';
       } else {
         const h = extra;
-        html = '<p class="lv-kicker">' + this.levelTag(L) + '</p><h2>' + this.tx.lose + '</h2><p>' + this.loseText(h) + '</p>' +
+        html = '<p class="lv-kicker">' + this.levelTag(L) + '</p><h2>' + w.lose + '</h2><p>' + this.loseText(h) + '</p>' +
           '<p class="lv-note">' + this.sim.stats.delivered + ' / ' + L.goal + ' · ' + this.doneText(this.sim.stats.delivered).replace(/^\d+ /, '') + '</p>' +
-          '<div class="lv-btns"><button data-act="retry" class="primary" type="button">Yollarımla tekrar dene</button><button data-act="reset" type="button">Boş tahtayla başla</button><button data-act="menu" type="button">Bölümler</button></div>';
+          '<div class="lv-btns"><button data-act="retry" class="primary" type="button">' + t('Yollarımla tekrar dene') + '</button><button data-act="reset" type="button">' + t('Boş tahtayla başla') + '</button><button data-act="menu" type="button">' + t('Bölümler') + '</button></div>';
       }
       c.innerHTML = '<div class="lv-cardbox">' + html + '</div>';
       c.hidden = false; c.dataset.kind = kind;
     }
-    hideCard() { $('lv-card').hidden = true; if (!this.started && (this.level.n || this.level.id) <= 3) this.toast(this.level.tip); }
+    hideCard() { $('lv-card').hidden = true; if (!this.started && (this.level.n || this.level.id) <= 3) this.toast(RA.lvYazi(this.level, 'tip')); }
     onDeliver(c) {
       if (this.sim.stats.delivered % 5 === 0) RA.audio.play('tap');
       const n = c && c.seg && c.seg.to; if (n) this.view.pop(n.x, n.z, (LV.COLORS[c.color] || { css: '#ffc531' }).css);
@@ -992,7 +1006,7 @@
           if (this.pickC) { this.closePick(); return; }
           const g = this.ground(p.x, p.y);
           if (g && this.tool === 'erase') this.eraseAt(g);
-          else if (g && this.tool === 'road') this.toast('Çizmek için parmağını sürükle: bir evin önünden aynı renkteki binanın önüne.');
+          else if (g && this.tool === 'road') this.toast(this.txt('Çizmek için parmağını sürükle: bir evin önünden aynı renkteki binanın önüne.'));
           return;
         }
         if (this.tool === 'road') this.addStroke(d.raw);
