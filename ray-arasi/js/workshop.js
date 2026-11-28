@@ -8,6 +8,7 @@
   const TITLES = { road: 'Karayolu', rail: 'Demiryolu', air: 'Havalimanı' };
   const DEF_TOOL = { road: 'road', rail: 'rail', air: 'taxi' };
   const TOOL_COL = { road: 0x5b6270, rail: 0x9a6b43, taxi: 0xf2c230, runway: 0x2c2f36, erase: 0xe5372d, lot: 0x1f5fc8 };
+  const num = (n) => n.toLocaleString(RA.dil === 'en' ? 'en-US' : 'tr-TR');
 
   class Workshop {
     constructor(app) {
@@ -40,9 +41,9 @@
       $('ws-less').addEventListener('click', () => this.setDensity(this.sim.density - 1));
       $('ws-more').addEventListener('click', () => this.setDensity(this.sim.density + 1));
       $('ws-menu').addEventListener('click', (e) => { e.stopPropagation(); $('ws-pop').hidden = !$('ws-pop').hidden; });
-      $('ws-new').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.start(this.domain); this.city.reset(); this.sim.clearAll(); this.commit('Yeni şehir: 4 düz yol. Talepler birazdan gelir. Eski çizim ↶ ile geri gelir.'); });
-      $('ws-sample').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.template(this.domain); this.commit('Örnek düzen yüklendi.'); });
-      $('ws-clear').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = new WS.Grid(); this.city.reset(); this.commit('Tahta temizlendi. Geri almak için ↶'); });
+      $('ws-new').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.start(this.domain); this.city.reset(); this.sim.clearAll(); this.commit(RA.t('Yeni şehir: 4 düz yol. Talepler birazdan gelir. Eski çizim ↶ ile geri gelir.')); });
+      $('ws-sample').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = WS.template(this.domain); this.commit(RA.t('Örnek düzen yüklendi.')); });
+      $('ws-clear').addEventListener('click', () => { $('ws-pop').hidden = true; this.pushUndo(); this.grid = new WS.Grid(); this.city.reset(); this.commit(RA.t('Tahta temizlendi. Geri almak için ↶')); });
       $('ws-dem').addEventListener('click', () => this.focusNext());
       $('ws-mood').addEventListener('click', () => this.toast(this.city.moodText()));
       $('ws-popn').addEventListener('click', () => this.toast(this.city.levelText()));
@@ -66,25 +67,25 @@
         runway: 'Pist: en az üç karelik düz bir çizgi çiz.',
         erase: 'Sil: üzerinden geçtiğin kareler temizlenir.',
       };
-      this.toast(tips[t]);
+      this.toast(RA.t(tips[t]));
     }
     setStyle(s) {
       this.style = s;
       document.querySelectorAll('#ws [data-style]').forEach((b) => { const on = b.dataset.style === s; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
-      this.toast({ grade: 'Kavşak: kesiştiği yere aynı seviyede bağlanır, ışıklar otomatik.', bridge: 'Köprü: kesiştiği yolun ya da rayın üstünden geçer.', tunnel: 'Alt geçit: kesiştiği yerin altından batıp çıkar.' }[s]);
+      this.toast(RA.t({ grade: 'Kavşak: kesiştiği yere aynı seviyede bağlanır, ışıklar otomatik.', bridge: 'Köprü: kesiştiği yolun ya da rayın üstünden geçer.', tunnel: 'Alt geçit: kesiştiği yerin altından batıp çıkar.' }[s]));
     }
     setAI(on) {
       this.sim.ai = on;
       const b = $('ws-ai'); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      b.querySelector('span.lbl').textContent = on ? 'YZ' : 'Elle';
-      b.setAttribute('aria-label', on ? 'Yapay zekâ açık' : 'Yapay zekâ kapalı, elle yönetim');
-      this.toast(on ? 'Yapay zekâ yönetiyor: ışıklar trafiğe göre kendiliğinden değişir, boşken sarı yanıp söner.' : 'Yapay zekâ kapalı: İzle aracıyla kavşaklara, makaslara ve uçaklara dokunarak sen yönet.');
+      b.querySelector('span.lbl').textContent = RA.t(on ? 'YZ' : 'Elle');
+      b.setAttribute('aria-label', RA.t(on ? 'Yapay zekâ açık' : 'Yapay zekâ kapalı, elle yönetim'));
+      this.toast(RA.t(on ? 'Yapay zekâ yönetiyor: ışıklar trafiğe göre kendiliğinden değişir, boşken sarı yanıp söner.' : 'Yapay zekâ kapalı: İzle aracıyla kavşaklara, makaslara ve uçaklara dokunarak sen yönet.'));
       RA.store.set('ws.ai', on);
     }
     setPaused(p) {
       this.paused = p;
       $('ws-play').classList.toggle('paused', p);
-      $('ws-play').setAttribute('aria-label', p ? 'Trafiği başlat' : 'Trafiği durdur');
+      $('ws-play').setAttribute('aria-label', RA.t(p ? 'Trafiği başlat' : 'Trafiği durdur'));
     }
     setDensity(d) {
       this.sim.density = RA.clamp(d, 1, 5);
@@ -102,7 +103,7 @@
     /* ---------- aç / kaydet ---------- */
     open(domain) {
       this.domain = domain;
-      $('ws-title').textContent = TITLES[domain];
+      $('ws-title').textContent = RA.t(TITLES[domain]);
       const saved = RA.store.get('ws.' + domain, null);
       // eski sürüm kaydı (başka boyut ya da biçim): şehir 4 düz yolla baştan başlar; eski çizim ↶ ile geri getirilebilir
       const stale = !!(saved && (saved.v !== WS.SAVE_V || saved.cols !== WS.COLS || saved.rows !== WS.ROWS));
@@ -124,9 +125,9 @@
       this.setTool('look');
       this.setStyle('grade');
       // ilk açılışta kısa yönlendirme
-      if (stale && this.undoStack.length) this.toast('Şehir 4 düz yolla baştan başladı. Eski çizimin ↶ ile geri gelir.');
-      else if (fresh) this.toast('Köyünün 4 düz yolu var. Talepleri karşıladıkça köy kasabaya, sonra şehre büyür. Trafik sıkışırsa büyüme durur.');
-      else this.toast('Yakınlaştırmak için iki parmağını aç ya da sağdaki + düğmesine dokun. İzle aracıyla tek parmakla kaydır, diğer araçlarla sürükleyerek çiz.');
+      if (stale && this.undoStack.length) this.toast(RA.t('Şehir 4 düz yolla baştan başladı. Eski çizimin ↶ ile geri gelir.'));
+      else if (fresh) this.toast(RA.t('Köyünün 4 düz yolu var. Talepleri karşıladıkça köy kasabaya, sonra şehre büyür. Trafik sıkışırsa büyüme durur.'));
+      else this.toast(RA.t('Yakınlaştırmak için iki parmağını aç ya da sağdaki + düğmesine dokun. İzle aracıyla tek parmakla kaydır, diğer araçlarla sürükleyerek çiz.'));
       this.lastStats = 0;
     }
     rebuild() {
@@ -147,19 +148,19 @@
     /* ---------- talepler ---------- */
     onDemand(p, why) {
       const t = WS.City.TYPES[p.type];
-      this.toast((why ? why + ': ' : 'Yeni talep: ') + t.ask + '. Üstteki talep düğmesi seni oraya götürür.');
+      this.toast(why ? RA.t('{why}: {ask}. Üstteki talep düğmesi seni oraya götürür.', { why: RA.t(why), ask: RA.t(t.ask) }) : RA.t('Yeni talep: {ask}. Üstteki talep düğmesi seni oraya götürür.', { ask: RA.t(t.ask) }));
       RA.audio.play('point');
       const b = $('ws-dem'); b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping');
     }
     onLevel(L, idx, unlocked) {
-      this.toast('Tebrikler, artık bir ' + L.name + ' oldun (' + L.min.toLocaleString('tr-TR') + ' kişi)!' + (unlocked.length ? ' Yeni talepler: ' + unlocked.join(', ') + '.' : ''));
+      this.toast(RA.t('Tebrikler, artık bir {ad} oldun ({n} kişi)!', { ad: RA.t(L.name), n: num(L.min) }) + (unlocked.length ? RA.t(' Yeni talepler: {liste}.', { liste: unlocked.map((s) => RA.t(s)).join(', ') }) : ''));
       RA.audio.play('record');
       const b = $('ws-popn'); b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping');
       this.saveCity();
     }
     onConnect(list) {
       const p = list[list.length - 1], t = WS.City.TYPES[p.type];
-      const msg = { road: t.name + ' bağlandı! Araçlar gelip gitmeye başladı.', rail: 'İstasyon bağlandı! Daha çok tren sefer yapacak.', taxi: 'Yeni kapı açıldı! Daha çok uçak gelecek.' }[t.need];
+      const msg = RA.t({ road: '{ad} bağlandı! Araçlar gelip gitmeye başladı.', rail: 'İstasyon bağlandı! Daha çok tren sefer yapacak.', taxi: 'Yeni kapı açıldı! Daha çok uçak gelecek.' }[t.need], { ad: RA.t(t.name) });
       this.pendingMsg = msg; // çizim mesajının yerine geçsin
       RA.audio.play('clear');
       this.saveCity();
@@ -167,9 +168,9 @@
     // Talep düğmesi: sıradaki bekleyen talebe (yoksa sıkışan kavşağa) yakınlaş
     focusNext() {
       const w = this.city.waiting();
-      const items = w.map((p) => ({ i: p.i, j: p.j, msg: WS.City.TYPES[p.type].ask + '. ' + WS.City.HOW[WS.City.TYPES[p.type].need] }));
-      for (const e of this.city.jams) items.push({ i: e.i, j: e.j, msg: 'Burası sıkışık (' + e.n + ' araç bekliyor). Köprü, alt geçit ya da yeni bir yol dene.' });
-      if (!items.length) { this.toast('Şu an bekleyen talep yok. Yeni talepler kendiliğinden gelir.'); return; }
+      const items = w.map((p) => ({ i: p.i, j: p.j, msg: RA.t(WS.City.TYPES[p.type].ask) + '. ' + RA.t(WS.City.HOW[WS.City.TYPES[p.type].need]) }));
+      for (const e of this.city.jams) items.push({ i: e.i, j: e.j, msg: RA.t('Burası sıkışık ({n} araç bekliyor). Köprü, alt geçit ya da yeni bir yol dene.', { n: e.n }) });
+      if (!items.length) { this.toast(RA.t('Şu an bekleyen talep yok. Yeni talepler kendiliğinden gelir.')); return; }
       const it = items[this.city.focusN++ % items.length];
       this.view.t.set(this.net.cx(it.i), 0, this.net.cz(it.j) + 1.5);
       this.view.d = this.fit.d * 0.34; this.clampView(); this.applyCam(); this.userView = true;
@@ -181,7 +182,7 @@
       const s = this.undoStack.pop();
       if (!s) return;
       this.grid = WS.Grid.load(JSON.parse(s));
-      this.commit('Geri alındı.');
+      this.commit(RA.t('Geri alındı.'));
       $('ws-undo').disabled = !this.undoStack.length;
     }
     commit(msg) { this.pendingMsg = null; this.save(); this.rebuild(); const m = this.pendingMsg || msg; this.pendingMsg = null; if (m) this.toast(m); RA.audio.play('switch'); }
@@ -331,7 +332,7 @@
         const cell = this.grid.cell(c.i, c.j);
         if (!cell || cell.pieces.length) continue;
         const pl = this.city.placeAt(c.i, c.j);
-        if (pl && WS.City.TYPES[pl.type].need !== 'road') { this.toast(WS.City.TYPES[pl.type].name + ' için ' + (WS.City.TYPES[pl.type].need === 'rail' ? 'ray' : 'taksi yolu') + ' gerekir.', true); return; }
+        if (pl && WS.City.TYPES[pl.type].need !== 'road') { this.toast(RA.t(WS.City.TYPES[pl.type].need === 'rail' ? '{ad} için ray gerekir.' : '{ad} için taksi yolu gerekir.', { ad: RA.t(WS.City.TYPES[pl.type].name) }), true); return; }
         tried++;
         for (const d of ['S', 'N', 'E', 'W']) {
           const nb = this.grid.cell(c.i + WS.DV[d].x, c.j + WS.DV[d].z);
@@ -340,8 +341,8 @@
           if (r.ok) { n++; break; }
         }
       }
-      if (n) { this.undoStack.push(before); if (this.undoStack.length > 30) this.undoStack.shift(); $('ws-undo').disabled = false; this.commit(n > 1 ? n + ' otopark eklendi.' : 'Otopark eklendi: araçlar buraya park edecek, sonra buradan çıkacak.'); }
-      else if (tried) { this.toast('Otoparkı bir yolun yanındaki boş kareye koy.', true); RA.audio.play('denied'); }
+      if (n) { this.undoStack.push(before); if (this.undoStack.length > 30) this.undoStack.shift(); $('ws-undo').disabled = false; this.commit(n > 1 ? RA.t('{n} otopark eklendi.', { n }) : RA.t('Otopark eklendi: araçlar buraya park edecek, sonra buradan çıkacak.')); }
+      else if (tried) { this.toast(RA.t('Otoparkı bir yolun yanındaki boş kareye koy.'), true); RA.audio.play('denied'); }
     }
     applyStroke(cells) {
       let seq = WS.strokeCells(cells.map((c) => ({ i: c.i, j: c.j })));
@@ -356,8 +357,8 @@
       for (let k = 0; k < seq.length; k++) {
         const pl = this.city.placeAt(seq[k].i, seq[k].j); if (!pl) continue;
         const t = WS.City.TYPES[pl.type];
-        if (pl.conn) { this.toast(t.name + ' zaten bağlı; tek girişi var. Yolu yanından geçir.', true); RA.audio.play('denied'); return; }
-        if (t.need !== this.tool) { this.toast('Bu kare ' + t.name + ' için ayrıldı: ' + WS.City.HOW[t.need], true); RA.audio.play('denied'); return; }
+        if (pl.conn) { this.toast(RA.t('{ad} zaten bağlı; tek girişi var. Yolu yanından geçir.', { ad: RA.t(t.name) }), true); RA.audio.play('denied'); return; }
+        if (t.need !== this.tool) { this.toast(RA.t('Bu kare {ad} için ayrıldı: {nasil}', { ad: RA.t(t.name), nasil: RA.t(WS.City.HOW[t.need]) }), true); RA.audio.play('denied'); return; }
         if (k > 0) { cut = seq.slice(0, k + 1); break; }
       }
       seq = cut;
@@ -376,10 +377,10 @@
         const d = Math.hypot(q.x - x, q.y - y); if (d < bd) { bd = d; best = p; }
       }
       if (best) {
-        if (sim.ai) { this.toast(best.code + ': kule (yapay zekâ) sıraya aldı.'); return; }
+        if (sim.ai) { this.toast(RA.t('{kod}: kule (yapay zekâ) sıraya aldı.', { kod: best.code })); return; }
         const r = sim.tapPlane(best);
-        if (r === 'ok') { RA.audio.play('select'); this.toast(best.code + ' için izin verildi.'); }
-        else if (r === 'busy') { RA.audio.play('denied'); this.toast('Pist dolu: uçak bekliyor.', true); }
+        if (r === 'ok') { RA.audio.play('select'); this.toast(RA.t('{kod} için izin verildi.', { kod: best.code })); }
+        else if (r === 'busy') { RA.audio.play('denied'); this.toast(RA.t('Pist dolu: uçak bekliyor.'), true); }
         return;
       }
       const c = this.cellAt(x, y);
@@ -387,15 +388,15 @@
       const cell = this.grid.cell(c.i, c.j);
       const J = sim.jc.get(c.i + ',' + c.j + ',0');
       if (J) {
-        if (sim.ai) { this.toast('Bu kavşağın ışıklarını yapay zekâ yönetiyor. Elle yönetmek için YZ\'yi kapat.'); return; }
+        if (sim.ai) { this.toast(RA.t('Bu kavşağın ışıklarını yapay zekâ yönetiyor. Elle yönetmek için YZ\'yi kapat.')); return; }
         sim.tapJunction(J); RA.audio.play('light'); return;
       }
       const k = cell.pieces.findIndex((p) => p.type === 'rail' && WS.portCount(p.m) >= 3);
       if (k >= 0) {
-        if (sim.ai) { this.toast('Makasları yapay zekâ boş hatta göre ayarlıyor. Elle için YZ\'yi kapat.'); return; }
-        sim.tapSwitch(c.i, c.j, k); RA.audio.play('switch'); this.toast('Makas çevrildi.'); return;
+        if (sim.ai) { this.toast(RA.t('Makasları yapay zekâ boş hatta göre ayarlıyor. Elle için YZ\'yi kapat.')); return; }
+        sim.tapSwitch(c.i, c.j, k); RA.audio.play('switch'); this.toast(RA.t('Makas çevrildi.')); return;
       }
-      if (this.tool === 'look' && !cell.pieces.length) this.toast('Çizmek için aşağıdan Yol, Ray, Taksi yolu ya da Pist seç.');
+      if (this.tool === 'look' && !cell.pieces.length) this.toast(RA.t('Çizmek için aşağıdan Yol, Ray, Taksi yolu ya da Pist seç.'));
     }
 
     /* ---------- döngü ---------- */
@@ -409,11 +410,12 @@
         const s = this.sim.stats, net = this.net, parts = [];
         if (net.list.some((x) => x.fam === 'road')) {
           const sources = this.sim.lots.size + net.entries.filter((e) => e.fam === 'road').length;
-          parts.push(sources ? s.cars + ' yolculuk · ' + this.sim.cars.length + ' araç' + (s.waitN ? ' · bekleme ' + (s.waitSum / s.waitN).toFixed(1).replace('.', ',') + ' sn' : '') : 'Araçlar için otopark ya da şehir dışı çıkışı ekle');
+          const wait = s.waitN ? (s.waitSum / s.waitN).toFixed(1) : '';
+          parts.push(sources ? RA.t('{a} yolculuk · {b} araç', { a: s.cars, b: this.sim.cars.length }) + (s.waitN ? RA.t(' · bekleme {sn} sn', { sn: RA.dil === 'en' ? wait : wait.replace('.', ',') }) : '') : RA.t('Araçlar için otopark ya da şehir dışı çıkışı ekle'));
         }
-        if (net.list.some((x) => x.fam === 'rail')) parts.push(this.sim.trains.length + ' tren · ' + s.trains + ' sefer');
-        if (net.runways.length) parts.push(s.land + ' iniş · ' + s.takeoff + ' kalkış');
-        $('ws-stats').textContent = parts.length ? parts.join(' · ') : 'Boş tahta: çizmeye başla';
+        if (net.list.some((x) => x.fam === 'rail')) parts.push(RA.t('{a} tren · {b} sefer', { a: this.sim.trains.length, b: s.trains }));
+        if (net.runways.length) parts.push(RA.t('{a} iniş · {b} kalkış', { a: s.land, b: s.takeoff }));
+        $('ws-stats').textContent = parts.length ? parts.join(' · ') : RA.t('Boş tahta: çizmeye başla');
         this.cityUI();
       }
     }
@@ -421,20 +423,20 @@
     cityUI() {
       const c = this.city, mood = Math.round(c.mood);
       const el = $('ws-mood');
-      el.querySelector('b').textContent = '%' + mood;
+      el.querySelector('b').textContent = RA.t('%{n}', { n: mood });
       el.querySelector('.meter i').style.width = mood + '%';
       el.dataset.lv = mood >= 70 ? 'ok' : mood >= 45 ? 'mid' : 'bad';
       const li = c.levelInfo(), pop = c.population();
       const pb = $('ws-popn');
-      pb.querySelector('.lv b').textContent = li.cur.name;
-      pb.querySelector('.lv > span:not(.meter)').textContent = pop.toLocaleString('tr-TR');
+      pb.querySelector('.lv b').textContent = RA.t(li.cur.name);
+      pb.querySelector('.lv > span:not(.meter)').textContent = num(pop);
       pb.querySelector('.meter i').style.width = (li.next ? RA.clamp((pop - li.cur.min) / (li.next.min - li.cur.min), 0, 1) * 100 : 100) + '%';
-      pb.title = li.next ? li.next.name + ' için ' + li.next.min.toLocaleString('tr-TR') + ' kişi' : 'En büyük aşama';
+      pb.title = li.next ? RA.t('{ad} için {n} kişi', { ad: RA.t(li.next.name), n: num(li.next.min) }) : RA.t('En büyük aşama');
       const n = c.waiting().length, jam = c.jams.length;
       const b = $('ws-dem');
       b.dataset.st = n ? 'dem' : jam ? 'jam' : 'none';
       b.querySelector('b').textContent = n ? String(n) : jam ? String(jam) : '0';
-      b.querySelector('span').textContent = n ? (n > 1 ? 'talep' : 'talep') : jam ? 'sıkışık' : 'talep';
+      b.querySelector('span').textContent = n ? RA.t('{n:talep:talep}', { n }) : jam ? RA.t('{n:sıkışık:sıkışık}', { n: jam }) : RA.t('talep');
     }
     resize(w, h) {
       this.camera.aspect = w / h; this.camera.updateProjectionMatrix();

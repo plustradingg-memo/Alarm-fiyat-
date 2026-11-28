@@ -10,10 +10,11 @@ ctx.window = ctx; ctx.self = ctx; ctx.globalThis = ctx;
 const fake2d = () => new Proxy({}, { get(t, k) { if (k in t) return t[k]; if (k === 'measureText') return () => ({ width: 10 }); if (k === 'getImageData') return (x, y, w, h) => ({ data: new Uint8ClampedArray((w || 1) * (h || 1) * 4) }); if (/^create/.test(k)) return () => ({ addColorStop() {} }); return () => {}; }, set(t, k, v) { t[k] = v; return true; } });
 const el = () => ({ style: {}, width: 64, height: 64, classList: { toggle() {}, add() {}, remove() {} }, addEventListener() {}, querySelector: () => el(), querySelectorAll: () => [], getContext: () => fake2d(), setAttribute() {}, appendChild() {}, dataset: {} });
 ctx.document = { createElement: el, getElementById: el, querySelector: el, querySelectorAll: () => [], addEventListener() {}, body: el(), documentElement: el() };
-ctx.localStorage = { getItem: () => null, setItem() {} };
+ctx.localStorage = { getItem: (k) => (k === 'rayarasi.dil' ? '"tr"' : null), setItem() {} };
+ctx.location = { search: '' };
 ctx.matchMedia = () => ({ matches: false, addEventListener() {} });
 vm.createContext(ctx);
-for (const f of ['vendor/three.min.js', 'core.js', 'models.js', 'lv-data.js', 'lv-net.js', 'lv-sim.js', 'lv-game.js']) vm.runInContext(fs.readFileSync(R + f, 'utf8'), ctx, { filename: f });
+for (const f of ['vendor/three.min.js', 'core.js', 'dil.js', 'en-arayuz.js', 'en-bolum.js', 'en-atolye.js', 'en-bolumler.js', 'models.js', 'lv-data.js', 'lv-net.js', 'lv-sim.js', 'lv-game.js']) vm.runInContext(fs.readFileSync(R + f, 'utf8'), ctx, { filename: f });
 const LV = ctx.RA.LV;
 
 // köprüsüz (hepsi kavşak / makas) denemede kaybedilmesi gereken bölümler: köprü burada gerçekten gerekir

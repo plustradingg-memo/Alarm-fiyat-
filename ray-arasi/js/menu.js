@@ -169,6 +169,7 @@
       this.set = RA.store.get('lv.set', 'road') || 'road';
       this.tabs = Array.from(document.querySelectorAll('#menu .lv-tabs [data-set]'));
       this.tabs.forEach((b) => b.addEventListener('click', () => { this.set = b.dataset.set; RA.store.set('lv.set', this.set); RA.audio.play('tap'); this.refresh(); }));
+      window.addEventListener('ra-dil', () => this.refresh()); // dil değişince bölüm haritası yeniden yazılır
       this.grid.addEventListener('click', (e) => {
         const b = e.target.closest('[data-lv]'); if (!b) return;
         if (b.classList.contains('locked')) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); RA.audio.play('denied'); return; }
@@ -187,7 +188,7 @@
       const set = LV.SETS.find((q) => q.mode === this.set) || LV.SETS[0];
       const INFO = { road: ['Karayolu bölümleri', 'Evleri iş yerlerine bağla, trafiği tıkatma'], rail: ['Demiryolu bölümleri', 'İstasyonları garlara bağla, trenleri bekletme'], air: ['Havalimanı bölümleri', 'Uçakları kapıya yanaştır, kalkışa yetiştir'] }[set.mode];
       const lv = set.levels, total = LV.progress.total(set.mode), max = lv.length * 3;
-      document.getElementById('menu-set-t').textContent = INFO[0]; document.getElementById('menu-set-d').textContent = INFO[1];
+      document.getElementById('menu-set-t').textContent = RA.t(INFO[0]); document.getElementById('menu-set-d').textContent = RA.t(INFO[1]);
       const ts = document.getElementById('menu-stars'); if (ts) ts.innerHTML = STAR + '<b>' + total + '</b><small>/ ' + max + '</small>';
       this.views.forEach((el) => { if (el.closest('.menu-banner')) el.dataset.scene = set.mode; });
       this.tabs.forEach((b) => b.setAttribute('aria-selected', b.dataset.set === set.mode));
@@ -209,15 +210,16 @@
         }
         const last = pos[pos.length - 1]; d += ' L' + last.x + ' ' + (last.y + 46);
         const locked0 = items.length && !LV.progress.unlocked(items[0].id);
-        html += '<section class="lv-ch' + (locked0 ? ' off' : '') + '" style="--ch:' + ch.color + '"><header class="lv-ch-head"><span class="ci">' + (ICONS[set.mode === 'road' ? ci : set.mode + ci] || ICONS[set.mode] || '') + '</span><span class="cn"><b>' + ch.name + '</b><em>Bölüm ' + ch.from + '–' + ch.to + '</em></span><span class="cs">' + STAR + got + '<small>/' + items.length * 3 + '</small></span></header>' +
+        html += '<section class="lv-ch' + (locked0 ? ' off' : '') + '" style="--ch:' + ch.color + '"><header class="lv-ch-head"><span class="ci">' + (ICONS[set.mode === 'road' ? ci : set.mode + ci] || ICONS[set.mode] || '') + '</span><span class="cn"><b>' + RA.t(ch.name) + '</b><em>' + RA.t('Bölüm {a}–{b}', { a: ch.from, b: ch.to }) + '</em></span><span class="cs">' + STAR + got + '<small>/' + items.length * 3 + '</small></span></header>' +
           '<div class="lv-chmap" style="height:' + H + 'px"><svg class="lv-road" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><path class="r0" d="' + d + '"/><path class="r1" d="' + d + '"/><path class="r2" d="' + d + '"/></svg>' +
           items.map((L, i) => {
             const st = LV.progress.stars(L.id), open = LV.progress.unlocked(L.id), need = LV.progress.need(L.id), p = pos[i];
             const cls = 'lv-btn lv-node' + (open ? '' : ' locked') + (st ? ' done' : '') + (next && next.id === L.id ? ' next' : '') + (need ? ' gate' : '');
-            const lab = set.name + ' ' + L.n + ': ' + L.name + (open ? ', ' + st + ' yıldız' : ', kilitli') + (need ? ', ' + need + ' yıldız gerekli' : '');
+            const ad = RA.lvYazi(L, 'name'), setAd = RA.t(set.name);
+            const lab = (open ? RA.t('{set} {n}: {ad}, {s} yıldız', { set: setAd, n: L.n, ad, s: st }) : RA.t('{set} {n}: {ad}, kilitli', { set: setAd, n: L.n, ad })) + (need ? RA.t(', {n} yıldız gerekli', { n: need }) : '');
             return '<button type="button" role="listitem" class="' + cls + '" data-lv="' + L.id + '" style="left:' + p.x + 'px;top:' + p.y + 'px" aria-label="' + lab + '">' +
               '<span class="s">' + [1, 2, 3].map((k) => '<i class="' + (k <= st ? 'on' : '') + '">★</i>').join('') + '</span>' +
-              '<span class="n">' + (open ? L.n : LOCK) + '</span><span class="t">' + L.name + '</span>' +
+              '<span class="n">' + (open ? L.n : LOCK) + '</span><span class="t">' + ad + '</span>' +
               (need ? '<span class="g' + (LV.progress.before(L.id) >= need ? ' ok' : '') + '">' + STAR + need + '</span>' : '') + '</button>';
           }).join('') + '</div></section>';
       });

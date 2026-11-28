@@ -37,6 +37,7 @@
   RA.todayLabel = function () {
     const ay = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
     const d = new Date();
+    if (RA.dil === 'en' && RA.AYLAR_EN) return RA.AYLAR_EN[d.getMonth()] + ' ' + d.getDate();
     return d.getDate() + ' ' + ay[d.getMonth()];
   };
   RA.dailySeed = (mode) => RA.hashStr('rayarasi|' + (RA.seedOverride || RA.todayKey()) + '|' + mode);

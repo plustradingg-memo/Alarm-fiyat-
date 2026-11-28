@@ -199,9 +199,11 @@
   /* ================= ağı kur ================= */
   // level: bölüm verisi, strokes: [{id, pts}], choices: {posKey: 'junction'|'bridge'|'tunnel'|'level'}
   // Dönüş: { ok, msg, at, ...ağ } — ok=false ise çizim kurala uymuyor (msg nedenini söyler)
+  // kural dışı çizim: msg Türkçe kalır (lv-game onarımı iletinin metnine bakar); ekranda key + v ile çevrilir
+  LV.fail = (key, v, at) => ({ ok: false, msg: v ? key.replace(/\{(\w+)\}/g, (m, k) => (v[k] != null ? v[k] : m)) : key, key, v: v || null, at: at || null });
   LV.buildNet = function (level, strokes, choices, opts) {
     opts = opts || {};
-    const fail = (msg, x, z) => ({ ok: false, msg, at: x != null ? { x, z } : null });
+    const fail = (msg, x, z, v) => LV.fail(msg, v, x != null ? { x, z } : null);
     const S = strokes.map((s) => stroke(s.id, s.pts));
     const byId = new Map(S.map((s) => [s.id, s]));
     const blds = level.blds || []; // LV.prep ile hazırlanmış binalar (simülasyon aynı nesneleri kullanır)
@@ -453,8 +455,8 @@
     const usage = { len, bridges, tunnels };
     if (!opts.free) {
       if (len > (level.budget || 1e9) + 0.01) return fail('Asfalt yetmiyor: daha kısa yol çiz ya da bir yolu sil.');
-      if (bridges > (level.bridges || 0)) return fail(level.bridges ? 'Köprü hakkın bitti (' + level.bridges + ').' : 'Bu bölümde köprü hakkın yok.');
-      if (tunnels > (level.tunnels || 0)) return fail(level.tunnels ? 'Alt geçit hakkın bitti (' + level.tunnels + ').' : 'Bu bölümde alt geçit hakkın yok.');
+      if (bridges > (level.bridges || 0)) return level.bridges ? fail('Köprü hakkın bitti ({n}).', null, null, { n: level.bridges }) : fail('Bu bölümde köprü hakkın yok.');
+      if (tunnels > (level.tunnels || 0)) return level.tunnels ? fail('Alt geçit hakkın bitti ({n}).', null, null, { n: level.tunnels }) : fail('Bu bölümde alt geçit hakkın yok.');
     }
 
     // --- şeritler (sağdan gidilir) ---

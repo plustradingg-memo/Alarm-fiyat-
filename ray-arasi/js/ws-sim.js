@@ -614,7 +614,7 @@
           if (o.mv.wait > 0.8 && o.mv.blockOwner === tr && mv.wait >= o.mv.wait) { this.reverseTrain(tr); }
           else if (mv.wait > 6) this.reverseTrain(tr);
         }
-        if (mv.wait > 16) { this.toast('Sıkışan bir tren depoya çekildi.'); this.killTrain(tr); continue; }
+        if (mv.wait > 16) { this.toast(RA.t('Sıkışan bir tren depoya çekildi.')); this.killTrain(tr); continue; }
         // tahtanın dışına çıkış
         if (mv.planEnd === 'exit' && mv.segs.every((m) => m.virtual) && mv.s > tr.len + 0.2) { this.stats.trains++; this.killTrain(tr, true); continue; }
         this.placeTrain(tr);
@@ -870,7 +870,7 @@
         else if (p.cleared) this.clearLanding(p);
       }
     }
-    toastOnce(msg) { if (this.lastToast !== msg || this.t - (this.lastToastT || 0) > 12) { this.lastToast = msg; this.lastToastT = this.t; if (!/Kule/.test(msg)) this.toast(msg); } }
+    toastOnce(msg) { if (this.lastToast !== msg || this.t - (this.lastToastT || 0) > 12) { this.lastToast = msg; this.lastToastT = this.t; if (!/Kule/.test(msg)) this.toast(RA.t(msg)); } }
     reroute(p) {
       p.needRoute = false;
       const h = p.mv.head();

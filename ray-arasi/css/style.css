@@ -396,3 +396,11 @@ svg.star { width: 20px; height: 20px; fill: #ffc531; stroke: #d99a00; stroke-wid
 .lv-btn.lv-node.next { animation: none; }
 .lv-btn.lv-node.next::after { content: ''; position: absolute; inset: -14px; border-radius: 50%; border: 4px solid var(--ch); opacity: 0.6; animation: nodering 1.3s ease-out infinite; pointer-events: none; }
 @keyframes nodering { from { transform: scale(0.85); opacity: 0.8; } to { transform: scale(1.25); opacity: 0; } }
+
+/* dil düğmesi (TR / EN): ana ekranda sol üstte, ses düğmesinin karşısında */
+.menu-head .btn-dil { position: absolute; left: 0; top: 0; width: 40px; height: 40px; background: #fff; border-color: #fff; box-shadow: 0 4px 0 rgba(30,80,120,0.2);
+  color: var(--ink); font: 900 13px/1 var(--font-sign, inherit); letter-spacing: 0.04em; }
+.menu-head .btn-dil:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(30,80,120,0.2); }
+/* oyun adı levhası iki yan düğmenin arasına sığar; yazı tek satır, sığmazsa küçülür (js/dil.js) */
+.menu-head .title-plate { max-width: calc(100% - 108px); box-sizing: border-box; }
+.title-plate h1 { white-space: nowrap; }

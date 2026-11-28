@@ -123,9 +123,15 @@
 
   /* ---------- Çizim ----------
    * type: road | rail | taxi | runway ; style: grade (kavşak) | bridge (köprü) | tunnel (alt geçit)
-   * Dönüş: { ok, msg, info } — başarısızsa ızgara değişmez.
+   * Dönüş: { ok, msg, info } — başarısızsa ızgara değişmez. msg ve info o anki dilde gelir.
    */
   WS.applyStroke = function (grid, seq, type, style) {
+    const r = applyStroke(grid, seq, type, style);
+    if (r.msg) r.msg = RA.t(r.msg);
+    if (r.info) r.info = RA.t(r.info);
+    return r;
+  };
+  function applyStroke(grid, seq, type, style) {
     if (type === 'runway') style = 'grade'; // pist her zaman zeminde
     const g = grid.clone();
     const fam = FAMILY[type];
@@ -162,7 +168,7 @@
       if (sep) {
         // köprü / alt geçit: mevcut tek parçanın üstünden ya da altından dik geçiş
         if (E.length !== 1 || E[0].lv !== 0 || !isStraight(E[0].m) || axisOf(E[0].m) === axisOf(st.m)) {
-          return { ok: false, msg: (style === 'bridge' ? 'Köprü' : 'Alt geçit') + ' yalnızca düz bir yolun ya da rayın dik üstünden geçer.' };
+          return { ok: false, msg: style === 'bridge' ? 'Köprü yalnızca düz bir yolun ya da rayın dik üstünden geçer.' : 'Alt geçit yalnızca düz bir yolun ya da rayın dik üstünden geçer.' };
         }
         if (E[0].type === 'runway' && style === 'bridge') return { ok: false, msg: 'Pistin üstüne köprü kurulamaz; alt geçit kullan.' };
         const lv = style === 'bridge' ? 1 : -1;
@@ -185,7 +191,7 @@
       if (other && other.type === 'runway' && (type === 'road' || type === 'rail')) {
         if (!straight || st.end || E.length !== 1 || axisOf(st.m) === other.ax) return { ok: false, msg: 'Yol ve ray pisti yalnızca dik açıyla, alt geçitle geçebilir.' };
         c.pieces.push({ type, m: st.m, lv: -1 }); elevated.push(st);
-        info = (type === 'road' ? 'Yol' : 'Ray') + ' pistin altından alt geçitle geçti.';
+        info = type === 'road' ? 'Yol pistin altından alt geçitle geçti.' : 'Ray pistin altından alt geçitle geçti.';
         continue;
       }
       if (type === 'runway') return { ok: false, msg: 'Pist yol ya da ray üstüne çizilemez. Önce o kareyi sil.' };
@@ -208,7 +214,7 @@
     normalize(g);
     grid.cells = g.cells;
     return { ok: true, info };
-  };
+  }
 
   WS.eraseStroke = function (grid, seq) {
     let n = 0;

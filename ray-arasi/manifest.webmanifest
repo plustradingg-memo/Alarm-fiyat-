@@ -1,6 +1,6 @@
 {
-  "name": "Ray Arası",
-  "short_name": "Ray Arası",
+  "name": "Trafik Ustası",
+  "short_name": "Trafik Ustası",
   "description": "Maket tahtana yol, ray ve havalimanı kur; trafiği yapay zekâ yönetsin.",
   "lang": "tr",
   "start_url": "./index.html",

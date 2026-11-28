@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Ray Arası</title>
+<title>Trafik Ustası</title>
 <meta name="description" content="4 düz yolla başlayan maket şehrini büyüt: talepleri karşıla, yol, ray ve havalimanı kur, sıkışan trafiği köprü ve alt geçitle çöz.">
 <meta name="theme-color" content="#1a242b">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -24,8 +24,9 @@
     <!-- ANA EKRAN -->
     <section id="menu" class="screen" aria-label="Ana ekran">
       <header class="menu-head">
-        <div class="title-plate"><h1>RAY ARASI</h1></div>
+        <div class="title-plate"><h1 id="oyun-adi">TRAFİK USTASI</h1></div>
         <p class="tagline">Yolu parmağınla çiz, köprüyü ve alt geçidi istediğin yere koy.</p>
+        <button id="btn-dil" class="btn-dil round-btn" type="button" aria-label="Dil: Türkçe. İngilizceye geç">TR</button>
         <button class="btn-sound round-btn" type="button" aria-label="Sesi kapat" aria-pressed="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l6 6M22 9l-6 6"/></svg>
         </button>
@@ -146,12 +147,17 @@
       <div id="lv-card" class="lv-card" hidden></div>
     </section>
 
-    <div id="rotate" class="screen overlay" aria-live="polite"><div class="res-card"><p class="res-kicker">Dikey ekran</p><p class="res-sentence">Ray Arası telefon dik tutularak kullanılır. Telefonunu çevir.</p></div></div>
+    <div id="rotate" class="screen overlay" aria-live="polite"><div class="res-card"><p class="res-kicker">Dikey ekran</p><p class="res-sentence">Oyun telefon dik tutularak oynanır. Telefonunu çevir.</p></div></div>
     <div id="fatal" class="screen overlay" hidden><div class="res-card"><p class="res-kicker">WebGL gerekli</p><p class="res-sentence"></p></div></div>
   </div>
 </div>
 <script src="js/vendor/three.min.js"></script>
 <script src="js/core.js"></script>
+<script src="js/dil.js"></script>
+<script src="js/en-arayuz.js"></script>
+<script src="js/en-bolum.js"></script>
+<script src="js/en-atolye.js"></script>
+<script src="js/en-bolumler.js"></script>
 <script src="js/models.js"></script>
 <script src="js/ws-grid.js"></script>
 <script src="js/ws-net.js"></script>

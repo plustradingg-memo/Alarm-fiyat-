@@ -38,7 +38,9 @@
   const BASE_RES = 300, BASE_JOBS = 200;
   const MAX_PLACES = 24, MAX_WAITING = 2;
   const GROW_MOOD = 45, SPAWN_MOOD = 50; // memnuniyet bunların altındaysa nüfus artmaz / yeni talep gelmez
-  const upTR = (s) => s.toLocaleUpperCase('tr-TR');
+  // tabela yazısı: o anki dilde ve o dilin büyük harf kuralıyla (tr: i → İ)
+  const upName = (s) => RA.t(s).toLocaleUpperCase(RA.dil === 'en' ? 'en-US' : 'tr-TR');
+  const num = (n) => n.toLocaleString(RA.dil === 'en' ? 'en-US' : 'tr-TR');
 
   /* ---------- yer modelleri (yerel +z yola bakar, taban yaklaşık x∈[-0.95,0.95], z∈[-0.55,0.45]) ---------- */
   function placeModel(type, seed) {
@@ -90,21 +92,22 @@
   // Ad levhası dokusu (bina tabelası)
   const texCache = {};
   function signTex(type) {
-    if (texCache[type]) return texCache[type];
+    const key = type + '|' + RA.dil;
+    if (texCache[key]) return texCache[key];
     const t = TYPES[type];
     const c = document.createElement('canvas'); c.width = 256; c.height = 96; const g = c.getContext('2d');
     g.fillStyle = '#ffffff'; roundRect(g, 0, 0, 256, 96, 18); g.fill();
     g.fillStyle = t.col; roundRect(g, 7, 7, 242, 82, 13); g.fill();
     g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    const txt = upTR(t.name); let fs = 50; g.font = '900 ' + fs + 'px Overpass, Arial, sans-serif';
+    const txt = upName(t.name); let fs = 50; g.font = '900 ' + fs + 'px Overpass, Arial, sans-serif';
     while (g.measureText(txt).width > 220 && fs > 24) { fs -= 2; g.font = '900 ' + fs + 'px Overpass, Arial, sans-serif'; }
     g.fillText(txt, 128, 54);
-    const tx = new T.CanvasTexture(c); tx.encoding = T.sRGBEncoding; texCache[type] = tx; return tx;
+    const tx = new T.CanvasTexture(c); tx.encoding = T.sRGBEncoding; texCache[key] = tx; return tx;
   }
   WS.placeSignTex = signTex;
   // Bekleyen talep işareti: ünlemli ad levhası ve aşağı bakan uç
   function pinTex(type, urgent) {
-    const key = 'pin' + type + (urgent ? 1 : 0);
+    const key = 'pin' + type + (urgent ? 1 : 0) + '|' + RA.dil;
     if (texCache[key]) return texCache[key];
     const t = TYPES[type];
     const c = document.createElement('canvas'); c.width = 320; c.height = 150; const g = c.getContext('2d');
@@ -117,7 +120,7 @@
     g.fillStyle = '#ffffff'; g.beginPath(); g.arc(54, 50, 28, 0, Math.PI * 2); g.fill();
     g.fillStyle = col; g.font = '900 44px Overpass, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('!', 54, 54);
     g.fillStyle = '#ffffff'; g.textAlign = 'left';
-    const txt = upTR(t.name); let fs = 46; g.font = '900 ' + fs + 'px Overpass, Arial, sans-serif';
+    const txt = upName(t.name); let fs = 46; g.font = '900 ' + fs + 'px Overpass, Arial, sans-serif';
     while (g.measureText(txt).width > 205 && fs > 22) { fs -= 2; g.font = '900 ' + fs + 'px Overpass, Arial, sans-serif'; }
     g.fillText(txt, 94, 56);
     const tx = new T.CanvasTexture(c); tx.encoding = T.sRGBEncoding; texCache[key] = tx; return tx;
@@ -286,7 +289,7 @@
         if (waiting >= MAX_WAITING || this.places.length >= MAX_PLACES) this.nextT = 6;
         else if (this.mood < SPAWN_MOOD) {
           this.nextT = 6;
-          if (!this.gateHintT) { this.gateHintT = 60; this.ws.toast('Şehir büyümek istiyor ama trafik sıkışık (memnuniyet %' + Math.round(this.mood) + '). Kırmızı halkalı yerleri rahatlatınca nüfus artar ve yeni talepler gelir.'); }
+          if (!this.gateHintT) { this.gateHintT = 60; this.ws.toast(RA.t('Şehir büyümek istiyor ama trafik sıkışık (memnuniyet %{n}). Kırmızı halkalı yerleri rahatlatınca nüfus artar ve yeni talepler gelir.', { n: Math.round(this.mood) })); }
         } else if (this.trySpawn()) this.nextT = 22 + this.rnd() * 12 + waiting * 8;
         else this.nextT = 8;
       }
@@ -308,15 +311,16 @@
     }
     moodText() {
       const p = this.parts || this.moodParts(), m = Math.round(this.mood), bits = [];
-      if (p.traffic >= 2) bits.push('araçlar yolda ortalama ' + Math.round(this.ema) + ' sn duruyor (−' + Math.round(p.traffic) + ')');
-      if (p.jam > 0) bits.push(this.jams.length + ' sıkışık kavşak (−' + Math.round(p.jam) + ')');
-      if (p.stuck >= 2) bits.push('kımıldayamayan araçlar (−' + Math.round(p.stuck) + ')');
-      if (p.demand >= 2) bits.push('uzun bekleyen talep (−' + Math.round(p.demand) + ')');
-      return 'Memnuniyet %' + m + (bits.length ? ': ' + bits.join(', ') + '.' : ': trafik akıyor, herkes memnun.') + (m < SPAWN_MOOD ? ' %' + SPAWN_MOOD + ' altında şehir büyümez.' : '');
+      if (p.traffic >= 2) bits.push(RA.t('araçlar yolda ortalama {sn} sn duruyor (−{p})', { sn: Math.round(this.ema), p: Math.round(p.traffic) }));
+      if (p.jam > 0) bits.push(RA.t('{n} sıkışık kavşak (−{p})', { n: this.jams.length, p: Math.round(p.jam) }));
+      if (p.stuck >= 2) bits.push(RA.t('kımıldayamayan araçlar (−{p})', { p: Math.round(p.stuck) }));
+      if (p.demand >= 2) bits.push(RA.t('uzun bekleyen talep (−{p})', { p: Math.round(p.demand) }));
+      return RA.t('Memnuniyet %{n}', { n: m }) + (bits.length ? ': ' + bits.join(', ') + '.' : RA.t(': trafik akıyor, herkes memnun.')) + (m < SPAWN_MOOD ? RA.t(' %{n} altında şehir büyümez.', { n: SPAWN_MOOD }) : '');
     }
     levelText() {
-      const { cur, next } = this.levelInfo(), n = this.population().toLocaleString('tr-TR');
-      return cur.name + ': ' + n + ' kişi. ' + (next ? next.name + ' olmak için ' + next.min.toLocaleString('tr-TR') + ' kişi gerekir. Mahalleleri bağla, iş ve okul taleplerini karşıla; trafik sıkışırsa nüfus artmaz.' : 'En büyük aşamadasın!');
+      const { cur, next } = this.levelInfo(), n = num(this.population());
+      if (!next) return RA.t('{ad}: {n} kişi. En büyük aşamadasın!', { ad: RA.t(cur.name), n });
+      return RA.t('{ad}: {n} kişi. {sonraki} olmak için {m} kişi gerekir. Mahalleleri bağla, iş ve okul taleplerini karşıla; trafik sıkışırsa nüfus artmaz.', { ad: RA.t(cur.name), n, sonraki: RA.t(next.name), m: num(next.min) });
     }
     onTrip(c) { this.ema += ((c.stopT || 0) - this.ema) * 0.08; }
     onGiveUp(c) { this.ema += (40 - this.ema) * 0.06; this.giveUps = (this.giveUps || 0) + 1; }
@@ -342,7 +346,7 @@
       this.jams = [...q.values()].filter((e) => e.n >= 5 || e.w > 15).sort((a, b) => b.n - a.n);
       if (this.jams.length && !this.jamHintT && this.ws.tool === 'look') {
         this.jamHintT = 75;
-        this.ws.toast('Trafik sıkıştı! Kavşağı köprü ya da alt geçitle ayır, ya da trafiği dağıtacak yeni bir yol aç.');
+        this.ws.toast(RA.t('Trafik sıkıştı! Kavşağı köprü ya da alt geçitle ayır, ya da trafiği dağıtacak yeni bir yol aç.'));
       }
     }
 

@@ -19,6 +19,8 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
   const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
+  // testler Türkçe metinleri denetler: dil Türkçeye sabitlenir (tarayıcının dili İngilizce olsa da)
+  await page.addInitScript(() => { try { if (!localStorage.getItem('rayarasi.dil')) localStorage.setItem('rayarasi.dil', '"tr"'); } catch (e) {} });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !/WebGL|GPU|swiftshader/i.test(m.text())) errors.push(m.text()); });

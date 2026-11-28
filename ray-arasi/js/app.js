@@ -37,7 +37,7 @@
       document.addEventListener('pointerdown', () => RA.audio.unlock(), { capture: true });
       const snd = () => {
         const on = !RA.audio.enabled; RA.audio.setEnabled(on); RA.audio.unlock();
-        document.querySelectorAll('.btn-sound').forEach((b) => { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', on ? 'Sesi kapat' : 'Sesi aç'); });
+        document.querySelectorAll('.btn-sound').forEach((b) => { b.classList.toggle('off', !on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.setAttribute('aria-label', RA.t(on ? 'Sesi kapat' : 'Sesi aç')); });
         if (on) RA.audio.play('tap');
       };
       document.querySelectorAll('.btn-sound').forEach((b) => {
@@ -70,6 +70,7 @@
       this.showScreen('menu');
       this.stage.dataset.mode = '';
       if (this.menu) this.menu.refresh();
+      if (RA.baslikSigdir) RA.baslikSigdir();
     }
     openLevel(id) {
       RA.audio.unlock();
@@ -126,7 +127,7 @@
       RA.app = new App();
     } catch (e) {
       const f = document.getElementById('fatal');
-      if (f) { f.hidden = false; f.querySelector('.res-sentence').textContent = 'Bu tarayıcı WebGL çalıştıramadı. Güncel bir Chrome, Safari, Firefox veya Edge ile tekrar dene.'; }
+      if (f) { f.hidden = false; f.querySelector('.res-sentence').textContent = RA.t('Bu tarayıcı WebGL çalıştıramadı. Güncel bir Chrome, Safari, Firefox veya Edge ile tekrar dene.'); }
       console.error(e);
     }
   }

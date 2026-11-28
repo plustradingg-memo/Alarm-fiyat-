@@ -1,6 +1,9 @@
-# RAY ARASI
+# Trafik Ustası / Traffic Maestro
 
-Masanın üzerindeki maket tahtasında oynanan, Türkçe, dikey ekranlı bir trafik bulmacası. Renkli evlerdeki insanları
+Mağaza adları: Türkçe **Trafik Ustası: Yol Çiz**, İngilizce **Traffic Maestro: Draw Roads** (ilk çalışma adı
+"Ray Arası" idi; klasör ve kayıt anahtarları bu adı taşımaya devam eder).
+
+Masanın üzerindeki maket tahtasında oynanan, Türkçe ve İngilizce, dikey ekranlı bir trafik bulmacası. Renkli evlerdeki insanları
 aynı renkteki iş yerlerine ulaştırmak için yolları **parmağınla serbestçe çizersin**. Ne kadar dağınık çizersen çiz
 oyun yolu kendisi toparlar; yollar birbirine kavuşurken küçük bir "öpüşme" animasyonu oynar. Yollar kesiştiği yerde
 kavşak, köprü ya da alt geçit olur; hangisi olacağına **sen dokunup karar verirsin**; **Köprü** düğmesine basınca
@@ -85,6 +88,17 @@ Hepsi aynı serbest çizim, kesişim seçimi ve köprü / alt geçit düğmeleri
 - Bunların hiçbiri yetmezse yol en sade hâline (iki ucu düz bağlayan yol) getirilir.
 
 Yalnızca kaynak sınırları uyarı verir: **asfalt** yetmiyorsa ya da **köprü / alt geçit hakkın** bittiyse.
+
+### Dil: Türkçe ve İngilizce
+
+Oyun cihazın diliyle açılır: telefon Türkçeyse Türkçe, değilse İngilizce. Ana ekranın sol üstündeki **TR / EN**
+düğmesi dili hemen değiştirir ve seçimi hatırlar (adres çubuğunda `?dil=en` ya da `?dil=tr` de olur). Bölüm adları,
+tanıtımlar, ipuçları, uyarılar, kartlar, 3B sahnedeki tabelalar ve serbest atölye iki dilde de vardır.
+
+Metinler kodda Türkçe yazılır ve `RA.t(...)` ile gösterilir; İngilizce karşılıkları `js/en-*.js` dosyalarındadır
+(`en-arayuz.js` sayfa ve ana ekran, `en-bolum.js` bölüm ekranı, `en-atolye.js` serbest atölye, `en-bolumler.js`
+120 bölümün adı, tanıtımı ve ipucu). Dil altyapısı `js/dil.js` içindedir. `test/dil-kontrol.cjs` oyunu İngilizce
+açıp ekranda Türkçe kalan her metni raporlar.
 
 ### Diğer düğmeler
 
