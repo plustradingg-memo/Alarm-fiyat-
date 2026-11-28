@@ -4,6 +4,7 @@
 // Anahtar her çalışmada Expo'dan okunur (scripts/asc.js), diske yazılmaz.
 //
 //   NODE_USE_ENV_PROXY=1 node scripts/ios-yayinla.js --build 3 [--incelemedekini-degistir] [--gorselsiz] [--gonderme]
+//   NODE_USE_ENV_PROXY=1 node scripts/ios-yayinla.js --yalniz-sayfa [--gorselsiz]   (derlemesiz: sayfa, ayarlar, görseller)
 //
 // --build N                    App Store Connect'e yüklenmiş derleme numarası (işlenmesi bitene kadar beklenir)
 // --incelemedekini-degistir    İncelemede bekleyen eski sürüm varsa incelemeden çekilir, numarası bu sürüme çevrilir
@@ -39,6 +40,9 @@ async function patchTolerant(asc, url, type, id, attributes) {
     try {
       return await asc.patch(url, { data: { type, id, attributes: attrs } });
     } catch (e) {
+      // Apple yeni bir soru eklediyse (ör. socialMedia) "hayır" yanıtıyla eklenir
+      const need = /provide a value for the attribute '(\w+)'/.exec(e.message);
+      if (need && !(need[1] in attrs)) { attrs[need[1]] = false; log('  yeni yaş sorusu "hayır" yanıtıyla eklendi:', need[1]); continue; }
       const bad = Object.keys(attrs).find((k) => e.message.includes(`'${k}'`) || e.message.includes(`/${k}`) || e.message.includes(` ${k} `));
       if (!bad) throw e;
       log('  Apple bu alanı kabul etmedi, atlandı:', bad);
@@ -49,7 +53,8 @@ async function patchTolerant(asc, url, type, id, attributes) {
 
 (async () => {
   const BUILD = val('--build');
-  if (!BUILD) throw new Error('--build gerekli');
+  const ONLY_PAGE = arg('--yalniz-sayfa'); // derleme olmadan sayfayı hazırla (metinler, görseller, ayarlar)
+  if (!BUILD && !ONLY_PAGE) throw new Error('--build gerekli (ya da --yalniz-sayfa)');
   const asc = await require('./asc')();
   const app = (await asc.get(`/v1/apps?filter[bundleId]=${BUNDLE}`)).data[0];
   if (!app) throw new Error(`App Store Connect'te ${BUNDLE} için uygulama kaydı yok (kayıt yalnızca App Store Connect sitesinden açılabilir)`);
@@ -57,7 +62,7 @@ async function patchTolerant(asc, url, type, id, attributes) {
 
   // 1) derleme işlenene kadar bekle
   let build;
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 90 && BUILD; i++) {
     const r = await asc.get(`/v1/builds?filter[app]=${app.id}&filter[version]=${BUILD}&filter[preReleaseVersion.version]=${M.surum}&fields[builds]=version,processingState`);
     build = r.data[0];
     if (build && build.attributes.processingState === 'VALID') break;
@@ -65,8 +70,8 @@ async function patchTolerant(asc, url, type, id, attributes) {
     if (i === 0) log('derleme', BUILD, build ? build.attributes.processingState : 'henüz görünmüyor', '— bekleniyor');
     await sleep(60000);
   }
-  if (!build || build.attributes.processingState !== 'VALID') throw new Error('derleme 90 dakikada hazır olmadı');
-  log('derleme hazır', BUILD);
+  if (BUILD && (!build || build.attributes.processingState !== 'VALID')) throw new Error('derleme 90 dakikada hazır olmadı');
+  if (BUILD) log('derleme hazır', BUILD);
 
   // 2) düzenlenebilir sürüm (gerekirse incelemedekini geri çek)
   const versions = async () => (await asc.get(`/v1/apps/${app.id}/appStoreVersions?filter[platform]=IOS&limit=10&fields[appStoreVersions]=versionString,appStoreState,createdDate`)).data;
@@ -95,8 +100,10 @@ async function patchTolerant(asc, url, type, id, attributes) {
     await asc.patch(`/v1/appStoreVersions/${ver.id}`, { data: { type: 'appStoreVersions', id: ver.id, attributes: { versionString: M.surum } } });
     log('sürüm numarası', ver.attributes.versionString, '→', M.surum);
   }
-  await asc.patch(`/v1/appStoreVersions/${ver.id}/relationships/build`, { data: { type: 'builds', id: build.id } });
-  log('derleme sürüme bağlandı');
+  if (build) {
+    await asc.patch(`/v1/appStoreVersions/${ver.id}/relationships/build`, { data: { type: 'builds', id: build.id } });
+    log('derleme sürüme bağlandı');
+  }
   // Onaylanınca kendiliğinden yayına girsin; telif satırı
   const A = M.ios_ayarlar || {};
   await asc.patch(`/v1/appStoreVersions/${ver.id}`, { data: { type: 'appStoreVersions', id: ver.id, attributes: { releaseType: 'AFTER_APPROVAL', ...(A.telif ? { copyright: A.telif } : {}) } } });
@@ -217,7 +224,8 @@ async function patchTolerant(asc, url, type, id, attributes) {
 
     // 7) ekran görüntüleri (aynıysa dokunulmaz)
     if (arg('--gorselsiz')) continue;
-    const dir = path.join(ROOT, M.gorseller.ios[locale]);
+    const dir = path.join(ROOT, M.gorseller.ios[locale] || '-');
+    if (!M.gorseller.ios[locale] || !fs.existsSync(dir)) { log('ekran görüntüsü klasörü yok, atlandı:', locale); continue; }
     const files = fs.readdirSync(dir).filter((f) => SHOT_RE.test(f)).sort((a, b) => Number(a.match(SHOT_RE)[1]) - Number(b.match(SHOT_RE)[1]));
     const md5s = files.map((f) => crypto.createHash('md5').update(fs.readFileSync(path.join(dir, f))).digest('hex'));
     const sets = (await asc.get(`/v1/appStoreVersionLocalizations/${loc.id}/appScreenshotSets`)).data;
@@ -262,7 +270,7 @@ async function patchTolerant(asc, url, type, id, attributes) {
   }
 
   // 8) incelemeye gönder
-  if (arg('--gonderme')) {
+  if (arg('--gonderme') || ONLY_PAGE) {
     log('hazır; incelemeye gönderilmedi (--gonderme)');
     return;
   }

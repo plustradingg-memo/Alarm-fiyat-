@@ -9,6 +9,8 @@
   const DEF_TOOL = { road: 'road', rail: 'rail', air: 'taxi' };
   const TOOL_COL = { road: 0x5b6270, rail: 0x9a6b43, taxi: 0xf2c230, runway: 0x2c2f36, erase: 0xe5372d, lot: 0x1f5fc8 };
   const num = (n) => n.toLocaleString(RA.dil === 'en' ? 'en-US' : 'tr-TR');
+  // cümle içindeki yer adı: İngilizcede küçük harfle ("the station"), Türkçede olduğu gibi
+  const icAd = (s) => (RA.dil === 'en' ? RA.t(s).toLowerCase() : RA.t(s));
 
   class Workshop {
     constructor(app) {
@@ -332,7 +334,7 @@
         const cell = this.grid.cell(c.i, c.j);
         if (!cell || cell.pieces.length) continue;
         const pl = this.city.placeAt(c.i, c.j);
-        if (pl && WS.City.TYPES[pl.type].need !== 'road') { this.toast(RA.t(WS.City.TYPES[pl.type].need === 'rail' ? '{ad} için ray gerekir.' : '{ad} için taksi yolu gerekir.', { ad: RA.t(WS.City.TYPES[pl.type].name) }), true); return; }
+        if (pl && WS.City.TYPES[pl.type].need !== 'road') { this.toast(RA.t(WS.City.TYPES[pl.type].need === 'rail' ? '{ad} için ray gerekir.' : '{ad} için taksi yolu gerekir.', { ad: icAd(WS.City.TYPES[pl.type].name) }), true); return; }
         tried++;
         for (const d of ['S', 'N', 'E', 'W']) {
           const nb = this.grid.cell(c.i + WS.DV[d].x, c.j + WS.DV[d].z);
@@ -357,8 +359,8 @@
       for (let k = 0; k < seq.length; k++) {
         const pl = this.city.placeAt(seq[k].i, seq[k].j); if (!pl) continue;
         const t = WS.City.TYPES[pl.type];
-        if (pl.conn) { this.toast(RA.t('{ad} zaten bağlı; tek girişi var. Yolu yanından geçir.', { ad: RA.t(t.name) }), true); RA.audio.play('denied'); return; }
-        if (t.need !== this.tool) { this.toast(RA.t('Bu kare {ad} için ayrıldı: {nasil}', { ad: RA.t(t.name), nasil: RA.t(WS.City.HOW[t.need]) }), true); RA.audio.play('denied'); return; }
+        if (pl.conn) { this.toast(RA.t('{ad} zaten bağlı; tek girişi var. Yolu yanından geçir.', { ad: icAd(t.name) }), true); RA.audio.play('denied'); return; }
+        if (t.need !== this.tool) { this.toast(RA.t('Bu kare {ad} için ayrıldı: {nasil}', { ad: icAd(t.name), nasil: RA.t(WS.City.HOW[t.need]) }), true); RA.audio.play('denied'); return; }
         if (k > 0) { cut = seq.slice(0, k + 1); break; }
       }
       seq = cut;

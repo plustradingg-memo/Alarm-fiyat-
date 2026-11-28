@@ -69,7 +69,11 @@
       "ageAssurance": false,
       "kidsAgeBand": null,
       "ageRatingOverride": "NONE",
-      "koreaAgeRatingOverride": "NONE"
+      "koreaAgeRatingOverride": "NONE",
+      "socialMedia": false,
+      "socialMediaAgeRestricted": false,
+      "sharedLocation": false,
+      "datingAndRelationships": false
     },
     "icerikHaklari": "DOES_NOT_USE_THIRD_PARTY_CONTENT"
   },
