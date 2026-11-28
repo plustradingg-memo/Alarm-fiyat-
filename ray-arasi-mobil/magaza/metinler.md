@@ -70,12 +70,15 @@ App Store simgesi derlemenin içinden gelir (`assets/icon.png`, 1024 × 1024).
 
 ## Doldurman gereken alanlar
 
-- **Gizlilik politikası adresi** (iki mağaza da zorunlu tutar): https://claude.ai/artifact/DxHtw1N5hzeWtr92DNNGgT
-  Sayfa yayımlandı; mağaza denetçilerinin açabilmesi için sayfanın **Share (Paylaş)** menüsünden herkese açık
-  yapılmalı. Adresi bir gizli pencerede açıp giriş yapmadan göründüğünü kontrol et. Sayfanın kaynağı bu klasördeki
-  `gizlilik-politikasi.html` dosyasıdır.
-- **Destek adresi** (App Store): bir web sayfası ya da iletişim sayfası adresi.
-- **Telif hakkı** (App Store): ör. "© 2026 [adın ya da şirketin]".
+Adım adım sıra ve hazır form yanıtları: `YAPILACAKLAR.md`. App Store'un metin, görsel, kategori ve yaş
+derecelendirmesi alanları `store.config.json` dosyasında hazır; `npm run magaza:ios` ile yüklenir.
+
+
+- **Gizlilik politikası adresi** (iki mağaza da zorunlu tutar): https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/gizlilik-politikasi.md
+  (giriş istemeden açılır; aynı içerik https://claude.ai/artifact/DxHtw1N5hzeWtr92DNNGgT adresinde de var, o sayfa
+  Paylaş menüsünden herkese açık yapılırsa kullanılabilir)
+- **Destek adresi** (App Store): https://github.com/plustradingg-memo/Alarm-fiyat-/blob/2d7c9c78de1f42003d9b76ee648b17596077db0e/ray-arasi-mobil/magaza/destek.md
+- **Telif hakkı** (App Store): `store.config.json` içinde "2026 Ray Arası" yazılı; istersen adınla değiştir.
 - **Geliştirici e-postası** (Google Play mağaza girişi).
 - **App Store › Uygulama Gizliliği:** "Veri toplamıyoruz" seç.
 - **Google Play › Veri güvenliği:** "Uygulama hiçbir kullanıcı verisi toplamıyor veya paylaşmıyor" seç; reklam içermiyor; hedef kitle 13 yaş ve üstü önerilir (çocuklara yönelik "Aileler" programı ek koşullar ister).

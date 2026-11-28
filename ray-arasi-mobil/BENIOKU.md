@@ -86,8 +86,16 @@ Sürüm adı `app.json` içindeki `version` alanıdır (ör. 1.0.0 → 1.0.1). D
 `magaza/metinler.md` iki mağazanın bütün metin alanlarını (ad, alt başlık, kısa ve tam açıklama, anahtar kelimeler,
 yaş sınırı, gizlilik yanıtları) içerir. `magaza/gorseller/` App Store 6,9" (1320 × 2868) ve Google Play
 (1080 × 1920) ekran görüntülerini, Play öne çıkan görselini (1024 × 500) ve 512 × 512 simgeyi içerir.
-Gizlilik politikası https://claude.ai/artifact/DxHtw1N5hzeWtr92DNNGgT adresinde yayımlandı (kaynağı
-`magaza/gizlilik-politikasi.html`); sayfa Paylaş menüsünden herkese açık yapılınca iki mağazaya da bu adres yazılır.
+Gizlilik politikası ve destek sayfası depoda (`magaza/gizlilik-politikasi.md`, `magaza/destek.md`) ve GitHub'da
+giriş istemeden açılır; adresleri `magaza/YAPILACAKLAR.md` dosyasında. App Store'un metin, ekran görüntüsü, kategori,
+yaş derecelendirmesi ve adres alanları `store.config.json` dosyasındadır; App Store Connect API anahtarı Expo'ya
+yüklendikten sonra tek komutla gönderilir:
+
+```bash
+npm run magaza:ios
+```
+
+Sana kalan adımlar (hesap gerektiren işler) ve hazır form yanıtları: `magaza/YAPILACAKLAR.md`.
 
 Görselleri yeniden üretmek için (Playwright ve Chromium gerekir):
 

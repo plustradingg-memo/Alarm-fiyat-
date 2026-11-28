@@ -22,7 +22,8 @@
     "derle:android": "eas build --platform android --profile production",
     "derle:ios": "eas build --platform ios --profile production",
     "gonder:android": "eas submit --platform android --profile production --latest",
-    "gonder:ios": "eas submit --platform ios --profile production --latest"
+    "gonder:ios": "eas submit --platform ios --profile production --latest",
+    "magaza:ios": "eas metadata:push"
   },
   "private": true
 }
