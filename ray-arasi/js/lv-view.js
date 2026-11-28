@@ -397,7 +397,8 @@
       const label = b.role === 'arr' ? RA.t('İNİŞ') : b.role === 'dep' ? RA.t('KALKIŞ') : b.role === 'gate' ? RA.t('KAPI {g}', { g: RA.LV.GATE_L[b.color] || '' }) :
         RA.t(mode === 'rail' ? (b.kind === 'house' ? 'İSTASYON' : ({ gar: 'GAR', liman: 'LİMAN', maden: 'MADEN' }[b.type] || 'GAR')) :
           b.kind === 'house' ? 'EVLER' : ({ fabrika: 'FABRİKA', okul: 'OKUL', avm: 'AVM', ofis: 'OFİS', hastane: 'HASTANE', stadyum: 'STADYUM' }[b.type] || 'İŞ YERİ'));
-      const sp = new T.Sprite(new T.SpriteMaterial({ map: signTex(label, col.css), depthTest: false, transparent: true }));
+      // tabela hep büyük harf (sözlükteki karşılık başka ekranda küçük harfle tanımlı olabilir: AVM → Mall)
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: signTex(label.toLocaleUpperCase(RA.dil === 'tr' ? 'tr-TR' : 'en-US'), col.css), depthTest: false, transparent: true }));
       sp.center.set(0.5, 0); sp.scale.set(2.6, 0.98, 1); sp.position.set(b.x - b.ux * 0.6, 2.1, b.z - b.uz * 0.6); sp.renderOrder = 15; g.add(sp);
       const an = new T.Mesh(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({ map: anchorTex(col.css), transparent: true, depthWrite: false }));
       an.rotation.x = -Math.PI / 2; an.position.set(b.ex, 0.05, b.ez); an.renderOrder = 5; g.add(an);

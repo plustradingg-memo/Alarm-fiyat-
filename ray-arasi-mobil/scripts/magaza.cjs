@@ -41,7 +41,8 @@ const cerceve = (b64, t, alt, H) => `<html><head><style>${fontCss}
   h1{margin:0;font-weight:900;font-size:${H.band > 100 ? 34 : 22}px;letter-spacing:.2px;text-shadow:0 2px 0 rgba(20,60,100,.35)}
   p{margin:${H.band > 100 ? 8 : 2}px 0 0;font-weight:700;font-size:${H.band > 100 ? 18 : 13}px;opacity:.95}
   img{display:block;width:${H.vw}px;height:${H.vh}px}</style></head>
-  <body><div class="b"><h1>${t}</h1><p>${alt}</p></div><img src="data:image/png;base64,${b64}"></body></html>`;
+  <body><div class="b"><h1>${t}</h1><p>${alt}</p></div><img src="data:image/png;base64,${b64}">
+  <script>for (const el of document.querySelectorAll('h1, p')) { el.style.whiteSpace = 'nowrap'; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.parentElement.clientWidth - 24 && f > 9) { f -= 0.5; el.style.fontSize = f + 'px'; } }</script></body></html>`;
 (async () => {
   const { chromium } = require('playwright');
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -80,11 +81,12 @@ const cerceve = (b64, t, alt, H) => `<html><head><style>${fontCss}
   }
   // Play öne çıkan görseli ve 512 simge
   const g = await (await b.newContext({ viewport: { width: 1024, height: 500 }, deviceScaleFactor: 1 })).newPage();
-  for (const dil of DILLER) {
   const simge = fs.readFileSync(path.join(KOK, 'assets', 'icon.png')).toString('base64');
+  for (const dil of DILLER) {
   await g.setContent(`<html><head><style>${fontCss}body{margin:0;width:1024px;height:500px;overflow:hidden;font-family:Overpass,sans-serif;background:linear-gradient(160deg,#4fb8f3,#bfe9ff 60%,#93dc6e 60%,#55ad42);display:flex;align-items:center;gap:56px;padding:0 70px;box-sizing:border-box}
-    img{width:300px;height:300px;border-radius:66px;box-shadow:0 18px 40px rgba(20,60,100,.35)}h1{margin:0;font-size:92px;font-weight:900;color:#fff;text-shadow:0 5px 0 rgba(20,60,100,.35)}p{margin:10px 0 0;font-size:30px;font-weight:800;color:#17304f}</style></head>
-    <body><img src="data:image/png;base64,${simge}"><div><h1>${AD[dil]}</h1><p>${SLOGAN[dil]}</p></div></body></html>`);
+    img{width:300px;height:300px;border-radius:66px;box-shadow:0 18px 40px rgba(20,60,100,.35)}h1{margin:0;font-size:78px;font-weight:900;color:#fff;white-space:nowrap;text-shadow:0 5px 0 rgba(20,60,100,.35)}p{margin:10px 0 0;font-size:30px;font-weight:800;color:#17304f}</style></head>
+    <body><img src="data:image/png;base64,${simge}"><div id="y"><h1>${AD[dil]}</h1><p>${SLOGAN[dil]}</p></div>
+    <script>const h = document.querySelector('h1'); let f = 78; while (h.getBoundingClientRect().right > 1024 - 56 && f > 40) { f -= 1; h.style.fontSize = f + 'px'; }</script></body></html>`);
   await g.waitForTimeout(300);
   await g.screenshot({ path: path.join(CIK, dil === 'tr' ? 'play-one-cikan-gorsel.png' : 'play-one-cikan-gorsel-' + dil + '.png') });
   }

@@ -471,6 +471,8 @@ ray-arasi/
 ├── index.html              Sayfa ve arayüz iskeleti
 ├── css/style.css           Arayüz (emaye levha tarzı düğmeler ve araç çubuğu)
 ├── js/core.js              Matematik, kayıt, ses (WebAudio), yollar, geometri yardımcıları
+├── js/dil.js               Dil desteği: RA.t sözlüğü, cihaz diline göre seçim, TR/EN düğmesi, oyun adı
+├── js/en-*.js              İngilizce karşılıklar (arayüz, bölüm ekranı, atölye, 120 bölüm metni)
 ├── js/models.js            Oyuncak maket modelleri (tren, vagon, araçlar, uçak, ağaç, bina, ışık, sinyal)
 ├── js/ws-grid.js           Izgara, çizim/silme kuralları, başlangıç (4 düz hat) ve örnek düzenler
 ├── js/ws-net.js            Şerit ve hat geometrisi, rampa yükseklikleri, kavşak çakışmaları, rota arama
@@ -490,7 +492,8 @@ ray-arasi/
 ├── ekran-goruntuleri/      Ana ekran (bölüm haritası, demiryolu ve havalimanı sekmeleri), bölüm kartı, serbest çizim, kesişim seçimi, köprü yerleri, önceden kurulan köprü, gerçekçi kavşak, köprü, büyük haritalar (14 Dağ yolu, 20 Megakent), demiryolu (nehir ve dağ, büyük gar, hızlı tren ağı), havalimanı (taksi köprüsü, mega havalimanı, ayrı pistler), nehir, alt geçit, büyük kavşak, kazanma, masaüstü
 ├── manifest.webmanifest    "Ana ekrana ekle" bilgileri
 ├── test/kontrol.cjs        İsteğe bağlı uçtan uca kontrol betiği (tarayıcıda)
-└── test/bolumler.cjs       120 bölümün hepsini tarayıcısız oynayan bölüm denetimi
+├── test/bolumler.cjs       120 bölümün hepsini tarayıcısız oynayan bölüm denetimi
+└── test/dil-kontrol.cjs    Oyunu İngilizce açıp Türkçe kalan metinleri bulan denetim
 ```
 
 Bütün görseller kodla üretilir (üç boyutlu modeller, dokular, sesler); dışarıdan görsel ya da ses dosyası yüklenmez.

@@ -33,7 +33,7 @@
     'İŞ YERİ': 'WORKPLACE',
     'FABRİKA': 'FACTORY',
     'OKUL': 'SCHOOL',
-    'AVM': 'MALL',
+    'AVM': 'Mall',
     'OFİS': 'OFFICE',
     'HASTANE': 'HOSPITAL',
     'STADYUM': 'STADIUM',
@@ -83,7 +83,7 @@
     'Çizmek için parmağını sürükle: bir evin önünden aynı renkteki binanın önüne.': 'Drag your finger to draw, from one building\'s marker to the building of the same color.',
     // köprü / alt geçit / tünel kurma
     '{Name} hakkın bitti.': '{Name} limit reached.',
-    '{Name} hakkın bitti. Birini kaldırmak için {name} işaretine dokunup Kavşak seç.': '{Name} limit reached. To free one up, tap a {name} marker and choose {Jn}.',
+    '{Name} hakkın bitti. Birini kaldırmak için {name} işaretine dokunup Kavşak seç.': '{Name} limit reached. To free one up, tap one on the map and choose {Jn}.',
     '{Name} hakkın bitti. Kurduğun bir {name}yü kaldırmak için × işaretine dokun.': '{Name} limit reached. Tap × on one you placed to remove it.',
     '{Name} yapabileceğin {n} kesişim parlıyor: birine dokun. Boş bir yere dokunursan (sürükleyerek yön verirsin) {name} önceden kurulur. ({left} hakkın var)': '{Name}: {n} {n:spot glows:spots glow}. Tap one, or tap an empty spot to set one up in advance (drag to aim it). ({left} left)',
     '{Name} kurmak istediğin yere dokun; yönünü vermek için sürükle. Sonra oradan geçen yolları çiz. ({left} hakkın var)': '{Name}: tap where you want it and drag to aim it. Then draw the {ways} that pass through it. ({left} left)',

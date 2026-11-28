@@ -9,7 +9,7 @@ const KAPSAM = process.argv[2] || 'hepsi';
 const URL = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?dil=en';
 // Türkçeye özgü harfler ya da sık Türkçe sözcükler; oyun adı ve özel adlar hariç tutulabilir
 const TR_HARF = /[çğıöşüÇĞİÖŞÜ]/;
-const TR_SOZ = /\b(ve|bir|bu|için|ile|yol|yolu|ev|evler|köprü|kavşak|bölüm|tamam|başlat|durdur|geri|sil|ipucu|yıldız|trafik|araç|tren|uçak|kapı|ray|hat|makas|tünel|pist|seç|çiz|şehir|nüfus|talep|neden|olsun|yok|var|daha|kaybettin|kazandın|harika)\b/i;
+const TR_SOZ = /(?<![’'\w])(ve|bir|bu|için|ile|yol|yolu|ev|evler|köprü|kavşak|bölüm|tamam|başlat|durdur|geri|sil|ipucu|yıldız|trafik|araç|tren|uçak|kapı|ray|hat|makas|tünel|pist|seç|çiz|şehir|nüfus|talep|neden|olsun|yok|var|daha|kaybettin|kazandın|harika)(?![’'\w])/i;
 const IZINLI = new Set(['TR', 'EN']);
 
 (async () => {
