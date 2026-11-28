@@ -86,7 +86,8 @@ Sürüm adı `app.json` içindeki `version` alanıdır (ör. 1.0.0 → 1.0.1). D
 `magaza/metinler.md` iki mağazanın bütün metin alanlarını (ad, alt başlık, kısa ve tam açıklama, anahtar kelimeler,
 yaş sınırı, gizlilik yanıtları) içerir. `magaza/gorseller/` App Store 6,9" (1320 × 2868) ve Google Play
 (1080 × 1920) ekran görüntülerini, Play öne çıkan görselini (1024 × 500) ve 512 × 512 simgeyi içerir.
-`magaza/gizlilik-politikasi.html` herkese açık bir adreste yayımlanıp iki mağazaya da yazılmalıdır.
+Gizlilik politikası https://claude.ai/artifact/DxHtw1N5hzeWtr92DNNGgT adresinde yayımlandı (kaynağı
+`magaza/gizlilik-politikasi.html`); sayfa Paylaş menüsünden herkese açık yapılınca iki mağazaya da bu adres yazılır.
 
 Görselleri yeniden üretmek için (Playwright ve Chromium gerekir):
 

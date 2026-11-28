@@ -70,7 +70,10 @@ App Store simgesi derlemenin içinden gelir (`assets/icon.png`, 1024 × 1024).
 
 ## Doldurman gereken alanlar
 
-- **Gizlilik politikası adresi** (iki mağaza da zorunlu tutar): `gizlilik-politikasi.html` dosyasını herkese açık bir adreste yayımla (ör. GitHub Pages ya da kendi siten) ve adresi iki mağazaya yaz.
+- **Gizlilik politikası adresi** (iki mağaza da zorunlu tutar): https://claude.ai/artifact/DxHtw1N5hzeWtr92DNNGgT
+  Sayfa yayımlandı; mağaza denetçilerinin açabilmesi için sayfanın **Share (Paylaş)** menüsünden herkese açık
+  yapılmalı. Adresi bir gizli pencerede açıp giriş yapmadan göründüğünü kontrol et. Sayfanın kaynağı bu klasördeki
+  `gizlilik-politikasi.html` dosyasıdır.
 - **Destek adresi** (App Store): bir web sayfası ya da iletişim sayfası adresi.
 - **Telif hakkı** (App Store): ör. "© 2026 [adın ya da şirketin]".
 - **Geliştirici e-postası** (Google Play mağaza girişi).
