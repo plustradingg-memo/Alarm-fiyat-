@@ -23,7 +23,8 @@
     "derle:ios": "eas build --platform ios --profile production",
     "gonder:android": "eas submit --platform android --profile production --latest",
     "gonder:ios": "eas submit --platform ios --profile production --latest",
-    "magaza:ios": "eas metadata:push"
+    "magaza:ios": "eas metadata:push",
+    "eas-build-post-install": "node scripts/paketle.cjs"
   },
   "private": true
 }
